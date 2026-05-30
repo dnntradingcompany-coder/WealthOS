@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quản lý tài sản</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --bg:#0d0f14;--sur:#151820;--sur2:#1c2030;
+  --b:rgba(255,255,255,0.07);--b2:rgba(255,255,255,0.13);
+  --tx:#e8eaf0;--mu:#6b7280;
+  --blue:#4f8ef7;--bluebg:rgba(79,142,247,0.1);
+  --pur:#8b6cf7;--purbg:rgba(139,108,247,0.1);
+  --amb:#f5a623;--ambbg:rgba(245,166,35,0.1);
+  --gr:#34d399;--re:#f87171;
+  --mono:'IBM Plex Mono',monospace;--sans:'Outfit',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100vh;}
+.app{max-width:960px;margin:0 auto;padding:2rem 1.5rem;}
+
+/* ── HEADER ── */
+.header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.75rem;}
+.logo{font-size:10px;letter-spacing:2.5px;color:var(--mu);margin-bottom:4px;}
+.ttl{font-size:24px;font-weight:600;letter-spacing:-0.5px;}
+.hright{display:flex;align-items:center;gap:10px;}
+.live{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;border:1px solid rgba(52,211,153,0.3);background:rgba(52,211,153,0.06);font-size:11px;color:var(--gr);font-family:var(--mono);}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--gr);animation:pu 1.5s ease-in-out infinite;}
+@keyframes pu{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}
+.btn{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;border:1px solid var(--b2);background:var(--sur);color:var(--mu);font-size:12px;cursor:pointer;font-family:var(--sans);transition:all .2s;}
+.btn:hover{background:var(--sur2);color:var(--tx);}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.btn-add{border-color:rgba(52,211,153,0.3);color:var(--gr);}
+.btn-add:hover{background:rgba(52,211,153,0.06);color:var(--gr);}
+@keyframes sp{to{transform:rotate(360deg)}}
+.spin{animation:sp .8s linear infinite;}
+
+/* ── TỔNG DANH MỤC ── */
+.smry{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:1.5rem;}
+.smry-sub{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.sc-total{
+  background:linear-gradient(135deg,#1a1f35 0%,#0d1528 60%,#0a1020 100%);
+  border:1px solid rgba(79,142,247,0.35);border-radius:16px;padding:22px 28px;
+  position:relative;overflow:hidden;
+  box-shadow:0 0 40px rgba(79,142,247,0.12),inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.sc-total::before{content:'';position:absolute;top:-60px;right:-60px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(79,142,247,0.12) 0%,transparent 70%);pointer-events:none;}
+.sc-total::after{content:'';position:absolute;bottom:-40px;left:30%;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,rgba(139,108,247,0.07) 0%,transparent 70%);pointer-events:none;}
+.sc-total .sl{font-size:10px;color:rgba(79,142,247,0.8);letter-spacing:2px;margin-bottom:8px;font-weight:500;}
+.sc-total .sv{font-size:40px;font-weight:700;font-family:var(--mono);letter-spacing:-2px;min-height:48px;background:linear-gradient(135deg,#ffffff 40%,rgba(79,142,247,0.9));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.sc-total .ss{font-size:13px;margin-top:6px;font-family:var(--mono);}
+.alloc-bar{display:flex;height:4px;border-radius:4px;overflow:hidden;margin-top:16px;gap:2px;}
+.alloc-bar span{border-radius:4px;transition:width .4s;}
+.alloc-labels{display:flex;flex-wrap:wrap;gap:10px 16px;margin-top:8px;}
+.alloc-lbl{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--mu);font-family:var(--mono);}
+.alloc-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
+.alloc-pct{color:var(--tx);font-weight:500;}
+.sc{background:var(--sur);border:1px solid var(--b);border-radius:12px;padding:14px 16px;position:relative;}
+.sl{font-size:10px;color:var(--mu);letter-spacing:.5px;margin-bottom:6px;}
+.sv{font-size:19px;font-weight:600;font-family:var(--mono);min-height:26px;}
+.ss{font-size:11px;margin-top:3px;font-family:var(--mono);color:var(--mu);}
+.sc .asset-pct{position:absolute;top:14px;right:14px;font-size:11px;font-family:var(--mono);font-weight:600;padding:2px 7px;border-radius:6px;background:var(--sur2);}
+.pos{color:var(--gr);}.neg{color:var(--re);}
+
+/* ── HOLDINGS ── */
+.holdings-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1rem;}
+.hfield{background:var(--sur);border:1px solid var(--b);border-radius:12px;padding:14px 16px;position:relative;}
+.hfield-top{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.hico{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.hlabel{font-size:12px;font-weight:500;color:var(--tx);}
+.hticker{font-size:10px;color:var(--mu);font-family:var(--mono);}
+.hdelete{position:absolute;top:10px;right:10px;width:20px;height:20px;border-radius:5px;border:none;background:transparent;color:var(--mu);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .2s;padding:0;}
+.hdelete:hover{background:rgba(248,113,113,.15);color:var(--re);}
+.hinput-wrap{position:relative;}
+.hinput{width:100%;background:var(--sur2);border:1px solid var(--b2);border-radius:8px;padding:8px 52px 8px 12px;font-size:14px;font-family:var(--mono);color:var(--tx);outline:none;transition:border-color .2s;}
+.hinput:focus{border-color:rgba(255,255,255,0.3);}
+.hinput::placeholder{color:var(--mu);}
+.hunit{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--mu);font-family:var(--mono);pointer-events:none;}
+.hval-block{margin-top:8px;padding:8px 10px;background:var(--sur2);border-radius:8px;border:1px solid var(--b);}
+.hval-price{font-size:10px;color:var(--mu);font-family:var(--mono);margin-bottom:2px;}
+.hval{font-size:14px;font-weight:600;font-family:var(--mono);color:var(--mu);min-height:20px;}
+.hval.ok{color:var(--gr);}
+.hval-alloc{font-size:10px;font-family:var(--mono);color:var(--mu);margin-top:3px;}
+.manual-price-row{display:flex;gap:6px;margin:6px 0 4px;align-items:center;}
+
+/* ── ADD ASSET BUTTON ── */
+.add-row{margin-bottom:1.5rem;}
+
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--sur);border:1px solid var(--b2);border-radius:16px;padding:24px;width:min(480px,92vw);max-height:88vh;overflow-y:auto;}
+.modal h3{font-size:15px;font-weight:600;margin-bottom:4px;}
+.modal-sub{font-size:11px;color:var(--mu);margin-bottom:20px;font-family:var(--mono);}
+.modal-tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
+.mtab{padding:5px 12px;border-radius:8px;border:1px solid var(--b2);background:transparent;color:var(--mu);font-size:11px;cursor:pointer;font-family:var(--sans);transition:all .2s;}
+.mtab:hover{background:var(--sur2);color:var(--tx);}
+.mtab.active{background:var(--blue);border-color:var(--blue);color:#fff;}
+.asset-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px;}
+.asset-opt{padding:10px 12px;border-radius:10px;border:1px solid var(--b);background:var(--sur2);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:8px;}
+.asset-opt:hover{border-color:var(--b2);background:var(--sur);}
+.asset-opt.sel{border-color:var(--blue);background:rgba(79,142,247,0.08);}
+.ao-ico{font-size:18px;flex-shrink:0;}
+.ao-name{font-size:12px;font-weight:500;}
+.ao-tick{font-size:10px;color:var(--mu);font-family:var(--mono);}
+.modal-divider{border:none;border-top:1px solid var(--b);margin:16px 0;}
+.modal-label{font-size:10px;color:var(--mu);letter-spacing:.5px;margin-bottom:6px;}
+.modal-input{width:100%;background:var(--sur2);border:1px solid var(--b2);border-radius:8px;padding:9px 12px;font-size:13px;font-family:var(--mono);color:var(--tx);outline:none;margin-bottom:12px;transition:border-color .2s;}
+.modal-input:focus{border-color:rgba(255,255,255,0.3);}
+.modal-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.modal-hint{font-size:10px;color:var(--mu);font-family:var(--mono);margin-top:-8px;margin-bottom:12px;}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:4px;}
+.mbtn{padding:8px 18px;border-radius:8px;border:1px solid var(--b2);background:var(--sur2);color:var(--mu);font-size:12px;cursor:pointer;font-family:var(--sans);transition:all .2s;}
+.mbtn:hover{color:var(--tx);}
+.mbtn-primary{background:var(--blue);border-color:var(--blue);color:#fff;}
+.mbtn-primary:hover{opacity:.88;}
+.modal-err{font-size:11px;color:var(--re);margin-bottom:10px;display:none;}
+
+/* ── CHART ── */
+.csec{background:var(--sur);border:1px solid var(--b);border-radius:16px;padding:18px;margin-bottom:1.5rem;}
+.chdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+.ctit{font-size:10px;color:var(--mu);letter-spacing:1.2px;}
+.leg{display:flex;gap:14px;flex-wrap:wrap;}
+.li{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--mu);font-family:var(--mono);}
+.ld{width:8px;height:8px;border-radius:2px;}
+.cw{position:relative;height:210px;}
+
+.sk{background:linear-gradient(90deg,var(--sur2) 25%,rgba(255,255,255,0.03) 50%,var(--sur2) 75%);background-size:200% 100%;animation:sh 1.4s infinite;border-radius:4px;display:inline-block;}
+@keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+.foot{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+/* ── FORECAST ── */
+.fc-sc-btn{font-size:10px;padding:3px 10px;border-radius:6px;border:1px solid var(--b2);background:transparent;color:var(--mu);cursor:pointer;font-family:var(--sans);transition:all .15s;white-space:nowrap;}
+.fc-sc-btn:hover{background:var(--sur2);color:var(--tx);}
+.fc-sc-btn.active{color:#fff;border-color:transparent;}
+.fc-metric{background:var(--sur2);border-radius:10px;padding:12px 14px;}
+.fc-metric .fc-ml{font-size:9px;color:var(--mu);letter-spacing:.5px;margin-bottom:4px;}
+.fc-metric .fc-mv{font-size:16px;font-weight:600;font-family:var(--mono);}
+#fc-table th{padding:7px 8px;background:var(--sur2);font-size:9px;color:var(--mu);font-weight:600;text-align:right;border-bottom:1px solid var(--b);}
+#fc-table th:first-child{text-align:left;}
+#fc-table td{padding:6px 8px;border-bottom:1px solid var(--b);text-align:right;font-size:11px;font-family:var(--mono);}
+#fc-table td:first-child{text-align:left;font-weight:500;}
+#fc-table tr.fc-hl td{background:rgba(79,142,247,0.06);}
+.fc-pos{color:var(--gr);font-weight:600;}.fc-neg{color:var(--re);font-weight:600;}
+.fsrc{font-size:11px;color:var(--mu);font-family:var(--mono);}
+.err{font-size:11px;color:var(--re);padding:8px 12px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);border-radius:8px;margin-top:10px;}
+.info{font-size:11px;color:#60a5fa;padding:8px 12px;background:rgba(96,165,250,.06);border:1px solid rgba(96,165,250,.2);border-radius:8px;margin-top:10px;}
+
+@media(max-width:640px){
+  .app{padding:1.25rem 1rem;}
+  .ttl{font-size:20px;}
+  .holdings-row{grid-template-columns:1fr;gap:10px;}
+  .hinput{font-size:16px;padding:10px 52px 10px 12px;}
+  .smry-sub{grid-template-columns:1fr;gap:10px;}
+  .sc-total .sv{font-size:30px;}
+  .sv{font-size:16px;}
+  .cw{height:160px;}
+  .foot{flex-direction:column;align-items:flex-start;gap:10px;}
+  .asset-grid{grid-template-columns:1fr;}
+  .modal-row{grid-template-columns:1fr;}
+}
+@media(min-width:641px) and (max-width:900px){
+  .holdings-row{grid-template-columns:repeat(2,1fr);}
+  .smry-sub{grid-template-columns:repeat(3,1fr);}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div>
+      <div class="logo">DANH MỤC ĐẦU TƯ</div>
+      <div class="ttl">Tài sản của tôi</div>
+    </div>
+    <div class="hright">
+      <div class="live"><span class="dot"></span>LIVE</div>
+      <button class="btn" id="rbtn" onclick="loadAll()">
+        <svg id="rico" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        Làm mới
+      </button>
+    </div>
+  </div>
+
+  <!-- TỔNG DANH MỤC -->
+  <div class="smry">
+    <div class="sc-total">
+      <div class="sl">TỔNG DANH MỤC (USD)</div>
+      <div class="sv" id="s0"><span class="sk" style="width:180px;height:44px;"></span></div>
+      <div class="ss" id="s0c">theo khối lượng nhập</div>
+      <div class="alloc-bar" id="alloc-bar"></div>
+      <div class="alloc-labels" id="alloc-labels"></div>
+    </div>
+    <div class="smry-sub" id="smry-sub">
+      <!-- dynamic summary cards -->
+    </div>
+  </div>
+
+  <!-- HOLDINGS -->
+  <div class="holdings-row" id="holdings-row">
+    <!-- dynamic hfields -->
+  </div>
+
+  <!-- ADD BUTTON -->
+  <div class="add-row">
+    <button class="btn btn-add" onclick="openModal()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Thêm tài sản
+    </button>
+  </div>
+
+  <!-- CHART -->
+  <div class="csec">
+    <div class="chdr">
+      <span class="ctit">BIẾN ĐỘNG 7 NGÀY (chỉ số hóa, ngày đầu = 100)</span>
+      <div class="leg" id="chart-legend"></div>
+    </div>
+    <div class="cw"><canvas id="ch"></canvas></div>
+  </div>
+
+  <div class="foot">
+    <span class="fsrc">Nguồn: CoinGecko · Yahoo Finance · <span id="ut">đang tải...</span></span>
+    <button class="btn" onclick="loadAll()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+      Làm mới
+    </button>
+  </div>
+  <div id="msgs"></div>
+
+  <!-- ── DỰ BÁO TĂNG TRƯỞNG ── -->
+  <div class="csec" style="margin-top:1.5rem;" id="forecast-section">
+    <div class="chdr" style="margin-bottom:16px;">
+      <span class="ctit">DỰ BÁO TĂNG TRƯỞNG 10 NĂM</span>
+      <button class="btn" onclick="syncFromPortfolio()" style="font-size:11px;padding:5px 12px;color:var(--gr);border-color:rgba(52,211,153,0.3);">
+        ↺ Đồng bộ từ danh mục
+      </button>
+    </div>
+
+    <!-- Kịch bản từng asset -->
+    <div id="fc-asset-scenarios" style="display:grid;gap:12px;margin-bottom:16px;"></div>
+
+    <!-- Thông số -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+      <div class="hfield" style="padding:14px 16px;">
+        <div class="sl" style="margin-bottom:8px;">VỐN BAN ĐẦU (USD)</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <input type="range" id="fc-init" min="1000" max="500000" step="1000" value="30000"
+            oninput="fcUpdateInit(+this.value)" style="flex:1;accent-color:var(--blue);">
+          <span id="fc-init-val" style="font-size:14px;font-weight:600;font-family:var(--mono);min-width:90px;text-align:right;">$30,000</span>
+        </div>
+      </div>
+      <div class="hfield" style="padding:14px 16px;">
+        <div class="sl" style="margin-bottom:8px;">DCA / THÁNG (USD)</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <input type="range" id="fc-dca" min="0" max="10000" step="100" value="0"
+            oninput="fcUpdateDCA(+this.value)" style="flex:1;accent-color:var(--blue);">
+          <span id="fc-dca-val" style="font-size:14px;font-weight:600;font-family:var(--mono);min-width:90px;text-align:right;">$0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Metrics -->
+    <div id="fc-metrics" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;"></div>
+
+    <!-- Chart dự báo -->
+    <div style="position:relative;height:260px;margin-bottom:16px;">
+      <canvas id="fc-chart"></canvas>
+    </div>
+
+    <!-- Bảng năm -->
+    <div style="overflow-x:auto;">
+      <table id="fc-table" style="width:100%;border-collapse:collapse;font-size:11px;font-family:var(--mono);">
+        <thead id="fc-thead"></thead>
+        <tbody id="fc-tbody"></tbody>
+      </table>
+    </div>
+
+    <div style="margin-top:12px;padding:10px 14px;background:rgba(248,113,113,0.06);border:1px solid rgba(248,113,113,0.2);border-radius:10px;font-size:11px;color:#f87171;line-height:1.6;">
+      ⚠ Đây là mô phỏng dựa trên lãi suất giả định — không phải dự báo thực tế. Crypto và hàng hóa có biến động cực cao, kịch bản thực tế có thể khác đáng kể.
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL THÊM TÀI SẢN ── -->
+<div class="modal-overlay" id="modal-overlay" onclick="maybeClose(event)">
+  <div class="modal">
+    <h3>Thêm tài sản</h3>
+    <div class="modal-sub">Chọn loại và tài sản muốn theo dõi</div>
+
+    <div class="modal-tabs">
+      <button class="mtab active" onclick="setTab('crypto')">🪙 Crypto</button>
+      <button class="mtab" onclick="setTab('stock')">📈 Cổ phiếu / ETF</button>
+      <button class="mtab" onclick="setTab('commodity')">🏅 Hàng hóa</button>
+      <button class="mtab" onclick="setTab('custom')">✏️ Tùy chỉnh</button>
+    </div>
+
+    <div id="tab-crypto">
+      <div class="asset-grid" id="crypto-grid"></div>
+    </div>
+    <div id="tab-stock" style="display:none">
+      <div class="asset-grid" id="stock-grid"></div>
+    </div>
+    <div id="tab-commodity" style="display:none">
+      <div class="asset-grid" id="commodity-grid"></div>
+    </div>
+    <div id="tab-custom" style="display:none">
+      <div class="modal-label">TÊN HIỂN THỊ</div>
+      <input class="modal-input" id="ci-name" placeholder="Ví dụ: Bitcoin" maxlength="30">
+      <div class="modal-label">MÃ TICKER / ID</div>
+      <input class="modal-input" id="ci-ticker" placeholder="Ví dụ: BTC hoặc bitcoin (CoinGecko ID)" maxlength="30">
+      <div class="modal-hint">Crypto: nhập CoinGecko ID (vd: bitcoin, ethereum). Cổ phiếu/ETF: Yahoo ticker (vd: AAPL, VUAA.L)</div>
+      <div class="modal-label">LOẠI</div>
+      <select class="modal-input" id="ci-type" style="cursor:pointer">
+        <option value="crypto">Crypto (CoinGecko)</option>
+        <option value="stock">Cổ phiếu / ETF (Yahoo Finance)</option>
+      </select>
+      <div class="modal-label">ICON (emoji)</div>
+      <input class="modal-input" id="ci-icon" placeholder="🪙" maxlength="4" style="font-size:20px;width:60px;text-align:center;">
+      <div class="modal-label">MÀU</div>
+      <input type="color" id="ci-color" value="#4f8ef7" style="width:40px;height:32px;border-radius:6px;border:none;cursor:pointer;background:none;">
+    </div>
+
+    <div class="modal-err" id="modal-err"></div>
+    <div class="modal-btns">
+      <button class="mbtn" onclick="closeModal()">Huỷ</button>
+      <button class="mbtn mbtn-primary" onclick="addSelectedAsset()">Thêm vào danh mục</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+//  ASSET CATALOG
+// ─────────────────────────────────────────────────────────────
+const CRYPTO_CATALOG = [
+  { id:'bitcoin',      name:'Bitcoin',     ticker:'BTC',      icon:'₿',   color:'#f7931a', type:'crypto' },
+  { id:'ethereum',     name:'Ethereum',    ticker:'ETH',      icon:'⟠',   color:'#627eea', type:'crypto' },
+  { id:'hyperliquid',  name:'Hyperliquid', ticker:'HYPE',     icon:'⚡',  color:'#8b6cf7', type:'crypto' },
+  { id:'pax-gold',     name:'PAX Gold',    ticker:'PAXG',     icon:'🪙',  color:'#f5a623', type:'crypto' },
+  { id:'solana',       name:'Solana',      ticker:'SOL',      icon:'◎',   color:'#9945ff', type:'crypto' },
+  { id:'binancecoin',  name:'BNB',         ticker:'BNB',      icon:'🔶',  color:'#f3ba2f', type:'crypto' },
+  { id:'ripple',       name:'XRP',         ticker:'XRP',      icon:'✕',   color:'#346aa9', type:'crypto' },
+  { id:'usd-coin',     name:'USDC',        ticker:'USDC',     icon:'💵',  color:'#2775ca', type:'crypto' },
+  { id:'sui',          name:'Sui',         ticker:'SUI',      icon:'💧',  color:'#4da2ff', type:'crypto' },
+  { id:'pepe',         name:'PEPE',        ticker:'PEPE',     icon:'🐸',  color:'#3ddc84', type:'crypto' },
+];
+const STOCK_CATALOG = [
+  { id:'VUAA.L',  name:'VUAA ETF',    ticker:'VUAA.L',  icon:'📈', color:'#4f8ef7', type:'stock' },
+  { id:'AAPL',    name:'Apple',       ticker:'AAPL',    icon:'🍎', color:'#a0c4ff', type:'stock' },
+  { id:'MSFT',    name:'Microsoft',   ticker:'MSFT',    icon:'🪟', color:'#00a4ef', type:'stock' },
+  { id:'NVDA',    name:'Nvidia',      ticker:'NVDA',    icon:'🟢', color:'#76b900', type:'stock' },
+  { id:'GOOGL',   name:'Alphabet',    ticker:'GOOGL',   icon:'🔍', color:'#4285f4', type:'stock' },
+  { id:'AMZN',    name:'Amazon',      ticker:'AMZN',    icon:'📦', color:'#ff9900', type:'stock' },
+  { id:'TSLA',    name:'Tesla',       ticker:'TSLA',    icon:'⚡', color:'#e31937', type:'stock' },
+  { id:'SPY',     name:'S&P 500 ETF', ticker:'SPY',     icon:'🇺🇸', color:'#34d399', type:'stock' },
+  { id:'QQQ',     name:'Nasdaq ETF',  ticker:'QQQ',     icon:'💹', color:'#818cf8', type:'stock' },
+  { id:'VCB.VN',  name:'Vietcombank', ticker:'VCB.VN',  icon:'🏦', color:'#00b14f', type:'stock' },
+];
+const COMMODITY_CATALOG = [
+  { id:'XAUUSD', name:'Vàng',         ticker:'GOLD',   icon:'🥇', color:'#ffd700', type:'commodity', stooq:'xauusd', cc:'XAU' },
+  { id:'XAGUSD', name:'Bạc',          ticker:'SILVER', icon:'🥈', color:'#c0c0c0', type:'commodity', stooq:'xagusd', cc:'XAG' },
+  { id:'USOIL',  name:'Dầu thô WTI', ticker:'OIL',    icon:'🛢️', color:'#6b4f2a', type:'commodity', stooq:'cl.f',  cc:null  },
+  { id:'NATGAS', name:'Khí tự nhiên',ticker:'GAS',    icon:'🔥', color:'#f97316', type:'commodity', stooq:'ng.f',  cc:null  },
+  { id:'XPTUSD', name:'Bạch kim',     ticker:'PLAT',   icon:'⚪', color:'#e5e7eb', type:'commodity', stooq:'xptusd',cc:'XPT' },
+  { id:'XCUUSD', name:'Đồng',         ticker:'COPPER', icon:'🟤', color:'#b87333', type:'commodity', stooq:'hg.f',  cc:null  },
+  { id:'WHEAT',  name:'Lúa mì',       ticker:'WHEAT',  icon:'🌾', color:'#d4a017', type:'commodity', stooq:'zw.f',  cc:null  },
+  { id:'COFFEE', name:'Cà phê',       ticker:'COFFEE', icon:'☕', color:'#6f4e37', type:'commodity', stooq:'kc.f',  cc:null  },
+];
+
+// ─────────────────────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────────────────────
+let C = null, busy = false;
+let assets = [];   // [{...meta, qty, price, pct, history}]
+let selectedAsset = null;
+let currentTab = 'crypto';
+
+const $ = id => document.getElementById(id);
+const usd = (n, d=2) => '$' + Number(n).toLocaleString('en-US', {minimumFractionDigits:d, maximumFractionDigits:d});
+const big = n => !n ? '—' : n>=1e9 ? '$'+(n/1e9).toFixed(2)+'B' : n>=1e6 ? '$'+(n/1e6).toFixed(1)+'M' : '$'+Number(n).toLocaleString();
+const norm = arr => { if(!arr?.length) return []; const b=arr[0]; return arr.map(v=>+(v/b*100).toFixed(2)); };
+const fmtChg = pct => pct==null ? '' : (pct>=0?'▲ +':'▼ ')+Math.abs(pct).toFixed(2)+'% (24h)';
+const qty = id => { const el = $(id); return el ? Math.max(0, parseFloat(el.value)||0) : 0; };
+
+// Palette màu cho asset tùy chỉnh khi chọn preset
+const PALETTE = ['#4f8ef7','#8b6cf7','#f5a623','#34d399','#f87171','#60a5fa','#a78bfa','#34d399','#fb923c','#e879f9'];
+let palIdx = 0;
+
+// ─────────────────────────────────────────────────────────────
+//  CORS / FETCH  (với timeout)
+// ─────────────────────────────────────────────────────────────
+const TIMEOUT_MS = 6000;
+function fetchWithTimeout(url, opts={}) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
+  return fetch(url, { ...opts, signal: ctrl.signal }).finally(() => clearTimeout(t));
+}
+
+const PROXIES = [
+  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+  url => `https://cors-anywhere.herokuapp.com/${url}`,
+];
+
+async function tryFetch(url) {
+  const attempts = [url, ...PROXIES.map(mk=>mk(url))].map(async u => {
+    const r = await fetchWithTimeout(u, { headers:{'Accept':'application/json'} });
+    if (!r.ok) throw new Error('not ok');
+    const text = await r.text();
+    const d = JSON.parse(text);
+    if (!d || d.error) throw new Error('bad data');
+    return d;
+  });
+  try { return await Promise.any(attempts); }
+  catch(_) { throw new Error('Không thể tải dữ liệu'); }
+}
+
+// Twelve Data free – 8 req/min, no key needed for basic quote
+async function fetchTwelveData(symbol) {
+  const url = `https://api.twelvedata.com/quote?symbol=${encodeURIComponent(symbol)}&apikey=demo`;
+  const r = await fetchWithTimeout(url);
+  if (!r.ok) throw new Error('fail');
+  const d = await r.json();
+  if (d.status === 'error' || !d.close) throw new Error('no data');
+  const price = parseFloat(d.close);
+  const prev  = parseFloat(d.previous_close);
+  const pct   = prev ? (price-prev)/prev*100 : null;
+  return { price, pct, history: [] };
+}
+
+async function fetchYahoo(symbol) {
+  const parseYahoo = d => {
+    if (d?.chart?.result?.[0]) {
+      const res = d.chart.result[0];
+      const price = res.meta?.regularMarketPrice;
+      if (!price) return null;
+      const closes = res.indicators?.quote?.[0]?.close?.filter(Boolean) || [];
+      const prev = res.meta?.previousClose || res.meta?.chartPreviousClose;
+      return { price, pct: prev ? (price-prev)/prev*100 : null, history: closes };
+    }
+    if (d?.quoteResponse?.result?.[0]) {
+      const q = d.quoteResponse.result[0];
+      if (!q.regularMarketPrice) return null;
+      return { price: q.regularMarketPrice, pct: q.regularMarketChangePercent||null, history: [] };
+    }
+    return null;
+  };
+
+  const baseUrls = [
+    `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=10d`,
+    `https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=10d`,
+    `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbol}`,
+    `https://query2.finance.yahoo.com/v7/finance/quote?symbols=${symbol}`,
+  ];
+
+  const allAttempts = [];
+  for (const base of baseUrls) {
+    for (const mk of [u=>u, ...PROXIES]) {
+      allAttempts.push((async () => {
+        const r = await fetchWithTimeout(mk(base));
+        if (!r.ok) throw new Error('not ok');
+        const d = JSON.parse(await r.text());
+        const parsed = parseYahoo(d);
+        if (!parsed) throw new Error('no price');
+        return parsed;
+      })());
+    }
+  }
+  // Thêm Twelve Data như một attempt song song
+  allAttempts.push((async () => {
+    const v = await fetchTwelveData(symbol);
+    return v;
+  })());
+
+  try { return await Promise.any(allAttempts); }
+  catch(_) { throw new Error(`${symbol} không tải được`); }
+}
+
+// Map CoinGecko id → CryptoCompare symbol & Binance symbol
+const CRYPTO_SYMBOLS = {
+  'bitcoin':     { cc:'BTC',  binance:'BTCUSDT' },
+  'ethereum':    { cc:'ETH',  binance:'ETHUSDT' },
+  'hyperliquid': { cc:'HYPE', binance:'HYPEUSDT' },
+  'pax-gold':    { cc:'PAXG', binance:'PAXGUSDT' },
+  'solana':      { cc:'SOL',  binance:'SOLUSDT' },
+  'binancecoin': { cc:'BNB',  binance:'BNBUSDT' },
+  'ripple':      { cc:'XRP',  binance:'XRPUSDT' },
+  'usd-coin':    { cc:'USDC', binance:'USDCUSDT' },
+  'sui':         { cc:'SUI',  binance:'SUIUSDT' },
+  'pepe':        { cc:'PEPE', binance:'PEPEUSDT' },
+};
+
+async function fetchOneCrypto(id) {
+  const sym = CRYPTO_SYMBOLS[id]?.cc || id.toUpperCase();
+  const bSym = CRYPTO_SYMBOLS[id]?.binance;
+
+  // Thử CoinGecko, CryptoCompare, Binance song song — lấy kết quả đầu tiên
+  const attempts = [];
+
+  // 1) CoinGecko qua proxy
+  attempts.push((async () => {
+    const url = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${id}&price_change_percentage=24h`;
+    const data = await tryFetch(url);
+    if (Array.isArray(data) && data[0]?.current_price) return data[0];
+    throw new Error('no data');
+  })());
+
+  // 2) CryptoCompare
+  attempts.push((async () => {
+    const r = await fetchWithTimeout(`https://min-api.cryptocompare.com/data/pricemultifull?fsyms=${sym}&tsyms=USD`);
+    if (!r.ok) throw new Error('not ok');
+    const d = await r.json();
+    const info = d?.RAW?.[sym]?.USD;
+    if (!info?.PRICE) throw new Error('no price');
+    return { id, current_price: info.PRICE, price_change_percentage_24h: info.CHANGEPCT24HOUR };
+  })());
+
+  // 3) Binance
+  if (bSym) {
+    attempts.push((async () => {
+      const r = await fetchWithTimeout(`https://api.binance.com/api/v3/ticker/24hr?symbol=${bSym}`);
+      if (!r.ok) throw new Error('not ok');
+      const d = await r.json();
+      if (!d.lastPrice) throw new Error('no price');
+      return { id, current_price: parseFloat(d.lastPrice), price_change_percentage_24h: parseFloat(d.priceChangePercent) };
+    })());
+  }
+
+  try {
+    return await Promise.any(attempts);
+  } catch(_) {
+    throw new Error(`${id} không tải được`);
+  }
+}
+
+async function fetchCrypto(ids) {
+  const idList = ids.split(',').map(s=>s.trim()).filter(Boolean);
+  const results = await Promise.allSettled(idList.map(id => fetchOneCrypto(id)));
+  const ok = results.filter(r=>r.status==='fulfilled').map(r=>r.value);
+  if (ok.length === 0) throw new Error('Không tải được giá crypto');
+  return ok;
+}
+
+async function fetchCommodityHistory(id) {
+  const meta = COMMODITY_MAP[id] || {};
+  const attempts = [];
+
+  // 1) CryptoCompare histoday cho metals (XAU, XAG, XPT)
+  if (meta.cc) {
+    for (const sym of [...new Set([meta.cc, 'PLAT', 'XPT', 'XAU', 'XAG'].filter(s => meta.cc === s || meta.cc === 'XPT'))]) {
+      attempts.push((async () => {
+        const r = await fetchWithTimeout(`https://min-api.cryptocompare.com/data/v2/histoday?fsym=${meta.cc}&tsym=USD&limit=8`);
+        if (!r.ok) throw new Error('fail');
+        const d = await r.json();
+        const arr = d?.Data?.Data?.map(x=>x.close).filter(v=>v>0);
+        if (!arr || arr.length < 2) throw new Error('no data');
+        return arr;
+      })());
+    }
+  }
+
+  // 2) Stooq daily CSV qua proxy — format: Date,Open,High,Low,Close,Volume
+  if (meta.stooq) {
+    const stooqUrl = `https://stooq.com/q/d/l/?s=${meta.stooq}&i=d`;
+    for (const proxy of [
+      `https://corsproxy.io/?${encodeURIComponent(stooqUrl)}`,
+      `https://api.allorigins.win/raw?url=${encodeURIComponent(stooqUrl)}`,
+      `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(stooqUrl)}`,
+    ]) {
+      attempts.push((async () => {
+        const r = await fetchWithTimeout(proxy);
+        if (!r.ok) throw new Error('fail');
+        const text = await r.text();
+        if (!text || text.includes('No data') || text.trim().split('\n').length < 3) throw new Error('no data');
+        const lines = text.trim().split('\n').slice(1); // bỏ header
+        const closes = lines
+          .slice(-10) // 10 ngày gần nhất
+          .map(l => { const cols = l.split(','); return parseFloat(cols[4]); }) // cột 4 = Close
+          .filter(v => !isNaN(v) && v > 0);
+        if (closes.length < 2) throw new Error('no data');
+        return closes;
+      })());
+    }
+  }
+
+  // 3) Yahoo futures (fallback — hay bị CORS nhưng thử)
+  const yahooFutMap = { 'XAUUSD':'GC=F','XAGUSD':'SI=F','USOIL':'CL=F','NATGAS':'NG=F','XPTUSD':'PL=F','XCUUSD':'HG=F','WHEAT':'ZW=F','COFFEE':'KC=F' };
+  const yfSym = yahooFutMap[id];
+  if (yfSym) {
+    attempts.push((async () => {
+      const v = await fetchYahoo(yfSym);
+      if (!v.history || v.history.length < 2) throw new Error('no history');
+      return v.history;
+    })());
+  }
+
+  if (!attempts.length) return [];
+  try { return await Promise.any(attempts); }
+  catch(_) { return []; }
+}
+
+async function fetchCryptoHistory(id) {
+  try {
+    const data = await tryFetch(`https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=7&interval=daily`);
+    if (data?.prices) return data.prices.map(x=>x[1]);
+  } catch(_) {}
+  try {
+    const sym = CRYPTO_SYMBOLS[id]?.cc || id.toUpperCase();
+    const r = await fetchWithTimeout(`https://min-api.cryptocompare.com/data/v2/histoday?fsym=${sym}&tsym=USD&limit=7`);
+    if (r.ok) { const d = await r.json(); if (d?.Data?.Data) return d.Data.Data.map(x=>x.close); }
+  } catch(_) {}
+  return [];
+}
+
+// ─────────────────────────────────────────────────────────────
+//  COMMODITY FETCH  (Stooq → CryptoCompare metals → Yahoo)
+// ─────────────────────────────────────────────────────────────
+const COMMODITY_MAP = {};
+COMMODITY_CATALOG.forEach(c => { COMMODITY_MAP[c.id] = c; });
+
+async function fetchCommodity(id) {
+  const meta = COMMODITY_MAP[id] || {};
+  const attempts = [];
+
+  // 1) Stooq CSV qua proxy — lấy 2 ngày để tính % đúng
+  if (meta.stooq) {
+    attempts.push((async () => {
+      const url = `https://stooq.com/q/d/l/?s=${meta.stooq}&i=d`;
+      const proxies = [
+        `https://corsproxy.io/?${encodeURIComponent(url)}`,
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+      ];
+      const r = await Promise.any(proxies.map(p => fetchWithTimeout(p)));
+      if (!r.ok) throw new Error('fail');
+      const text = await r.text();
+      const lines = text.trim().split('\n').slice(1).slice(-2); // 2 ngày gần nhất
+      if (lines.length < 1) throw new Error('no data');
+      // Format: Date,Open,High,Low,Close,Volume
+      const today = lines[lines.length-1].split(',');
+      const close = parseFloat(today[4]);
+      if (!close || isNaN(close)) throw new Error('bad price');
+      // prev close = close của ngày hôm qua (không dùng open)
+      const prev = lines.length >= 2 ? parseFloat(lines[lines.length-2].split(',')[4]) : null;
+      const pct = prev && prev > 0 ? (close - prev) / prev * 100 : null;
+      return { id, current_price: close, price_change_percentage_24h: pct };
+    })());
+  }
+
+  // 2) CryptoCompare metals (XAU, XAG, XPT)
+  if (meta.cc) {
+    attempts.push((async () => {
+      const r = await fetchWithTimeout(`https://min-api.cryptocompare.com/data/pricemultifull?fsyms=${meta.cc}&tsyms=USD`);
+      if (!r.ok) throw new Error('fail');
+      const d = await r.json();
+      const info = d?.RAW?.[meta.cc]?.USD;
+      if (!info?.PRICE) throw new Error('no price');
+      return { id, current_price: info.PRICE, price_change_percentage_24h: info.CHANGEPCT24HOUR };
+    })());
+  }
+
+  // 3) Twelve Data (ETF/futures symbols)
+  const tdMap = { 'XAUUSD':'XAU/USD','XAGUSD':'XAG/USD','USOIL':'WTI/USD','XPTUSD':'XPT/USD' };
+  const tdSym = tdMap[id];
+  if (tdSym) {
+    attempts.push((async () => {
+      const v = await fetchTwelveData(tdSym);
+      return { id, current_price: v.price, price_change_percentage_24h: v.pct };
+    })());
+  }
+
+  // 4) Yahoo Finance futures
+  const yahooMap = { 'XAUUSD':'GC=F','XAGUSD':'SI=F','USOIL':'CL=F','NATGAS':'NG=F','XPTUSD':'PL=F','XCUUSD':'HG=F','WHEAT':'ZW=F','COFFEE':'KC=F' };
+  const yahooSym = yahooMap[id];
+  if (yahooSym) {
+    attempts.push((async () => {
+      const v = await fetchYahoo(yahooSym);
+      return { id, current_price: v.price, price_change_percentage_24h: v.pct };
+    })());
+  }
+
+  try { return await Promise.any(attempts); }
+  catch(_) { throw new Error(`${meta.ticker||id} không tải được`); }
+}
+
+// ─────────────────────────────────────────────────────────────
+function renderHoldings() {
+  const row = $('holdings-row');
+  row.innerHTML = assets.map((a, i) => `
+    <div class="hfield" id="hf-${i}">
+      <div class="hfield-top">
+        <div class="hico" style="background:${a.color}22;">${a.icon}</div>
+        <div>
+          <div class="hlabel">${a.name}</div>
+          <div class="hticker">${a.ticker} · USD</div>
+        </div>
+      </div>
+      <button class="hdelete" onclick="removeAsset(${i})" title="Xoá">×</button>
+      <div class="hinput-wrap">
+        <input class="hinput" id="qty-${i}" type="number" min="0" step="any" placeholder="0"
+          value="${a.qty||''}" oninput="onQtyChange(${i})">
+        <span class="hunit">${a.ticker.split('.')[0]}</span>
+      </div>
+      <div class="hval-block">
+        ${a.price != null
+          ? `<div class="hval-price" id="price-${i}">Giá: ${usd(a.price, a.price>100?2:a.price>1?3:5)}</div>
+             <div class="hval ${a.qty>0?'ok':''}" id="val-${i}">${a.qty>0 ? usd(a.price*a.qty) : '—'}</div>
+             <div class="hval-alloc" id="alloc-${i}"></div>`
+          : `<div class="hval-price" id="price-${i}" style="color:var(--mu)">Không tải được giá tự động</div>
+             <div class="manual-price-row">
+               <div class="hinput-wrap" style="flex:1">
+                 <input class="hinput" id="mprice-${i}" type="number" min="0" step="any" placeholder="Nhập giá thủ công"
+                   value="${a.manualPrice||''}" oninput="setManualPrice(${i}, this.value)" style="font-size:12px;padding:6px 10px;">
+                 <span class="hunit" style="font-size:9px">USD</span>
+               </div>
+               <button class="btn" onclick="retryFetch(${i})" title="Thử lại" style="padding:6px 8px;min-width:32px;flex-shrink:0;">↻</button>
+             </div>
+             <div class="hval ${(a.manualPrice&&a.qty>0)?'ok':''}" id="val-${i}">${a.manualPrice&&a.qty>0 ? usd(a.manualPrice*a.qty) : '—'}</div>
+             <div class="hval-alloc" id="alloc-${i}"></div>`
+        }
+      </div>
+    </div>
+  `).join('');
+  recalc();
+}
+
+// ─────────────────────────────────────────────────────────────
+//  SUMMARY CARDS (dynamic)
+// ─────────────────────────────────────────────────────────────
+function renderSummaryCards() {
+  const sub = $('smry-sub');
+  // Tính tổng để hiển thị % phân bổ
+  const vals = assets.map(a => a.price!=null ? a.price*(a.qty||0) : 0);
+  const total = vals.reduce((s,v)=>s+v, 0);
+
+  sub.innerHTML = assets.map((a, i) => {
+    const val = a.price != null ? a.price*(a.qty||0) : null;
+    const pct = (total>0 && val!=null && val>0) ? (val/total*100).toFixed(1)+'%' : null;
+    const chg = fmtChg(a.pct);
+    const chgClass = a.pct!=null ? (a.pct>=0?'pos':'neg') : '';
+
+    // Giá trị hiển thị: nếu có qty→ tổng, nếu không → giá đơn vị
+    let displayVal;
+    if (val!=null && val>0) displayVal = usd(val);
+    else if (a.price!=null) displayVal = usd(a.price, a.price>100?2:a.price>1?3:5);
+    else displayVal = '<span class="sk" style="width:70px;height:20px;display:inline-block;"></span>';
+
+    return `
+    <div class="sc" style="border-top: 2px solid ${a.color}33;">
+      ${pct ? `<span class="asset-pct" style="color:${a.color};">${pct}</span>` : ''}
+      <div class="sl">GIÁ TRỊ ${a.ticker.toUpperCase()}</div>
+      <div class="sv">${displayVal}</div>
+      <div class="ss ${chgClass}">${chg || (a.price==null?'đang tải...':'nhập khối lượng')}</div>
+    </div>`;
+  }).join('');
+
+  const n = assets.length;
+  sub.style.gridTemplateColumns = n > 0 ? `repeat(${Math.min(n,3)},1fr)` : '1fr';
+}
+
+// ─────────────────────────────────────────────────────────────
+//  RECALC (tổng + phân bổ)
+// ─────────────────────────────────────────────────────────────
+function recalc() {
+  // update prices shown
+  assets.forEach((a,i) => {
+    const priceEl = $(`price-${i}`);
+    if (priceEl && a.price!=null) priceEl.textContent = 'Giá: '+usd(a.price, a.price>100?2:a.price>1?3:5);
+  });
+
+  // values per asset
+  const vals = assets.map((a,i) => {
+    const q = qty(`qty-${i}`);
+    assets[i].qty = q;
+    return a.price != null ? a.price * q : null;
+  });
+
+  // total
+  const total = vals.reduce((s,v) => s + (v??0), 0);
+  const anyVal = vals.some(v => v!=null && v>0);
+
+  if (anyVal && total > 0) {
+    $('s0').textContent = usd(total);
+
+    // alloc bar + labels
+    const bar = $('alloc-bar');
+    const lbl = $('alloc-labels');
+    bar.innerHTML = assets.map((a,i) => {
+      const v = vals[i]??0;
+      const pct = (v/total*100).toFixed(1);
+      return `<span style="background:${a.color};width:${pct}%;transition:width .4s;border-radius:4px;"></span>`;
+    }).join('');
+    lbl.innerHTML = assets.map((a,i) => {
+      const v = vals[i]??0;
+      const pct = v>0 ? (v/total*100).toFixed(1)+'%' : '—';
+      return `<span class="alloc-lbl"><span class="alloc-dot" style="background:${a.color}"></span>${a.ticker.split('.')[0]} <span class="alloc-pct">${pct}</span></span>`;
+    }).join('');
+
+    // update hval in each holding card
+    vals.forEach((v, i) => {
+      const valEl = $(`val-${i}`);
+      const allocEl = $(`alloc-${i}`);
+      if (valEl) {
+        if (v != null) {
+          valEl.textContent = v > 0 ? usd(v) : '—';
+          valEl.className = v > 0 ? 'hval ok' : 'hval';
+        }
+      }
+      if (allocEl) {
+        const pct = v!=null&&v>0 ? (v/total*100).toFixed(1) : null;
+        allocEl.textContent = pct ? pct+'% danh mục' : '';
+      }
+    });
+
+    // weighted 24h
+    const known = assets.map((a,i)=>({pct:a.pct,val:vals[i]})).filter(x=>x.pct!=null&&x.val!=null&&x.val>0);
+    if (known.length > 0) {
+      const kt = known.reduce((s,x)=>s+x.val,0);
+      const wp = known.reduce((s,x)=>s+x.pct*(x.val/kt),0);
+      const td = known.reduce((s,x)=>s+x.val*(x.pct/100),0);
+      $('s0c').className='ss '+(wp>=0?'pos':'neg');
+      $('s0c').textContent=(wp>=0?'▲ +':'▼ ')+Math.abs(wp).toFixed(2)+'% · '+(td>=0?'+':'')+usd(td)+' hôm nay';
+    }
+  } else {
+    $('s0').textContent = '—';
+    $('alloc-bar').innerHTML = '';
+    $('alloc-labels').innerHTML = '';
+    $('s0c').className='ss';
+    $('s0c').textContent='theo khối lượng nhập';
+    vals.forEach((_,i) => {
+      const valEl=$(`val-${i}`); if(valEl){valEl.textContent='—';valEl.className='hval';}
+      const allocEl=$(`alloc-${i}`); if(allocEl) allocEl.textContent='';
+    });
+    // Vẫn cập nhật summary cards qua renderSummaryCards bên dưới
+  }
+
+  renderSummaryCards();
+  saveAll();
+}
+
+function setManualPrice(i, val) {
+  const p = parseFloat(val);
+  assets[i].manualPrice = p > 0 ? p : null;
+  assets[i].price = assets[i].manualPrice; // dùng làm giá chính
+  const priceEl = $(`price-${i}`);
+  if (priceEl && assets[i].price) priceEl.textContent = 'Không tải được giá tự động';
+  recalc();
+  buildChart();
+}
+
+async function retryFetch(i) {
+  const btn = document.querySelector(`#hf-${i} .btn`);
+  if (btn) { btn.textContent = '...'; btn.disabled = true; }
+  assets[i].price = null; assets[i].manualPrice = null;
+  await fetchSingleAsset(i);
+  renderHoldings();
+}
+
+function onQtyChange(i) { recalc(); }
+
+// ─────────────────────────────────────────────────────────────
+//  LOAD PRICES
+// ─────────────────────────────────────────────────────────────
+async function loadAll() {
+  if (busy) return;
+  busy = true;
+  $('rbtn').disabled = true;
+  $('rico').classList.add('spin');
+  $('msgs').innerHTML = '';
+  $('ut').textContent = 'đang tải...';
+  const msgs = [];
+
+  const cryptoAssets    = assets.filter(a=>a.type==='crypto');
+  const stockAssets     = assets.filter(a=>a.type==='stock');
+  const commodityAssets = assets.filter(a=>a.type==='commodity');
+
+  // ── Crypto: fetch tất cả song song ──
+  await Promise.allSettled(cryptoAssets.map(async a => {
+    try {
+      const c = await fetchOneCrypto(a.id);
+      a.price = c.current_price;
+      a.pct   = c.price_change_percentage_24h;
+      const priceEl = $(`price-${assets.indexOf(a)}`);
+      if (priceEl && a.price!=null) priceEl.textContent = 'Giá: '+usd(a.price, a.price>100?2:a.price>1?3:5);
+    } catch(e) {
+      msgs.push({type:'info', text:`${a.ticker}: ${e.message}`});
+    }
+  }));
+
+  // ── Commodities: fetch song song ──
+  await Promise.allSettled(commodityAssets.map(async a => {
+    try {
+      const c = await fetchCommodity(a.id);
+      a.price = c.current_price; a.pct = c.price_change_percentage_24h;
+      const priceEl = $(`price-${assets.indexOf(a)}`);
+      if (priceEl && a.price!=null) priceEl.textContent = 'Giá: '+usd(a.price, a.price>100?2:a.price>1?3:5);
+    } catch(e) {
+      msgs.push({type:'info', text:`${a.ticker}: ${e.message}`});
+    }
+  }));
+
+  // ── Stocks/ETF: fetch song song (price + history cùng lúc) ──
+  await Promise.allSettled(stockAssets.map(async a => {
+    try {
+      const v = await fetchYahoo(a.id);
+      a.price = v.price; a.pct = v.pct; a.history = v.history||[];
+      const priceEl = $(`price-${assets.indexOf(a)}`);
+      if (priceEl && a.price!=null) priceEl.textContent = 'Giá: '+usd(a.price, a.price>100?2:a.price>1?3:5);
+    } catch(e) {
+      msgs.push({type:'info', text:`${a.ticker}: không tải được (CORS)`});
+    }
+  }));
+
+  // ── Fetch history cho crypto và commodity (song song) ──
+  await Promise.allSettled(assets.map(async a => {
+    if (a.history && a.history.length > 1) return; // đã có từ Yahoo
+    try {
+      if (a.type === 'crypto') {
+        const h = await fetchCryptoHistory(a.id);
+        if (h.length > 1) a.history = h;
+      } else if (a.type === 'commodity') {
+        const h = await fetchCommodityHistory(a.id);
+        if (h.length > 1) a.history = h;
+      }
+    } catch(_) {}
+  }));
+
+  renderHoldings();
+  buildChart();
+  recalc();
+  setTimeout(() => buildChart(), 200);
+
+  $('msgs').innerHTML = msgs.map(m=>`<div class="${m.type==='err'?'err':'info'}">${m.type==='err'?'⚠':'ℹ'} ${m.text}</div>`).join('');
+  $('ut').textContent = 'cập nhật '+new Date().toLocaleTimeString('vi-VN');
+  $('rico').classList.remove('spin');
+  $('rbtn').disabled = false;
+  busy = false;
+}
+
+// ─────────────────────────────────────────────────────────────
+//  CHART
+// ─────────────────────────────────────────────────────────────
+function buildChart() {
+  if (C) C.destroy();
+  // Lấy tất cả assets có giá — dùng history nếu có, nếu không dùng flat line tạm
+  const chartAssets = assets.filter(a => a.price != null);
+  if (!chartAssets.length) return;
+
+  // Chuẩn hóa độ dài history: lấy max len từ các asset có history thật
+  const realHistLen = chartAssets.filter(a=>a.history&&a.history.length>1).map(a=>a.history.length);
+  const targetLen = realHistLen.length ? Math.max(...realHistLen) : 7;
+
+  const days = Array.from({length:targetLen},(_,i)=>{
+    const d=new Date(); d.setDate(d.getDate()-(targetLen-1-i));
+    return (d.getMonth()+1)+'/'+d.getDate();
+  });
+
+  const datasets = chartAssets.map(a => {
+    // Nếu không có history, tạo flat line từ giá hiện tại
+    const hist = (a.history && a.history.length > 1)
+      ? a.history.slice(-targetLen)          // cắt đúng độ dài
+      : Array(targetLen).fill(a.price);      // flat line
+
+    return {
+      label: a.ticker,
+      data: norm(hist),
+      borderColor: a.color,
+      borderWidth: 2,
+      pointRadius: 3,
+      pointBackgroundColor: a.color,
+      tension: .4,
+      fill: false,
+      borderDash: (a.history && a.history.length > 1) ? [] : [4,4], // dash nếu là flat
+    };
+  });
+
+  $('chart-legend').innerHTML = chartAssets.map(a=>`
+    <span class="li"><span class="ld" style="background:${a.color}"></span>${a.ticker}</span>`).join('');
+
+  C = new Chart($('ch'), {
+    type:'line',
+    data:{ labels:days, datasets },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          callbacks:{label:x=>' '+x.dataset.label+': '+x.raw.toFixed(1)+(x.dataset.borderDash?.length?' (ước tính)':'')},
+          backgroundColor:'#1c2030',titleColor:'#9ca3af',bodyColor:'#e8eaf0',
+          borderColor:'rgba(255,255,255,.1)',borderWidth:1,padding:10
+        }
+      },
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#6b7280',font:{size:10}}},
+        y:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#6b7280',font:{size:10},callback:v=>v.toFixed(0)}}
+      }
+    }
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+//  MODAL
+// ─────────────────────────────────────────────────────────────
+function buildCatalogGrid(containerId, catalog) {
+  $(containerId).innerHTML = catalog.map((item,i) => `
+    <div class="asset-opt" id="opt-${containerId}-${i}" onclick="selectPreset('${containerId}',${i})">
+      <span class="ao-ico">${item.icon}</span>
+      <div><div class="ao-name">${item.name}</div><div class="ao-tick">${item.ticker}</div></div>
+    </div>`).join('');
+}
+
+function openModal() {
+  selectedAsset = null;
+  $('modal-err').style.display='none';
+  $('modal-overlay').classList.add('open');
+  buildCatalogGrid('crypto-grid', CRYPTO_CATALOG);
+  buildCatalogGrid('stock-grid', STOCK_CATALOG);
+  buildCatalogGrid('commodity-grid', COMMODITY_CATALOG);
+  setTab('crypto');
+}
+function closeModal() { $('modal-overlay').classList.remove('open'); selectedAsset=null; }
+function maybeClose(e) { if(e.target===$('modal-overlay')) closeModal(); }
+
+function setTab(tab) {
+  currentTab = tab;
+  ['crypto','stock','commodity','custom'].forEach(t => {
+    $('tab-'+t).style.display = t===tab?'':'none';
+  });
+  document.querySelectorAll('.mtab').forEach((btn,i) => {
+    btn.classList.toggle('active', ['crypto','stock','commodity','custom'][i]===tab);
+  });
+  selectedAsset = null;
+}
+
+function selectPreset(gridId, idx) {
+  // deselect all in this grid
+  document.querySelectorAll(`#${gridId} .asset-opt`).forEach(el=>el.classList.remove('sel'));
+  document.getElementById(`opt-${gridId}-${idx}`).classList.add('sel');
+  const catalog = gridId==='crypto-grid' ? CRYPTO_CATALOG : gridId==='stock-grid' ? STOCK_CATALOG : COMMODITY_CATALOG;
+  selectedAsset = { ...catalog[idx] };
+}
+
+function addSelectedAsset() {
+  $('modal-err').style.display='none';
+  let asset;
+  if (currentTab==='custom') {
+    const name   = $('ci-name').value.trim();
+    const ticker = $('ci-ticker').value.trim().toUpperCase();
+    const type   = $('ci-type').value;
+    const icon   = $('ci-icon').value.trim() || '💰';
+    const color  = $('ci-color').value;
+    if (!name || !ticker) { showModalErr('Vui lòng nhập tên và mã ticker'); return; }
+    asset = { id: type==='crypto' ? ticker.toLowerCase() : ticker, name, ticker, icon, color, type };
+  } else {
+    if (!selectedAsset) { showModalErr('Vui lòng chọn một tài sản'); return; }
+    asset = { ...selectedAsset };
+  }
+  // check duplicate
+  if (assets.find(a=>a.id===asset.id)) { showModalErr('Tài sản này đã có trong danh mục'); return; }
+  asset.qty = 0; asset.price = null; asset.pct = null; asset.history = [];
+  assets.push(asset);
+  closeModal();
+  renderHoldings();
+  recalc();
+  renderFcAssetScenarios();
+  fcUpdate();
+  // fetch price for new asset
+  fetchSingleAsset(assets.length-1);
+}
+
+function showModalErr(msg) {
+  const el=$('modal-err'); el.textContent=msg; el.style.display='block';
+}
+
+async function fetchSingleAsset(i) {
+  const a = assets[i];
+  try {
+    if (a.type==='crypto') {
+      const [c, hist] = await Promise.all([fetchOneCrypto(a.id), fetchCryptoHistory(a.id)]);
+      a.price = c.current_price; a.pct = c.price_change_percentage_24h;
+      a.history = hist;
+    } else if (a.type==='commodity') {
+      const [c, h] = await Promise.all([fetchCommodity(a.id), fetchCommodityHistory(a.id)]);
+      a.price = c.current_price; a.pct = c.price_change_percentage_24h;
+      if (h.length > 1) a.history = h;
+    } else {
+      const v = await fetchYahoo(a.id);
+      a.price=v.price; a.pct=v.pct; a.history=v.history||[];
+    }
+    const priceEl=$(`price-${i}`);
+    if (priceEl && a.price!=null) priceEl.textContent='Giá: '+usd(a.price,a.price>100?2:a.price>1?3:5);
+    recalc();
+    buildChart();
+  } catch(e) {
+    const priceEl=$(`price-${i}`);
+    if (priceEl) priceEl.textContent='Giá: không tải được';
+  }
+}
+
+function removeAsset(i) {
+  assets.splice(i,1);
+  delete fcScenarios[i];
+  // Rebuild fcScenarios keys
+  const newSc = {};
+  Object.keys(fcScenarios).forEach(k => { if(+k < i) newSc[k]=fcScenarios[k]; else if(+k > i) newSc[+k-1]=fcScenarios[k]; });
+  Object.assign(fcScenarios, newSc);
+  renderHoldings();
+  recalc();
+  renderFcAssetScenarios();
+  fcUpdate();
+  buildChart();
+}
+
+// ─────────────────────────────────────────────────────────────
+//  PERSIST
+// ─────────────────────────────────────────────────────────────
+function saveAll() {
+  const save = assets.map(a=>({ id:a.id,name:a.name,ticker:a.ticker,icon:a.icon,color:a.color,type:a.type,qty:a.qty||0 }));
+  localStorage.setItem('portfolio_v2', JSON.stringify(save));
+}
+
+function loadSaved() {
+  try {
+    const raw = localStorage.getItem('portfolio_v2');
+    if (raw) {
+      const saved = JSON.parse(raw);
+      // Validate: mỗi asset phải có ticker hợp lệ (không phải id dạng coingecko như 'hyperliquid')
+      const valid = saved.every(s => s.ticker && s.name && s.id && s.type);
+      if (!valid) { localStorage.removeItem('portfolio_v2'); return false; }
+      assets = saved.map(s=>({...s, price:null, pct:null, history:[]}));
+      return true;
+    }
+  } catch(_) { localStorage.removeItem('portfolio_v2'); }
+  return false;
+}
+
+// ─────────────────────────────────────────────────────────────
+//  FORECAST ENGINE
+// ─────────────────────────────────────────────────────────────
+const FC_SCENARIOS = {
+  // ETF/Stock
+  stock:  { base:{r:0.10,l:'TB 10%'}, hist:{r:0.185,l:'Lịch sử 18.5%'}, bull:{r:0.15,l:'Lạc quan 15%'}, bear:{r:0.06,l:'Bi quan 6%'} },
+  // Crypto
+  crypto: { base:{r:0.30,l:'TB 30%'}, bull:{r:0.80,l:'Lạc quan 80%'}, bear:{r:-0.20,l:'Bi quan −20%'}, real:{r:0.20,l:'Thực tế 20%'} },
+  // Commodity
+  commodity:{ base:{r:0.086,l:'Lịch sử 8.6%'}, bull:{r:0.15,l:'Lạc quan 15%'}, bear:{r:0.03,l:'Bi quan 3%'}, mid:{r:0.10,l:'TB 10%'} },
+};
+const FC_YRS = 10;
+let fcInitAmt = 30000, fcDCA = 0;
+let fcScenarios = {}; // assetIndex → scenarioKey
+let fcChart2 = null;
+
+function fcFmt(n) {
+  if (Math.abs(n) >= 1e6) return '$'+(n/1e6).toFixed(2)+'M';
+  if (Math.abs(n) >= 1000) return '$'+Math.round(n).toLocaleString('en-US');
+  return '$'+n.toFixed(0);
+}
+
+function fcCalcAsset(init, dca, rate) {
+  let v = init, res = [init];
+  for (let i = 0; i < FC_YRS; i++) { v = (v + dca*12) * (1+rate); res.push(Math.round(v)); }
+  return res;
+}
+
+function fcGetScenarios(type) {
+  return FC_SCENARIOS[type] || FC_SCENARIOS.stock;
+}
+
+function fcDefaultScenario(type) {
+  const s = fcGetScenarios(type);
+  return Object.keys(s)[0];
+}
+
+function renderFcAssetScenarios() {
+  const container = document.getElementById('fc-asset-scenarios');
+  if (!assets.length) { container.innerHTML = '<div style="color:var(--mu);font-size:12px;">Chưa có tài sản nào trong danh mục.</div>'; return; }
+  container.style.gridTemplateColumns = `repeat(${Math.min(assets.length,3)},1fr)`;
+  container.innerHTML = assets.map((a,i) => {
+    const scens = fcGetScenarios(a.type);
+    const cur = fcScenarios[i] || fcDefaultScenario(a.type);
+    const btns = Object.entries(scens).map(([k,v]) =>
+      `<button class="fc-sc-btn${cur===k?' active':''}" style="${cur===k?'background:'+a.color+';':''}"
+        onclick="fcSetScenario(${i},'${k}')">${v.l}</button>`
+    ).join('');
+    return `
+    <div class="hfield" style="padding:14px 16px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <div class="hico" style="background:${a.color}22;">${a.icon}</div>
+        <div><div style="font-size:12px;font-weight:500;">${a.name}</div><div style="font-size:10px;color:var(--mu);font-family:var(--mono);">${a.ticker}</div></div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;">${btns}</div>
+    </div>`;
+  }).join('');
+}
+
+function fcSetScenario(i, key) {
+  fcScenarios[i] = key;
+  renderFcAssetScenarios();
+  fcUpdate();
+}
+
+function fcUpdateInit(v) {
+  fcInitAmt = v;
+  document.getElementById('fc-init-val').textContent = fcFmt(v);
+  fcUpdate();
+}
+function fcUpdateDCA(v) {
+  fcDCA = v;
+  document.getElementById('fc-dca-val').textContent = fcFmt(v);
+  fcUpdate();
+}
+
+function syncFromPortfolio() {
+  // Lấy tổng giá trị hiện tại làm vốn ban đầu
+  const total = assets.reduce((s,a) => s + (a.price!=null ? a.price*(a.qty||0) : 0), 0);
+  if (total > 0) {
+    fcInitAmt = Math.round(total);
+    document.getElementById('fc-init').value = Math.min(fcInitAmt, 500000);
+    document.getElementById('fc-init-val').textContent = fcFmt(fcInitAmt);
+  }
+  fcUpdate();
+}
+
+function fcUpdate() {
+  if (!assets.length) return;
+  const startYear = new Date().getFullYear();
+  const labels = Array.from({length:FC_YRS+1},(_,i)=>String(startYear+i));
+
+  // Tính từng asset
+  const assetData = assets.map((a,i) => {
+    const scens = fcGetScenarios(a.type);
+    const key = fcScenarios[i] || fcDefaultScenario(a.type);
+    const rate = scens[key]?.r ?? 0.10;
+    // phân bổ theo % thực tế trong danh mục
+    const totalVal = assets.reduce((s,x) => s+(x.price!=null?x.price*(x.qty||0):0), 0);
+    const myVal = a.price!=null ? a.price*(a.qty||0) : 0;
+    const allocPct = totalVal > 0 ? myVal/totalVal : 1/assets.length;
+    const init = fcInitAmt * allocPct;
+    const dca  = fcDCA * allocPct;
+    return { a, key, rate, allocPct, series: fcCalcAsset(init, dca, rate) };
+  });
+
+  const total = assetData[0].series.map((_,i) => assetData.reduce((s,d)=>s+d.series[i],0));
+  const inv   = Array.from({length:FC_YRS+1},(_,i)=>Math.round(fcInitAmt+fcDCA*12*i));
+
+  // Metrics
+  const final = total[FC_YRS];
+  const invFinal = inv[FC_YRS];
+  const profit = final - invFinal;
+  const cagr = ((Math.pow(final/Math.max(fcInitAmt,1),1/FC_YRS)-1)*100).toFixed(1);
+  const multi = (final/Math.max(invFinal,1)).toFixed(2);
+
+  const metricsEl = document.getElementById('fc-metrics');
+  const cols = Math.min(assets.length+2, 4);
+  metricsEl.style.gridTemplateColumns = `repeat(${cols},1fr)`;
+  metricsEl.innerHTML = [
+    { l:'Tổng sau '+FC_YRS+' năm', v:fcFmt(final), c:'var(--blue)' },
+    { l:'Lãi ròng', v:(profit>=0?'+':'')+fcFmt(profit), c:profit>=0?'var(--gr)':'var(--re)' },
+    { l:'CAGR danh mục', v:cagr+'%/năm', c:'var(--tx)' },
+    { l:'×lần vốn đầu tư', v:multi+'x', c:'var(--tx)' },
+    ...assetData.map(d=>({ l:d.a.ticker+' 2035', v:fcFmt(d.series[FC_YRS]), c:d.a.color })),
+  ].map(m=>`<div class="fc-metric"><div class="fc-ml">${m.l}</div><div class="fc-mv" style="color:${m.c}">${m.v}</div></div>`).join('');
+
+  // Chart
+  if (fcChart2) fcChart2.destroy();
+  const ctx2 = document.getElementById('fc-chart').getContext('2d');
+  const datasets = [
+    { label:'Tổng', data:total, borderColor:'var(--blue)', borderWidth:2.5, pointRadius:3, pointBackgroundColor:'var(--blue)', backgroundColor:'rgba(79,142,247,0.07)', fill:true, tension:0.35 },
+    ...assetData.map(d=>({ label:d.a.ticker, data:d.series, borderColor:d.a.color, borderWidth:1.5, borderDash:[5,3], pointRadius:0, fill:false, tension:0.35 })),
+    { label:'Vốn', data:inv, borderColor:'rgba(255,255,255,0.2)', borderWidth:1.2, borderDash:[2,4], pointRadius:0, fill:false, tension:0.1 },
+  ];
+  fcChart2 = new Chart(ctx2, {
+    type:'line',
+    data:{ labels, datasets },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{ callbacks:{label:c=>' '+c.dataset.label+': '+fcFmt(c.parsed.y)}, backgroundColor:'#1c2030', titleColor:'#9ca3af', bodyColor:'#e8eaf0', borderColor:'rgba(255,255,255,.1)', borderWidth:1, padding:10 }
+      },
+      scales:{
+        y:{ grid:{color:'rgba(255,255,255,.05)'}, ticks:{color:'#6b7280',font:{size:10},callback:v=>v>=1e6?'$'+(v/1e6).toFixed(1)+'M':'$'+Math.round(v/1000)+'K'} },
+        x:{ grid:{color:'rgba(255,255,255,.05)'}, ticks:{color:'#6b7280',font:{size:10},maxRotation:0} }
+      }
+    }
+  });
+
+  // Table header
+  const thead = document.getElementById('fc-thead');
+  thead.innerHTML = `<tr><th>Năm</th><th>Vốn tích lũy</th>${assetData.map(d=>`<th style="color:${d.a.color}">${d.a.ticker}</th>`).join('')}<th>Tổng</th><th>Lãi</th><th>×lần</th></tr>`;
+
+  // Table body
+  const tbody = document.getElementById('fc-tbody');
+  tbody.innerHTML = '';
+  for (let i=1; i<=FC_YRS; i++) {
+    const tot = total[i];
+    const profit_i = tot - inv[i];
+    const tr = document.createElement('tr');
+    if (i===FC_YRS) tr.classList.add('fc-hl');
+    tr.innerHTML = `
+      <td>${startYear+i}</td>
+      <td>${fcFmt(inv[i])}</td>
+      ${assetData.map(d=>`<td style="color:${d.a.color}">${fcFmt(d.series[i])}</td>`).join('')}
+      <td><strong>${fcFmt(tot)}</strong></td>
+      <td class="${profit_i>=0?'fc-pos':'fc-neg'}">${profit_i>=0?'+':''}${fcFmt(profit_i)}</td>
+      <td>${(tot/Math.max(inv[i],1)).toFixed(2)}x</td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
+// Init forecast after assets load
+function initForecast() {
+  assets.forEach((_,i) => { if (!fcScenarios[i]) fcScenarios[i] = fcDefaultScenario(assets[i].type); });
+  renderFcAssetScenarios();
+  fcUpdate();
+}
+
+const hadSaved = loadSaved();
+if (!hadSaved) {
+  // defaults
+  assets = [
+    { id:'VUAA.L',     name:'VUAA ETF',    ticker:'VUAA.L', icon:'📈', color:'#4f8ef7', type:'stock',  qty:0, price:null, pct:null, history:[] },
+    { id:'hyperliquid',name:'Hyperliquid', ticker:'HYPE',   icon:'⚡', color:'#8b6cf7', type:'crypto', qty:0, price:null, pct:null, history:[] },
+    { id:'pax-gold',   name:'PAX Gold',    ticker:'PAXG',   icon:'🪙', color:'#f5a623', type:'crypto', qty:0, price:null, pct:null, history:[] },
+  ];
+}
+renderHoldings();
+recalc();
+loadAll().then(() => initForecast());
+
+// Auto-refresh mỗi 60s: chỉ update giá, không reset DOM/qty
+async function silentRefresh() {
+  if (busy) return;
+  const cryptoAssets    = assets.filter(a=>a.type==='crypto');
+  const stockAssets     = assets.filter(a=>a.type==='stock');
+  const commodityAssets = assets.filter(a=>a.type==='commodity');
+  await Promise.allSettled([
+    ...cryptoAssets.map(async a => {
+      try { const c=await fetchOneCrypto(a.id); a.price=c.current_price; a.pct=c.price_change_percentage_24h; } catch(_){}
+    }),
+    ...commodityAssets.map(async a => {
+      try { const c=await fetchCommodity(a.id); a.price=c.current_price; a.pct=c.price_change_percentage_24h; } catch(_){}
+    }),
+    ...stockAssets.map(async a => {
+      try { const v=await fetchYahoo(a.id); a.price=v.price; a.pct=v.pct; } catch(_){}
+    }),
+  ]);
+  // Update giá hiển thị trong từng card mà không re-render
+  assets.forEach((a,i) => {
+    const priceEl = $(`price-${i}`);
+    if (priceEl && a.price!=null) priceEl.textContent = 'Giá: '+usd(a.price, a.price>100?2:a.price>1?3:5);
+  });
+  recalc();
+  buildChart();
+  $('ut').textContent = 'cập nhật '+new Date().toLocaleTimeString('vi-VN');
+}
+setInterval(silentRefresh, 60000);
+</script>
+</body>
+</html>

@@ -2201,45 +2201,51 @@ if ('serviceWorker' in navigator) {
 //  PWA INSTALL PROMPT
 // ─────────────────────────────────────────────────────────────
 let deferredPrompt = null;
-const banner = document.getElementById('pwa-banner');
-const installBtn = document.getElementById('pwa-install-btn');
 
-// Đã cài rồi hoặc đã dismiss thì không hiện
-const pwaInstalled = window.matchMedia('(display-mode: standalone)').matches
-  || window.navigator.standalone === true
-  || localStorage.getItem('pwa-dismissed');
-
-// Android / Desktop Chrome — beforeinstallprompt event
+// Lắng nghe NGAY từ đầu, trước mọi thứ khác
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
   deferredPrompt = e;
-  if (!pwaInstalled) showBanner('android');
+  console.log('[PWA] beforeinstallprompt captured');
+  if (!pwaInstalled()) showBanner('android');
 });
 
-// iOS Safari — không có beforeinstallprompt, hướng dẫn thủ công
+function pwaInstalled() {
+  return window.matchMedia('(display-mode: standalone)').matches
+    || window.navigator.standalone === true
+    || localStorage.getItem('pwa-dismissed') === '1';
+}
+
+const banner    = document.getElementById('pwa-banner');
+const installBtn = document.getElementById('pwa-install-btn');
+
+// iOS Safari
 const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
-const isInStandalone = window.navigator.standalone;
-if (isIOS && !isInStandalone && !localStorage.getItem('pwa-dismissed')) {
-  setTimeout(() => showBanner('ios'), 2000);
+if (isIOS && !window.navigator.standalone && localStorage.getItem('pwa-dismissed') !== '1') {
+  setTimeout(() => showBanner('ios'), 2500);
 }
 
 function showBanner(platform) {
-  if (!banner) return;
+  if (!banner || pwaInstalled()) return;
   const titleEl = document.getElementById('pwa-title');
   const subEl   = document.getElementById('pwa-sub');
-  const lang = currentLang || 'vi';
+  const lang = (typeof currentLang !== 'undefined' ? currentLang : null) || localStorage.getItem('lang') || 'vi';
+
   if (platform === 'ios') {
-    if (titleEl) titleEl.textContent = lang==='vi' ? 'Cài ứng dụng (iOS)' : 'Install App (iOS)';
-    if (subEl)   subEl.innerHTML     = lang==='vi'
-      ? 'Nhấn <strong>⎙ Share</strong> → <strong>Add to Home Screen</strong>'
-      : 'Tap <strong>⎙ Share</strong> → <strong>Add to Home Screen</strong>';
-    if (installBtn) installBtn.style.display = 'none'; // iOS không có auto-install
+    if (titleEl) titleEl.textContent = lang==='vi' ? 'Cài lên iPhone' : 'Install on iPhone';
+    if (subEl)   subEl.innerHTML = lang==='vi'
+      ? 'Safari → nhấn <strong>⎙</strong> → <em>Add to Home Screen</em>'
+      : 'Safari → tap <strong>⎙ Share</strong> → <em>Add to Home Screen</em>';
+    if (installBtn) installBtn.style.display = 'none';
   } else {
     if (titleEl) titleEl.textContent = lang==='vi' ? 'Cài ứng dụng' : 'Install App';
     if (subEl)   subEl.textContent   = lang==='vi'
-      ? 'Thêm vào màn hình chính để dùng offline'
-      : 'Add to home screen for offline use';
-    if (installBtn) installBtn.style.display = '';
+      ? 'Thêm vào màn hình chính, dùng offline'
+      : 'Add to home screen, works offline';
+    if (installBtn) {
+      installBtn.style.display = '';
+      installBtn.textContent = lang==='vi' ? 'Cài ngay' : 'Install';
+    }
   }
   banner.classList.add('show');
 }
@@ -2249,16 +2255,53 @@ function dismissPWA() {
   localStorage.setItem('pwa-dismissed', '1');
 }
 
+// Install button — xử lý cả 3 trường hợp
 if (installBtn) {
   installBtn.addEventListener('click', async () => {
+    // Trường hợp 1: có deferredPrompt — cài trực tiếp
     if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') dismissPWA();
-      deferredPrompt = null;
+      try {
+        await deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log('[PWA] outcome:', outcome);
+        if (outcome === 'accepted') dismissPWA();
+        deferredPrompt = null;
+      } catch(err) {
+        console.warn('[PWA] prompt error:', err);
+        showManualInstructions();
+      }
+      return;
     }
+    // Trường hợp 2: đang standalone — đã cài rồi
+    if (pwaInstalled()) {
+      dismissPWA();
+      return;
+    }
+    // Trường hợp 3: không có prompt (Chrome chưa sẵn sàng, hoặc đã dismiss trước)
+    showManualInstructions();
   });
 }
+
+function showManualInstructions() {
+  const subEl = document.getElementById('pwa-sub');
+  const lang = localStorage.getItem('lang') || 'vi';
+  const isAndroid = /android/i.test(navigator.userAgent);
+  if (subEl) {
+    subEl.innerHTML = isAndroid
+      ? (lang==='vi'
+          ? 'Chrome menu <strong>⋮</strong> → <em>Add to Home screen</em>'
+          : 'Chrome menu <strong>⋮</strong> → <em>Add to Home screen</em>')
+      : (lang==='vi'
+          ? 'Safari → <strong>⎙ Share</strong> → <em>Add to Home Screen</em>'
+          : 'Safari → <strong>⎙ Share</strong> → <em>Add to Home Screen</em>');
+  }
+  if (installBtn) installBtn.style.display = 'none';
+}
+
+window.addEventListener('appinstalled', () => {
+  console.log('[PWA] App installed!');
+  dismissPWA();
+});
 
 // Ẩn banner sau khi đã cài
 window.addEventListener('appinstalled', () => dismissPWA());

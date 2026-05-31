@@ -2519,13 +2519,13 @@ async function initPremium() {
     lockPremium(); return;
   }
 
-  // 2. Unlock tạm thời để UX mượt
+  // 2. Unlock ngay dựa trên local data
   unlockPremium();
 
-  // 3. Re-verify với Worker ở background
+  // 3. Re-verify background — chỉ lock khi key thực sự không hợp lệ
   const email = localStorage.getItem('wealthos_email');
   const key   = localStorage.getItem('wealthos_key');
-  if (!email || !key) { lockPremium(); return; }
+  if (!email || !key) return;
 
   try {
     const res = await fetch('https://proud-feather-b76c.dnntradingcompany.workers.dev/verify', {
@@ -2533,15 +2533,16 @@ async function initPremium() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, license_key: key }),
     });
+    if (!res.ok) return; // server error → giữ unlock
     const data = await res.json();
-    if (!data.valid) {
-      lockPremium();
-    } else {
-      // Cập nhật valid_until mới nhất từ Sheet
+    if (data.valid) {
       localStorage.setItem('wealthos_valid_until', data.valid_until);
+    } else if (data.reason === 'not_found' || data.reason === 'expired') {
+      lockPremium(); // chỉ lock khi key thực sự sai/hết hạn
     }
+    // sheet_error, error → giữ unlock
   } catch {
-    // Nếu lỗi mạng → giữ unlock (tránh lock nhầm khi offline)
+    // Lỗi mạng → giữ unlock
   }
 }
 

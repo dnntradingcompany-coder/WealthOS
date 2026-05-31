@@ -1708,6 +1708,8 @@ function recalc() {
     if (fcEl) fcEl.value = fmtNum(fcInitAmt, 0);
     if (typeof fcUpdate === 'function') fcUpdate();
   }
+  // Re-render forecast asset cards when assets/prices change
+  if (typeof renderFcAssetScenarios === 'function') renderFcAssetScenarios();
 
   saveAll();
 }
@@ -2116,7 +2118,9 @@ function fcCalcAsset(init, dca, rate) {
 
 function renderFcAssetScenarios() {
   const container = document.getElementById('fc-asset-scenarios');
+  if (!container) return;
   if (!assets.length) { container.innerHTML = `<div style="color:var(--mu);font-size:12px;">${t('noAssets')}</div>`; return; }
+  if (typeof FC_ASSET_DATA === 'undefined') return; // not loaded yet
   const vi = currentLang === 'vi';
   container.style.gridTemplateColumns = `repeat(${Math.min(assets.length,3)},1fr)`;
   container.innerHTML = assets.map((a,i) => {

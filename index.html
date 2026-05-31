@@ -641,6 +641,11 @@ function applyLang() {
   // Update lang button
   const lb = document.getElementById('lang-btn');
   if (lb) lb.textContent = currentLang==='vi' ? '🇬🇧 EN' : '🇻🇳 VI';
+  // Update s0c nếu đang hiển thị "byQty"
+  const s0c = $('s0c');
+  if (s0c && !s0c.className.includes('pos') && !s0c.className.includes('neg')) {
+    s0c.textContent = t('byQty');
+  }
   // Re-render dynamic parts
   renderHoldings();
   renderSummaryCards();
@@ -708,21 +713,21 @@ const qty = id => { const el = $(id); if(!el) return 0; const raw = String(el.va
 
 // Format số có dấu phẩy cho qty input (giữ nguyên số thập phân)
 function fmtQtyInput(el) {
-  const raw = String(el.value).replace(/,/g,'');
+  const cur = el.selectionStart;
+  const oldVal = el.value;
+  const raw = oldVal.replace(/,/g, '');
+  if (raw === '' || raw === '.') return;
   const num = parseFloat(raw);
   if (isNaN(num) || num < 0) return;
-  // Giữ số thập phân nếu đang nhập
   const hasDot = raw.includes('.');
-  const decimals = hasDot ? raw.split('.')[1] : null;
-  const intPart = Math.floor(Math.abs(num)).toLocaleString('en-US');
-  const pos = el.selectionStart, oldLen = el.value.length;
-  if (hasDot) {
-    el.value = intPart + '.' + (decimals ?? '');
-  } else {
-    el.value = intPart === '0' && raw === '0' ? '0' : intPart;
-  }
-  const diff = el.value.length - oldLen;
-  try { el.setSelectionRange(pos+diff, pos+diff); } catch(_) {}
+  const decPart = hasDot ? raw.split('.')[1] : null;
+  const intStr = Math.floor(Math.abs(num)).toLocaleString('en-US');
+  const newVal = hasDot ? intStr + '.' + (decPart ?? '') : intStr;
+  if (newVal === oldVal) return;
+  el.value = newVal;
+  // Điều chỉnh cursor theo sự thay đổi số ký tự
+  const diff = newVal.length - oldVal.length;
+  try { el.setSelectionRange(cur + diff, cur + diff); } catch(_) {}
 }
 
 // Palette màu cho asset tùy chỉnh khi chọn preset
@@ -1322,14 +1327,14 @@ function recalc() {
       const wp = known.reduce((s,x)=>s+x.pct*(x.val/kt),0);
       const td = known.reduce((s,x)=>s+x.val*(x.pct/100),0);
       $('s0c').className='ss '+(wp>=0?'pos':'neg');
-      $('s0c').textContent=(wp>=0?'▲ +':'▼ ')+Math.abs(wp).toFixed(2)+'% · '+(td>=0?'+':'')+usd(td)+' hôm nay';
+      $('s0c').textContent=(wp>=0?'▲ +':'▼ ')+Math.abs(wp).toFixed(2)+'% · '+(td>=0?'+':'')+usd(td)+' '+t('today');
     }
   } else {
     $('s0').textContent = '—';
     $('alloc-bar').innerHTML = '';
     $('alloc-labels').innerHTML = '';
     $('s0c').className='ss';
-    $('s0c').textContent='theo khối lượng nhập';
+    $('s0c').textContent=t('byQty');
     vals.forEach((_,i) => {
       const valEl=$(`val-${i}`); if(valEl){valEl.textContent='—';valEl.className='hval';}
       const allocEl=$(`alloc-${i}`); if(allocEl) allocEl.textContent='';
@@ -1372,7 +1377,7 @@ async function loadAll() {
   $('rbtn').disabled = true;
   $('rico').classList.add('spin');
   $('msgs').innerHTML = '';
-  $('ut').textContent = 'đang tải...';
+  $('ut').textContent = t('loading');
   const msgs = [];
 
   const cryptoAssets    = assets.filter(a=>a.type==='crypto');
@@ -1669,12 +1674,26 @@ function loadSaved() {
 // ─────────────────────────────────────────────────────────────
 //  FORECAST ENGINE
 // ─────────────────────────────────────────────────────────────
+const FC_SCENARIO_LABELS = {
+  vi: {
+    base:'TB 10%', hist:'Lịch sử 18.5%', bull15:'Lạc quan 15%', bear6:'Bi quan 6%',
+    base30:'TB 30%', bull80:'Lạc quan 80%', bear20:'Bi quan −20%', real20:'Thực tế 20%',
+    hist86:'Lịch sử 8.6%', bull15c:'Lạc quan 15%', bear3:'Bi quan 3%', mid10:'TB 10%',
+  },
+  en: {
+    base:'Avg 10%', hist:'Historical 18.5%', bull15:'Optimistic 15%', bear6:'Pessimistic 6%',
+    base30:'Avg 30%', bull80:'Optimistic 80%', bear20:'Pessimistic −20%', real20:'Realistic 20%',
+    hist86:'Historical 8.6%', bull15c:'Optimistic 15%', bear3:'Pessimistic 3%', mid10:'Avg 10%',
+  }
+};
+const fcL = () => FC_SCENARIO_LABELS[currentLang] || FC_SCENARIO_LABELS.vi;
+
 const FC_SCENARIOS = {
-  stock:     { base:{r:0.10,l:'TB 10%'}, hist:{r:0.185,l:'Lịch sử 18.5%'}, bull:{r:0.15,l:'Lạc quan 15%'}, bear:{r:0.06,l:'Bi quan 6%'} },
-  crypto:    { base:{r:0.30,l:'TB 30%'}, bull:{r:0.80,l:'Lạc quan 80%'}, bear:{r:-0.20,l:'Bi quan −20%'}, real:{r:0.20,l:'Thực tế 20%'} },
-  commodity: { base:{r:0.086,l:'Lịch sử 8.6%'}, bull:{r:0.15,l:'Lạc quan 15%'}, bear:{r:0.03,l:'Bi quan 3%'}, mid:{r:0.10,l:'TB 10%'} },
-  cash:      { fixed:{r:0.055,l:'Theo lãi suất'} },
-  realestate:{ fixed:{r:0.08, l:'Theo khu vực'} },
+  stock:     { base:{r:0.10,lk:'base'}, hist:{r:0.185,lk:'hist'}, bull:{r:0.15,lk:'bull15'}, bear:{r:0.06,lk:'bear6'} },
+  crypto:    { base:{r:0.30,lk:'base30'}, bull:{r:0.80,lk:'bull80'}, bear:{r:-0.20,lk:'bear20'}, real:{r:0.20,lk:'real20'} },
+  commodity: { base:{r:0.086,lk:'hist86'}, bull:{r:0.15,lk:'bull15c'}, bear:{r:0.03,lk:'bear3'}, mid:{r:0.10,lk:'mid10'} },
+  cash:      { fixed:{r:0.055,lk:'base'} },
+  realestate:{ fixed:{r:0.08, lk:'base'} },
 };
 const FC_YRS = 10;
 let fcInitAmt = 30000, fcDCA = 0;
@@ -1733,7 +1752,7 @@ function renderFcAssetScenarios() {
     const cur = fcScenarios[i]||fcDefaultScenario(a.type);
     const btns = Object.entries(scens).map(([k,v])=>
       `<button class="fc-sc-btn${cur===k?' active':''}" style="${cur===k?'background:'+a.color+';':''}"
-        onclick="fcSetScenario(${i},'${k}')">${v.l}</button>`).join('');
+        onclick="fcSetScenario(${i},'${k}')">${fcL()[v.lk]||v.lk}</button>`).join('');
     return `
     <div class="hfield" style="padding:14px 16px;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">

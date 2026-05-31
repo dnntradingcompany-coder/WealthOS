@@ -2117,42 +2117,66 @@ function fcCalcAsset(init, dca, rate) {
 function renderFcAssetScenarios() {
   const container = document.getElementById('fc-asset-scenarios');
   if (!assets.length) { container.innerHTML = `<div style="color:var(--mu);font-size:12px;">${t('noAssets')}</div>`; return; }
+  const vi = currentLang === 'vi';
   container.style.gridTemplateColumns = `repeat(${Math.min(assets.length,3)},1fr)`;
   container.innerHTML = assets.map((a,i) => {
-    if (a.type==='cash') return `
-      <div class="hfield" style="padding:14px 16px;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-          <div class="hico" style="background:${a.color}22;">${a.icon}</div>
-          <div><div style="font-size:12px;font-weight:500;">${a.name}</div><div style="font-size:10px;color:var(--mu);">${a.ticker} · ${currentLang==='vi'?'Tiết kiệm':'Savings'}</div></div>
+    const color = a.color || '#4f8ef7';
+
+    // Cash special card
+    if (a.type === 'cash') return `
+      <div style="background:var(--sur);border:1px solid var(--b);border-radius:12px;padding:14px 16px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <div style="width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;background:${color}22;border:2px solid ${color}44;">${a.icon}</div>
+          <div><div style="font-size:13px;font-weight:600;color:var(--tx);">${a.name}</div><div style="font-size:10px;color:var(--mu);font-family:var(--mono);">${a.ticker} · ${vi?'Tiết kiệm':'Savings'}</div></div>
         </div>
-        <div style="background:var(--sur2);border-radius:8px;padding:8px 10px;font-size:12px;font-family:var(--mono);">
-          ${t('fcCashLabel')} <span style="color:var(--gr);font-weight:600;">${a.cashRate||5.5}% ${t('perYear')}</span><br>
-          <span style="color:var(--mu);font-size:10px;">${t('fcCashNote')}</span>
+        <div style="background:var(--sur2);border-radius:8px;padding:8px 12px;font-size:12px;font-family:var(--mono);color:var(--gr);font-weight:600;">
+          ${t('fcCashLabel')} ${a.cashRate||5.5}% ${t('perYear')}
         </div>
+        <div style="font-size:10px;color:var(--mu);margin-top:5px;">${t('fcCashNote')}</div>
       </div>`;
-    if (a.type==='realestate') return `
-      <div class="hfield" style="padding:14px 16px;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-          <div class="hico" style="background:${a.color}22;">${a.icon}</div>
-          <div><div style="font-size:12px;font-weight:500;">${a.name}</div><div style="font-size:10px;color:var(--mu);">${currentLang==='vi'?'BĐS · Tăng trưởng':'RE · Appreciation'}</div></div>
+
+    // RE special card
+    if (a.type === 'realestate') return `
+      <div style="background:var(--sur);border:1px solid var(--b);border-radius:12px;padding:14px 16px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <div style="width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;background:${color}22;border:2px solid ${color}44;">${a.icon}</div>
+          <div><div style="font-size:13px;font-weight:600;color:var(--tx);">${a.name}</div><div style="font-size:10px;color:var(--mu);font-family:var(--mono);">${vi?'BĐS · Tăng trưởng':'RE · Appreciation'}</div></div>
         </div>
-        <div style="background:var(--sur2);border-radius:8px;padding:8px 10px;font-size:12px;font-family:var(--mono);">
-          ${t('fcRELabel')} <span style="color:#fb923c;font-weight:600;">${((a.reGrowthRate||0.08)*100).toFixed(0)}% ${t('perYear')}</span><br>
-          <span style="color:var(--mu);font-size:10px;">${t('fcRENote')}</span>
+        <div style="background:var(--sur2);border-radius:8px;padding:8px 12px;font-size:12px;font-family:var(--mono);color:#fb923c;font-weight:600;">
+          ${t('fcRELabel')} ${((a.reGrowthRate||0.08)*100).toFixed(0)}% ${t('perYear')}
         </div>
+        <div style="font-size:10px;color:var(--mu);margin-top:5px;">${t('fcRENote')}</div>
       </div>`;
+
+    // Standard asset card with colored chips
     const scens = fcGetScenarios(a.type);
     const cur = fcScenarios[i] || fcDefaultScenario(a.type);
-    const btns = Object.entries(scens).map(([k,v]) =>
-      `<button class="fc-sc-btn${cur===k?' active':''}" style="${cur===k?'background:'+a.color+';':''}"
-        onclick="fcSetScenario(${i},'${k}')">${v.label}</button>`).join('');
+    const chipColors = { hist:'#e8eaf0', real:'#34d399', bull:'#4f8ef7', bear:'#f87171' };
+    const chips = Object.entries(scens).map(([k,v]) => {
+      const cc = chipColors[k] || '#e8eaf0';
+      const isActive = cur === k;
+      return `<span
+        onclick="fcSetScenario(${i},'${k}')"
+        style="padding:3px 9px;border-radius:6px;font-size:10px;font-weight:${isActive?'800':'600'};font-family:var(--mono);
+          color:${cc};cursor:pointer;transition:all .15s;
+          background:${isActive?cc+'30':'rgba(255,255,255,0.04)'};
+          border:${isActive?'2px':'1px'} solid ${isActive?cc:cc+'40'};
+          box-shadow:${isActive?'0 0 8px '+cc+'50':'none'};
+          transform:${isActive?'scale(1.05)':'scale(1)'};">
+        ${v.label}
+      </span>`;
+    }).join('');
+
     return `
-    <div class="hfield" style="padding:14px 16px;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-        <div class="hico" style="background:${a.color}22;">${a.icon}</div>
-        <div><div style="font-size:12px;font-weight:500;">${a.name}</div><div style="font-size:10px;color:var(--mu);font-family:var(--mono);">${a.ticker}</div></div>
+    <div style="background:var(--sur);border:1px solid var(--b);border-radius:12px;padding:14px 16px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div style="width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;background:${color}22;border:2px solid ${color}44;flex-shrink:0;">${a.icon}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;color:var(--tx);">${a.name}</div>
+          <div style="font-size:10px;color:var(--mu);font-family:var(--mono);">${a.ticker}</div>
+        </div>
       </div>
-      <div style="display:flex;flex-wrap:wrap;gap:5px;">${btns}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;">${chips}</div>
     </div>`;
   }).join('');
 }

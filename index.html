@@ -565,10 +565,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
       <!-- Input area -->
       <div style="padding:12px 16px;border-top:1px solid var(--b);flex-shrink:0;display:flex;gap:8px;align-items:flex-end;background:var(--sur);">
         <textarea id="ai-chat-input"
-          placeholder="Hỏi gì đó... VD: Tôi muốn nghỉ hưu sau 15 năm với $500K, nên đầu tư như thế nào?"
-          style="flex:1;background:var(--sur2);border:1px solid var(--b2);border-radius:12px;padding:10px 14px;color:var(--tx);font-size:13px;font-family:var(--sans);resize:none;height:44px;max-height:120px;outline:none;line-height:1.5;transition:border-color .2s;"
+          placeholder="Hỏi gì đó..."
           onfocus="this.style.borderColor='rgba(167,139,250,0.5)'"
           onblur="this.style.borderColor=''"
+          style="flex:1;background:var(--sur2);border:1px solid var(--b2);border-radius:12px;padding:10px 14px;color:var(--tx);font-size:13px;font-family:var(--sans);resize:none;height:44px;max-height:120px;outline:none;line-height:1.5;transition:border-color .2s;"
           onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage();}"
           oninput="this.style.height='44px';this.style.height=Math.min(this.scrollHeight,120)+'px';"
           rows="1"></textarea>
@@ -735,7 +735,7 @@ const LANG = {
     // AI Advisor
     aiBtn:'AI Tư vấn',
     aiTitle:'AI Tư vấn Danh mục',
-    aiSub:'Phân tích danh mục và gợi ý phân bổ tối ưu theo khẩu vị rủi ro',
+    aiSub:'Phân tích điểm mạnh và điểm yếu danh mục hiện tại',
     aiRiskLabel:'KHẨU VỊ RỦI RO CỦA BẠN',
     aiRisk0Name:'An toàn', aiRisk0Desc:'Bảo toàn vốn, rủi ro thấp',
     aiRisk1Name:'Cân bằng', aiRisk1Desc:'Tăng trưởng vừa phải, rủi ro trung bình',
@@ -824,7 +824,7 @@ const LANG = {
     // AI Advisor
     aiBtn:'AI Advisor',
     aiTitle:'AI Portfolio Advisor',
-    aiSub:'Analyze your portfolio and get optimal allocation suggestions based on your risk profile',
+    aiSub:'Analyze portfolio strengths and weaknesses',
     aiRiskLabel:'YOUR RISK PROFILE',
     aiRisk0Name:'Conservative', aiRisk0Desc:'Capital preservation, low risk',
     aiRisk1Name:'Balanced', aiRisk1Desc:'Moderate growth, medium risk',
@@ -2436,7 +2436,7 @@ function openAIAdvisor() {
     }
   } else {
     if (badge)     badge.style.display = 'none';
-    if (sub)       sub.textContent = t('aiSub');
+    if (sub)       { sub.dataset.i18n = 'aiSub'; sub.textContent = t('aiSub'); }
     if (freePanel) freePanel.style.display = '';
     if (chatPanel) chatPanel.style.display = 'none';
   }
@@ -2449,6 +2449,10 @@ function updateSuggestions() {
     ? ['💼 Phân tích danh mục hiện tại', '🏖️ Nghỉ hưu sau 20 năm cần bao nhiêu?', '📈 Tái cơ cấu danh mục như thế nào?', '🛡️ Giảm rủi ro danh mục']
     : ['💼 Analyze my current portfolio', '🏖️ How much to retire in 20 years?', '📈 How to rebalance my portfolio?', '🛡️ Reduce portfolio risk'];
   btns.forEach((b, i) => { if (suggestions[i]) b.textContent = suggestions[i]; });
+  const input = document.getElementById('ai-chat-input');
+  if (input) input.placeholder = vi
+    ? 'Hỏi gì đó... VD: Tôi muốn nghỉ hưu sau 15 năm với $500K'
+    : 'Ask anything... e.g. How to retire in 15 years with $500K?';
 }
 
 function initChatWelcome() {

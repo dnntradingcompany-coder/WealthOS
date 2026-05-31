@@ -1746,7 +1746,7 @@ function fcUpdateInit(v) { fcInitAmt = v; fcUpdate(); }
 function fcUpdateDCA(v)  { fcDCA = v; fcUpdate(); }
 
 function syncFromPortfolio() {
-  const total = assets.reduce((s,a) => s + (a.price!=null ? a.price*(a.qty||0) : 0), 0);
+  const total = assets.reduce((s,a,i) => s + getAssetValue(a,i), 0);
   if (total > 0) {
     fcInitAmt = Math.round(total);
     const el = document.getElementById('fc-init');

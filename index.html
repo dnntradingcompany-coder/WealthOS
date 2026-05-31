@@ -2617,6 +2617,19 @@ function unlockPremium() {
   content.style.filter = 'none';
   content.style.pointerEvents = 'auto';
   content.style.userSelect = 'auto';
+
+  // Auto-fill vốn ban đầu từ tổng danh mục hiện có
+  const total = assets.reduce((s, a) => {
+    const v = (a.price!=null&&(a.qty||0)>0) ? a.price*(a.qty||0) : (a.manualValue||a.qty||0);
+    return s + v;
+  }, 0);
+  if (total > 0) {
+    const initEl = document.getElementById('pm-init');
+    if (initEl) initEl.value = Math.round(total).toLocaleString('en-US');
+    // Update fcInitAmt for pmUpdate calculation
+    window._pmInitFromPortfolio = total;
+  }
+
   pmRenderAlloc();
   pmUpdate();
 }
@@ -2717,8 +2730,8 @@ Rules:
         <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
           <button style="padding:4px 12px;border-radius:8px;border:none;background:${color};color:#fff;font-size:11px;font-weight:600;cursor:default;font-family:var(--sans);">${cfg.icon} ${cfg.label}</button>
           <button style="padding:4px 12px;border-radius:8px;border:1px solid var(--b2);background:transparent;color:var(--tx);font-size:11px;font-weight:600;cursor:default;font-family:var(--mono);">${item.target_pct}% <span style="color:${diffColor};font-size:10px;">(${diffStr})</span></button>
-          <span style="font-size:10px;color:var(--mu);flex:1;">${item.reason}</span>
         </div>
+        <div style="font-size:10px;color:var(--mu);margin-top:6px;line-height:1.5;">${item.reason}</div>
       </div>`;
     }).join('');
 
@@ -2755,7 +2768,10 @@ function updatePmYears(val) {
 
 function parsePmNum(id) {
   const el = document.getElementById(id);
-  return el ? parseFloat((el.value||'0').replace(/,/g,''))||0 : 0;
+  if (!el) return 0;
+  const val = parseFloat((el.value||'0').replace(/,/g,''))||0;
+  if (id === 'pm-init' && val === 0 && window._pmInitFromPortfolio) return window._pmInitFromPortfolio;
+  return val;
 }
 
 function pmUpdate() {

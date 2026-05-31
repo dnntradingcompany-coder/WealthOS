@@ -2629,26 +2629,81 @@ function selectPmRisk(el) {
   pmUpdate();
 }
 
-function pmRenderAlloc() {
-  const alloc = PM_ALLOC[pmSelectedRisk];
-  const risk = PM_RISK[pmSelectedRisk];
-  const typeMap = { stock:t('pmTypeStock'), crypto:t('pmTypeCrypto'), commodity:t('pmTypeCommodity'), cash:t('pmTypeCash'), realestate:t('pmTypeRE') };
-  const colorMap = { stock:'#4f8ef7', crypto:'#8b6cf7', commodity:'#f5a623', cash:'#34d399', realestate:'#f87171' };
+async function pmRenderAlloc() {
+  const vi = currentLang === 'vi';
   const riskName = t('aiRisk'+['conservative','balanced','growth','aggressive'].indexOf(pmSelectedRisk)+'Name');
+  const resultEl = document.getElementById('pm-alloc-result');
 
-  let html = `<div style="font-size:11px;color:#a78bfa;font-weight:600;margin-bottom:10px;font-family:var(--mono);">${t('pmAllocTitle')} · ${riskName.toUpperCase()}</div>`;
-  html += '<div style="display:flex;flex-direction:column;gap:6px;">';
-  for (const [type, pct] of Object.entries(alloc)) {
-    html += `<div style="display:flex;align-items:center;gap:8px;">
-      <div style="width:90px;font-size:11px;color:var(--mu);">${typeMap[type]||type}</div>
-      <div style="flex:1;height:6px;background:var(--sur);border-radius:4px;overflow:hidden;">
-        <div style="width:${pct}%;height:100%;background:${colorMap[type]||'#6b7280'};border-radius:4px;transition:width .4s;"></div>
-      </div>
-      <div style="width:32px;text-align:right;font-size:12px;font-weight:600;font-family:var(--mono);color:${colorMap[type]||'var(--tx)'};">${pct}%</div>
+  // Show loading
+  resultEl.innerHTML = `<div style="font-size:11px;color:#a78bfa;font-weight:600;margin-bottom:10px;font-family:var(--mono);">${t('pmAllocTitle')} · ${riskName.toUpperCase()}</div>
+    <div style="display:flex;align-items:center;gap:8px;color:var(--mu);font-size:11px;font-family:var(--mono);">
+      <span class="ai-typing"></span> ${vi?'Đang phân tích danh mục của bạn...':'Analyzing your portfolio...'}
     </div>`;
+
+  // Build portfolio summary
+  const total = assets.reduce((s, a) => {
+    const v = (a.price!=null&&(a.qty||0)>0) ? a.price*(a.qty||0) : (a.manualValue||a.qty||0);
+    return s + v;
+  }, 0);
+
+  if (!assets.length || total === 0) {
+    resultEl.innerHTML = `<span style="color:var(--mu);font-size:11px;font-family:var(--mono);">${vi?'Chưa có tài sản nào trong danh mục.':'No assets in portfolio yet.'}</span>`;
+    return;
   }
-  html += '</div>';
-  document.getElementById('pm-alloc-result').innerHTML = html;
+
+  const portfolioLines = assets.map(a => {
+    const val = (a.price!=null&&(a.qty||0)>0) ? a.price*(a.qty||0) : (a.manualValue||a.qty||0);
+    const pct = ((val/total)*100).toFixed(1);
+    return `- ${a.name} (${a.ticker}, ${a.type}): $${Math.round(val).toLocaleString()} = ${pct}%`;
+  }).join('\n');
+
+  const prompt = vi
+    ? `Bạn là chuyên gia tư vấn danh mục. Phân tích danh mục sau với khẩu vị "${riskName}" và đưa ra gợi ý % phân bổ cụ thể cho từng tài sản hiện có.
+
+DANH MỤC HIỆN TẠI (tổng $${Math.round(total).toLocaleString()}):
+${portfolioLines}
+
+Yêu cầu:
+1. Với MỖI tài sản hiện có: ghi rõ nên GIỮ/TĂNG/GIẢM và % mục tiêu
+2. Nếu cần, đề xuất THÊM loại tài sản mới (VD: thêm vàng, tiền mặt...)
+3. Tổng % phải = 100%
+4. Format rõ ràng, dùng bullet points, có icon ✅ (giữ), 📈 (tăng), 📉 (giảm), ➕ (thêm mới)
+5. Ngắn gọn, tối đa 150 từ`
+    : `You are a portfolio advisor. Analyze this portfolio with "${riskName}" risk profile and suggest specific % allocation for each asset.
+
+CURRENT PORTFOLIO (total $${Math.round(total).toLocaleString()}):
+${portfolioLines}
+
+Requirements:
+1. For EACH asset: state KEEP/INCREASE/DECREASE and target %
+2. If needed, suggest adding NEW asset types (e.g. add gold, cash...)
+3. Total % must = 100%
+4. Use bullet points with icons ✅ (keep), 📈 (increase), 📉 (decrease), ➕ (add new)
+5. Concise, max 150 words`;
+
+  try {
+    const res = await fetch('https://twilight-silence-ee34.dnntradingcompany.workers.dev/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: [{ role: 'user', content: prompt }] }),
+    });
+    const data = await res.json();
+    const text = data.content?.map(b => b.text||'').join('') || '';
+
+    const formatted = text
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/^[-•]\s+(.+)/gm, '<li>$1</li>')
+      .replace(/(<li>[\s\S]*?<\/li>)/g, '<ul style="padding-left:14px;margin:4px 0;">$1</ul>')
+      .replace(/\n{2,}/g, '<br>')
+      .replace(/\n/g, '<br>')
+      .replace(/(\d+[-–]\d+%|\d+%)/g, '<span class="alloc-chip">$1</span>');
+
+    resultEl.innerHTML = `
+      <div style="font-size:11px;color:#a78bfa;font-weight:600;margin-bottom:10px;font-family:var(--mono);">${t('pmAllocTitle')} · ${riskName.toUpperCase()}</div>
+      <div style="font-size:12px;line-height:1.8;color:var(--tx);">${formatted}</div>`;
+  } catch {
+    resultEl.innerHTML = `<span style="color:var(--mu);font-size:11px;">${vi?'Không thể tải gợi ý. Vui lòng thử lại.':'Could not load suggestion. Please try again.'}</span>`;
+  }
 }
 
 function updatePmYears(val) {

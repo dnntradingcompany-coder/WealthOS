@@ -711,7 +711,15 @@ const norm = arr => { if(!arr?.length) return []; const b=arr[0]; return arr.map
 const fmtChg = pct => pct==null ? '' : (pct>=0?'▲ +':'▼ ')+Math.abs(pct).toFixed(2)+'% (24h)';
 const qty = id => { const el = $(id); if(!el) return 0; const raw = String(el.value).replace(/,/g,''); return Math.max(0, parseFloat(raw)||0); };
 
-// Format số có dấu phẩy cho qty input (giữ nguyên số thập phân)
+// Format số cho input: luôn dùng dấu phẩy phân cách nghìn, dấu chấm thập phân
+function fmtNum(n, maxDec=8) {
+  if (!n && n!==0) return '';
+  const num = parseFloat(n);
+  if (isNaN(num)) return '';
+  const parts = num.toFixed(maxDec).replace(/\.?0+$/, '').split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return parts.join('.');
+}
 function fmtQtyInput(el) {
   const cur = el.selectionStart;
   const oldVal = el.value;
@@ -721,11 +729,10 @@ function fmtQtyInput(el) {
   if (isNaN(num) || num < 0) return;
   const hasDot = raw.includes('.');
   const decPart = hasDot ? raw.split('.')[1] : null;
-  const intStr = Math.floor(Math.abs(num)).toLocaleString('en-US');
+  const intStr = String(Math.floor(Math.abs(num))).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   const newVal = hasDot ? intStr + '.' + (decPart ?? '') : intStr;
   if (newVal === oldVal) return;
   el.value = newVal;
-  // Điều chỉnh cursor theo sự thay đổi số ký tự
   const diff = newVal.length - oldVal.length;
   try { el.setSelectionRange(cur + diff, cur + diff); } catch(_) {}
 }
@@ -1120,8 +1127,8 @@ function fxLabel(currency) {
   const rate = FX_RATES[currency] ?? FX_FALLBACK[currency];
   if (!rate) return '';
   const per1USD = Math.round(1/rate);
-  return currency==='VND' ? `1 USD ≈ ${per1USD.toLocaleString('en-US')} VND`
-       : currency==='JPY' ? `1 USD ≈ ${per1USD.toLocaleString('en-US')} JPY`
+  return currency==='VND' ? `1 USD ≈ ${String(per1USD).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} VND`
+       : currency==='JPY' ? `1 USD ≈ ${String(per1USD).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} JPY`
        : `1 ${currency} ≈ ${(rate).toFixed(4)} USD`;
 }
 
@@ -1175,7 +1182,7 @@ function renderHoldings() {
       valBlock = `
         ${isNotUSD && fxInfo ? `<div class="hval-price" id="price-${i}" style="color:var(--mu);font-size:10px;">💱 ${fxInfo}</div>` : `<div id="price-${i}" style="display:none"></div>`}
         <div class="hval ${usdVal>0?'ok':''}" id="val-${i}">${usdVal>0 ? usd(usdVal) : '—'}${isNotUSD&&usdVal>0?' <span style="font-size:10px;opacity:.6;font-weight:400">USD</span>':''}</div>
-        ${isNotUSD&&usdVal>0 ? `<div style="font-size:10px;color:var(--mu);font-family:var(--mono);margin-top:2px;">${(a.qty||0).toLocaleString('en-US')} ${a.currency}</div>` : ''}
+        ${isNotUSD&&usdVal>0 ? `<div style="font-size:10px;color:var(--mu);font-family:var(--mono);margin-top:2px;">${fmtNum(a.qty||0)} ${a.currency}</div>` : ''}
         <div class="hval-alloc" id="alloc-${i}"></div>
         ${extraField}`;
     } else if (isRE) {
@@ -1193,7 +1200,7 @@ function renderHoldings() {
                     <div class="hinput-wrap" style="flex:1">
                       <input class="hinput" id="mprice-${i}" type="text" inputmode="decimal"
                         placeholder="${t('manualPrice')}"
-                        value="${a.manualPrice ? Number(a.manualPrice).toLocaleString('en-US',{maximumFractionDigits:2}) : ''}"
+                        value="${a.manualPrice ? fmtNum(a.manualPrice, 2) : ''}"
                         oninput="fmtQtyInput(this);setManualPrice(${i},this.value)"
                         onkeypress="return /[0-9.,]/.test(event.key)"
                         style="font-size:12px;padding:6px 10px;">
@@ -1215,7 +1222,7 @@ function renderHoldings() {
       <div class="hinput-wrap">
         <input class="hinput" id="qty-${i}" type="text" inputmode="decimal"
           placeholder="${qtyPlaceholder}"
-          value="${a.qty ? Number(a.qty).toLocaleString('en-US', {maximumFractionDigits:8}) : ''}"
+          value="${a.qty ? fmtNum(a.qty) : ''}"
           oninput="fmtQtyInput(this);onQtyChange(${i})"
           onkeypress="return /[0-9.,]/.test(event.key)">
         <span class="hunit">${qtyLabel}</span>
@@ -1702,7 +1709,7 @@ let fcChart2 = null;
 
 function fcFmt(n) {
   if (Math.abs(n) >= 1e6) return '$'+(n/1e6).toFixed(2)+'M';
-  if (Math.abs(n) >= 1000) return '$'+Math.round(n).toLocaleString('en-US');
+  if (Math.abs(n) >= 1000) return '$'+fmtNum(Math.round(n),0);
   return '$'+n.toFixed(0);
 }
 
@@ -1777,7 +1784,7 @@ function fcFormatInput(el) {
     // Lưu vị trí con trỏ để không bị nhảy
     const selStart = el.selectionStart;
     const oldLen = el.value.length;
-    el.value = Math.round(num).toLocaleString('en-US');
+    el.value = String(Math.round(num)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     const newLen = el.value.length;
     el.setSelectionRange(selStart + (newLen - oldLen), selStart + (newLen - oldLen));
     return Math.round(num);
@@ -1795,7 +1802,7 @@ function syncFromPortfolio() {
   if (total > 0) {
     fcInitAmt = Math.round(total);
     const el = document.getElementById('fc-init');
-    if (el) el.value = fcInitAmt.toLocaleString('en-US');
+    if (el) el.value = fmtNum(fcInitAmt,0);
   }
   fcUpdate();
 }
@@ -1894,6 +1901,8 @@ function fcUpdate() {
 // Init forecast after assets load
 function initForecast() {
   assets.forEach((_,i) => { if (!fcScenarios[i]) fcScenarios[i] = fcDefaultScenario(assets[i].type); });
+  const initEl = $('fc-init'); if (initEl) initEl.value = fmtNum(fcInitAmt, 0);
+  const dcaEl  = $('fc-dca');  if (dcaEl)  dcaEl.value  = fcDCA > 0 ? fmtNum(fcDCA, 0) : '0';
   renderFcAssetScenarios();
   fcUpdate();
 }

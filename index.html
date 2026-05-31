@@ -457,53 +457,14 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
 
 <!-- ── AI ADVISOR MODAL ── -->
 <div class="modal-overlay" id="ai-modal-overlay" onclick="maybeCloseAI(event)" style="z-index:200;">
-  <div class="modal" style="width:min(560px,94vw);max-height:90vh;">
+  <div class="modal" style="width:min(520px,94vw);max-height:90vh;">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
       <span style="font-size:20px;">✦</span>
       <h3 style="font-size:16px;" data-i18n="aiTitle">AI Tư vấn Danh mục</h3>
     </div>
-    <div class="modal-sub" id="ai-modal-sub" data-i18n="aiSub">Phân tích danh mục và gợi ý phân bổ tối ưu theo khẩu vị rủi ro</div>
+    <div class="modal-sub" id="ai-modal-sub" data-i18n="aiSub">Phân tích điểm mạnh và điểm yếu danh mục hiện tại</div>
 
-    <!-- Risk profile selector -->
-    <div id="ai-setup" style="margin-top:4px;">
-      <div class="modal-label" style="margin-bottom:10px;" data-i18n="aiRiskLabel">KHẨU VỊ RỦI RO CỦA BẠN</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
-        <div class="ai-risk-opt" data-risk="conservative" onclick="selectRisk(this)">
-          <div style="font-size:22px;margin-bottom:4px;">🛡️</div>
-          <div style="font-size:12px;font-weight:600;color:var(--tx);" data-i18n="aiRisk0Name">An toàn</div>
-          <div style="font-size:10px;color:var(--mu);margin-top:2px;" data-i18n="aiRisk0Desc">Bảo toàn vốn, rủi ro thấp</div>
-        </div>
-        <div class="ai-risk-opt" data-risk="balanced" onclick="selectRisk(this)">
-          <div style="font-size:22px;margin-bottom:4px;">⚖️</div>
-          <div style="font-size:12px;font-weight:600;color:var(--tx);" data-i18n="aiRisk1Name">Cân bằng</div>
-          <div style="font-size:10px;color:var(--mu);margin-top:2px;" data-i18n="aiRisk1Desc">Tăng trưởng vừa phải, rủi ro trung bình</div>
-        </div>
-        <div class="ai-risk-opt" data-risk="growth" onclick="selectRisk(this)">
-          <div style="font-size:22px;margin-bottom:4px;">📈</div>
-          <div style="font-size:12px;font-weight:600;color:var(--tx);" data-i18n="aiRisk2Name">Tăng trưởng</div>
-          <div style="font-size:10px;color:var(--mu);margin-top:2px;" data-i18n="aiRisk2Desc">Tối ưu tăng trưởng dài hạn</div>
-        </div>
-        <div class="ai-risk-opt" data-risk="aggressive" onclick="selectRisk(this)">
-          <div style="font-size:22px;margin-bottom:4px;">🚀</div>
-          <div style="font-size:12px;font-weight:600;color:var(--tx);" data-i18n="aiRisk3Name">Mạo hiểm</div>
-          <div style="font-size:10px;color:var(--mu);margin-top:2px;" data-i18n="aiRisk3Desc">Lợi nhuận cao, chấp nhận biến động lớn</div>
-        </div>
-      </div>
-
-        <div style="margin-bottom:12px;display:none;">
-        <div class="modal-label" style="margin-bottom:6px;"><span data-i18n="aiKeyLabel">GOOGLE GEMINI API KEY</span> <span style="color:#f5a623;font-size:9px;letter-spacing:0;">● Miễn phí tại aistudio.google.com</span></div>
-        <div style="position:relative;">
-          <input id="ai-apikey" class="modal-input" type="password" placeholder="AIzaSy..." style="margin-bottom:0;padding-right:70px;" oninput="saveApiKey(this.value)" value="AQ.Ab8RN6IZiG7hXMlIffSJsbXrHU7YRI26FP6izsqsnoBJtk06jg">
-          <span id="ai-key-status" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;font-family:var(--mono);color:var(--mu);"></span>
-        </div>
-        <div style="font-size:10px;color:var(--mu);font-family:var(--mono);margin-top:4px;margin-bottom:12px;" data-i18n="aiKeyHint">Key được lưu trong trình duyệt, không gửi đi đâu ngoài Google.</div>
-      </div>
-
-      <div style="margin-bottom:12px;">
-        <div class="modal-label" style="margin-bottom:6px;" data-i18n="aiContextLabel">THÔNG TIN THÊM (tùy chọn)</div>
-        <textarea id="ai-context" class="modal-input" rows="2" style="resize:none;height:60px;"></textarea>
-      </div>
-
+    <div id="ai-setup" style="margin-top:12px;">
       <div id="ai-setup-err" class="modal-err"></div>
       <div class="modal-btns">
         <button class="mbtn" id="ai-close-btn" onclick="closeAIAdvisor()" data-i18n="aiClose">Đóng</button>
@@ -2255,11 +2216,6 @@ const RISK_LABELS = {
 
 async function runAIAnalysis() {
   const errEl = document.getElementById('ai-setup-err');
-  if (!selectedRisk) {
-    errEl.textContent = t('aiErrNoRisk');
-    errEl.style.display = 'block';
-    return;
-  }
   errEl.style.display = 'none';
 
   const btn = document.getElementById('ai-analyze-btn');
@@ -2267,13 +2223,11 @@ async function runAIAnalysis() {
   btn.innerHTML = `<span class="ai-typing"></span> ${t('aiAnalyzing')}`;
 
   const portfolioText = buildPortfolioSummary();
-  const extraContext = document.getElementById('ai-context').value.trim();
-  const riskLabel = RISK_LABELS[selectedRisk]();
 
-  const prompt = `Phân tích ngắn gọn danh mục này (khẩu vị: ${riskLabel}):
-${portfolioText}${extraContext ? '\nThêm: '+extraContext : ''}
+  const prompt = `Phân tích ngắn gọn danh mục đầu tư này:
+${portfolioText}
 
-Chỉ nhận xét điểm mạnh và điểm yếu của danh mục hiện tại. Không đề xuất thêm tài sản mới. Trả lời tiếng Việt, súc tích, dùng bullet points.`;
+Chỉ nhận xét điểm mạnh và điểm yếu của danh mục hiện tại. Trả lời tiếng Việt, súc tích, dùng bullet points.`;
 
   try {
     const workerUrl = 'https://twilight-silence-ee34.dnntradingcompany.workers.dev';

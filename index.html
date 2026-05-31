@@ -2270,21 +2270,13 @@ async function runAIAnalysis() {
   const extraContext = document.getElementById('ai-context').value.trim();
   const riskLabel = RISK_LABELS[selectedRisk]();
 
-  const prompt = `Bạn là chuyên gia tư vấn tài chính cá nhân. Hãy phân tích danh mục đầu tư sau và đưa ra gợi ý phân bổ tối ưu.
+  const prompt = `Phân tích danh mục này (khẩu vị: ${riskLabel}):
+${portfolioText}${extraContext ? '\nThêm: '+extraContext : ''}
 
-DANH MỤC HIỆN TẠI:
-${portfolioText}
-
-KHẨU VỊ RỦI RO: ${riskLabel}
-${extraContext ? `THÔNG TIN THÊM: ${extraContext}` : ''}
-
-Hãy trả lời bằng tiếng Việt, bao gồm:
-1. **Nhận xét danh mục hiện tại**: điểm mạnh, điểm yếu, rủi ro tập trung
-2. **Gợi ý phân bổ % tối ưu**: cho từng tài sản hiện có (và nếu cần, đề xuất thêm loại tài sản mới phù hợp với khẩu vị rủi ro)
-3. **Lý do cụ thể** cho từng điều chỉnh
-4. **Lưu ý rủi ro** quan trọng
-
-Trả lời súc tích, thực tế, dễ hiểu. Không dùng markdown phức tạp.`;
+Trả lời tiếng Việt, ngắn gọn:
+1. Nhận xét danh mục (điểm mạnh/yếu)
+2. Gợi ý % phân bổ tối ưu cho từng tài sản
+3. Lưu ý rủi ro`;
 
   try {
     const workerUrl = 'https://twilight-silence-ee34.dnntradingcompany.workers.dev';

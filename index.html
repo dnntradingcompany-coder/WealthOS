@@ -274,7 +274,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
   <!-- HOLDINGS -->
   <div class="csec" style="margin-bottom:1rem;">
     <div class="chdr" style="margin-bottom:14px;">
-      <span class="ctit" data-i18n="holdingsTitle">NHẬP KHỐI LƯỢNG TÀI SẢN</span>
+      <span class="ctit" data-i18n="holdingsTitle">KHỐI LƯỢNG TÀI SẢN CỦA BẠN</span>
       <button class="btn btn-add" onclick="openModal()" style="font-size:11px;padding:5px 12px;">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         <span data-i18n="addAsset">Thêm tài sản</span>
@@ -285,10 +285,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
     </div>
   </div>
 
-  <!-- GIÁ TRỊ TỪNG TÀI SẢN -->
+  <!-- GIÁ TRỊ TỪNG LOẠI TÀI SẢN -->
   <div class="csec" style="margin-top:1rem;">
     <div class="chdr" style="margin-bottom:14px;">
-      <span class="ctit" data-i18n="assetValTitle">GIÁ TRỊ TỪNG TÀI SẢN</span>
+      <span class="ctit" data-i18n="assetValTitle">GIÁ TRỊ TỪNG LOẠI TÀI SẢN</span>
     </div>
     <div class="smry-sub" id="smry-sub" style="grid-template-columns:repeat(3,1fr);">
       <!-- dynamic summary cards -->
@@ -374,53 +374,53 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
     <!-- LOCK OVERLAY (shown when not premium) -->
     <div id="premium-lock" style="position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(13,15,20,0.7);backdrop-filter:blur(6px);border-radius:16px;">
       <div style="font-size:36px;margin-bottom:12px;">🔒</div>
-      <div style="font-size:16px;font-weight:700;color:var(--tx);margin-bottom:6px;">Tính năng Premium</div>
-      <div style="font-size:12px;color:var(--mu);text-align:center;max-width:280px;margin-bottom:20px;line-height:1.6;">Phân bổ % danh mục theo khẩu vị rủi ro + Mô phỏng tăng trưởng tùy chọn 3–100 năm</div>
-      <button onclick="openUpgradeModal()" style="padding:10px 28px;border-radius:10px;border:none;background:linear-gradient(135deg,#7c3aed,#4f8ef7);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);">✦ Nâng cấp Premium</button>
+      <div style="font-size:16px;font-weight:700;color:var(--tx);margin-bottom:6px;" data-i18n="pmLockTitle">Tính năng Premium</div>
+      <div style="font-size:12px;color:var(--mu);text-align:center;max-width:280px;margin-bottom:20px;line-height:1.6;" data-i18n="pmLockDesc">Phân bổ % danh mục theo khẩu vị rủi ro + Mô phỏng tăng trưởng tùy chọn 3–100 năm</div>
+      <button onclick="openUpgradeModal()" style="padding:10px 28px;border-radius:10px;border:none;background:linear-gradient(135deg,#7c3aed,#4f8ef7);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);" data-i18n="pmUpgradeBtn">✦ Nâng cấp Premium</button>
     </div>
 
     <!-- PREMIUM CONTENT (blurred when locked) -->
     <div id="premium-content" style="filter:blur(4px);pointer-events:none;user-select:none;">
       <div class="chdr" style="margin-bottom:16px;">
-        <span class="ctit">PHÂN BỔ TỐI ƯU & MÔ PHỎNG DÀI HẠN ✦</span>
+        <span class="ctit" data-i18n="pmTitle">PHÂN BỔ TỐI ƯU & MÔ PHỎNG DÀI HẠN ✦</span>
       </div>
 
       <!-- Risk selector -->
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;" id="pm-risk-grid">
-        <div class="pm-risk-btn active" data-risk="conservative" onclick="selectPmRisk(this)">🛡️<br><span>An toàn</span></div>
-        <div class="pm-risk-btn" data-risk="balanced" onclick="selectPmRisk(this)">⚖️<br><span>Cân bằng</span></div>
-        <div class="pm-risk-btn" data-risk="growth" onclick="selectPmRisk(this)">📈<br><span>Tăng trưởng</span></div>
-        <div class="pm-risk-btn" data-risk="aggressive" onclick="selectPmRisk(this)">🚀<br><span>Mạo hiểm</span></div>
+        <div class="pm-risk-btn active" data-risk="conservative" onclick="selectPmRisk(this)">🛡️<br><span data-i18n="aiRisk0Name">An toàn</span></div>
+        <div class="pm-risk-btn" data-risk="balanced" onclick="selectPmRisk(this)">⚖️<br><span data-i18n="aiRisk1Name">Cân bằng</span></div>
+        <div class="pm-risk-btn" data-risk="growth" onclick="selectPmRisk(this)">📈<br><span data-i18n="aiRisk2Name">Tăng trưởng</span></div>
+        <div class="pm-risk-btn" data-risk="aggressive" onclick="selectPmRisk(this)">🚀<br><span data-i18n="aiRisk3Name">Mạo hiểm</span></div>
       </div>
 
       <!-- AI allocation result -->
       <div id="pm-alloc-result" style="background:var(--sur2);border-radius:12px;padding:14px 16px;margin-bottom:16px;min-height:60px;font-size:13px;line-height:1.7;color:var(--tx);">
-        <span style="color:var(--mu);font-size:11px;font-family:var(--mono);">Chọn khẩu vị để xem gợi ý phân bổ...</span>
+        <span style="color:var(--mu);font-size:11px;font-family:var(--mono);" data-i18n="pmAllocHint">Chọn khẩu vị để xem gợi ý phân bổ...</span>
       </div>
 
       <!-- Year slider -->
       <div style="display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;margin-bottom:16px;">
         <div>
-          <div class="sl" style="margin-bottom:8px;">SỐ NĂM MÔ PHỎNG</div>
+          <div class="sl" style="margin-bottom:8px;" data-i18n="pmYearsLabel">SỐ NĂM MÔ PHỎNG</div>
           <input type="range" id="pm-years" min="3" max="100" value="10" oninput="updatePmYears(this.value)" style="width:100%;accent-color:#8b6cf7;">
         </div>
         <div style="text-align:center;min-width:60px;">
           <div style="font-size:28px;font-weight:700;font-family:var(--mono);color:#a78bfa;" id="pm-years-val">10</div>
-          <div style="font-size:10px;color:var(--mu);">năm</div>
+          <div style="font-size:10px;color:var(--mu);" data-i18n="pmYearsUnit">năm</div>
         </div>
       </div>
 
       <!-- Params -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
         <div class="hfield" style="padding:12px 14px;">
-          <div class="sl" style="margin-bottom:6px;">VỐN BAN ĐẦU (USD)</div>
+          <div class="sl" style="margin-bottom:6px;" data-i18n="initCapital">VỐN BAN ĐẦU (USD)</div>
           <div class="hinput-wrap">
             <input class="hinput" type="text" id="pm-init" value="30,000" oninput="pmUpdate()" style="font-size:14px;font-weight:600;padding-right:48px;">
             <span class="hunit">USD</span>
           </div>
         </div>
         <div class="hfield" style="padding:12px 14px;">
-          <div class="sl" style="margin-bottom:6px;">DCA / THÁNG (USD)</div>
+          <div class="sl" style="margin-bottom:6px;" data-i18n="dcaMonth">DCA / THÁNG (USD)</div>
           <div class="hinput-wrap">
             <input class="hinput" type="text" id="pm-dca" value="0" oninput="pmUpdate()" style="font-size:14px;font-weight:600;padding-right:48px;">
             <span class="hunit">USD</span>
@@ -436,7 +436,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
         <canvas id="pm-chart"></canvas>
       </div>
 
-      <div style="padding:10px 14px;background:rgba(248,113,113,0.06);border:1px solid rgba(248,113,113,0.2);border-radius:10px;font-size:11px;color:#f87171;line-height:1.6;">
+      <div style="padding:10px 14px;background:rgba(248,113,113,0.06);border:1px solid rgba(248,113,113,0.2);border-radius:10px;font-size:11px;color:#f87171;line-height:1.6;" data-i18n="pmDisclaimer">
         ⚠ Mô phỏng dựa trên lãi suất giả định — không phải dự báo thực tế.
       </div>
     </div>
@@ -586,36 +586,36 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
   <div class="modal" style="width:min(480px,94vw);text-align:center;">
     <div style="font-size:40px;margin-bottom:12px;">✦</div>
     <h3 style="font-size:20px;margin-bottom:6px;">WealthOS Premium</h3>
-    <div class="modal-sub" style="margin-bottom:24px;">Mở khóa toàn bộ tính năng nâng cao</div>
+    <div class="modal-sub" style="margin-bottom:24px;" data-i18n="pmModalSub">Mở khóa toàn bộ tính năng nâng cao</div>
 
     <!-- Features list -->
     <div style="text-align:left;background:var(--sur2);border-radius:12px;padding:16px;margin-bottom:20px;">
       <div style="display:flex;flex-direction:column;gap:10px;">
-        <div style="display:flex;align-items:center;gap:10px;font-size:13px;"><span style="color:var(--gr);font-size:16px;">✓</span> Phân bổ % danh mục theo AI theo khẩu vị rủi ro</div>
-        <div style="display:flex;align-items:center;gap:10px;font-size:13px;"><span style="color:var(--gr);font-size:16px;">✓</span> Mô phỏng tăng trưởng tùy chọn 3–100 năm</div>
-        <div style="display:flex;align-items:center;gap:10px;font-size:13px;"><span style="color:var(--gr);font-size:16px;">✓</span> Phân tích AI không giới hạn</div>
-        <div style="display:flex;align-items:center;gap:10px;font-size:13px;"><span style="color:var(--gr);font-size:16px;">✓</span> Xuất báo cáo PDF</div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:13px;"><span style="color:var(--gr);font-size:16px;">✓</span> <span data-i18n="pmFeat1">Phân bổ % danh mục theo AI theo khẩu vị rủi ro</span></div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:13px;"><span style="color:var(--gr);font-size:16px;">✓</span> <span data-i18n="pmFeat2">Mô phỏng tăng trưởng tùy chọn 3–100 năm</span></div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:13px;"><span style="color:var(--gr);font-size:16px;">✓</span> <span data-i18n="pmFeat3">Phân tích AI không giới hạn</span></div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:13px;"><span style="color:var(--gr);font-size:16px;">✓</span> <span data-i18n="pmFeat4">Xuất báo cáo PDF</span></div>
       </div>
     </div>
 
     <!-- Pricing -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
       <div id="plan-monthly" class="plan-card active" onclick="selectPlan('monthly')">
-        <div style="font-size:11px;color:var(--mu);margin-bottom:4px;">HÀNG THÁNG</div>
+        <div style="font-size:11px;color:var(--mu);margin-bottom:4px;" data-i18n="pmMonthly">HÀNG THÁNG</div>
         <div style="font-size:22px;font-weight:700;font-family:var(--mono);">$4.99</div>
-        <div style="font-size:10px;color:var(--mu);">/tháng</div>
+        <div style="font-size:10px;color:var(--mu);" data-i18n="pmPerMonth">/tháng</div>
       </div>
       <div id="plan-yearly" class="plan-card" onclick="selectPlan('yearly')">
-        <div style="font-size:11px;color:var(--amb);margin-bottom:4px;">TIẾT KIỆM 40%</div>
+        <div style="font-size:11px;color:var(--amb);margin-bottom:4px;" data-i18n="pmYearly">TIẾT KIỆM 40%</div>
         <div style="font-size:22px;font-weight:700;font-family:var(--mono);">$2.99</div>
-        <div style="font-size:10px;color:var(--mu);">/tháng · $35.9/năm</div>
+        <div style="font-size:10px;color:var(--mu);" data-i18n="pmPerYear2">/tháng · $35.9/năm</div>
       </div>
     </div>
 
-    <button onclick="activatePremium()" style="width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#7c3aed,#4f8ef7);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans);margin-bottom:10px;">✦ Bắt đầu dùng Premium</button>
-    <button class="mbtn" onclick="closeUpgradeModal()" style="width:100%;">Để sau</button>
+    <button onclick="activatePremium()" style="width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#7c3aed,#4f8ef7);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans);margin-bottom:10px;" data-i18n="pmStartBtn">✦ Bắt đầu dùng Premium</button>
+    <button class="mbtn" onclick="closeUpgradeModal()" style="width:100%;" data-i18n="pmLater">Để sau</button>
 
-    <div style="font-size:10px;color:var(--mu);margin-top:12px;font-family:var(--mono);">Demo: click "Bắt đầu" để mở khóa thử</div>
+    <div style="font-size:10px;color:var(--mu);margin-top:12px;font-family:var(--mono);" data-i18n="pmDemo">Demo: click "Bắt đầu" để mở khóa thử</div>
   </div>
 </div>
 
@@ -634,7 +634,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
 const LANG = {
   vi: {
     logo:'WEALTHOS', title:'Nền tảng quản trị tài sản thông minh.',
-    refresh:'Làm mới', addAsset:'Thêm tài sản', holdingsTitle:'NHẬP KHỐI LƯỢNG TÀI SẢN', assetValTitle:'GIÁ TRỊ TỪNG TÀI SẢN',
+    refresh:'Làm mới', addAsset:'Thêm tài sản', holdingsTitle:'KHỐI LƯỢNG TÀI SẢN CỦA BẠN', assetValTitle:'GIÁ TRỊ TỪNG LOẠI TÀI SẢN',
     totalPortfolio:'TỔNG DANH MỤC (USD)', byQty:'theo khối lượng nhập',
     chart7d:'BIẾN ĐỘNG 7 NGÀY (chỉ số hóa, ngày đầu = 100)',
     source:'Nguồn', loading:'đang tải...', updatedAt:'cập nhật',
@@ -686,6 +686,18 @@ const LANG = {
     locAu:'Úc (~7%/năm)', locJp:'Nhật Bản (~3%/năm)', locUk:'Anh (~5%/năm)',
     locGroupVn:'🇻🇳 Việt Nam', locGroupIntl:'🌏 Quốc tế',
     today:'hôm nay',
+    // Premium
+    pmLockTitle:'Tính năng Premium', pmLockDesc:'Phân bổ % danh mục theo khẩu vị rủi ro + Mô phỏng tăng trưởng tùy chọn 3–100 năm',
+    pmUpgradeBtn:'✦ Nâng cấp Premium', pmTitle:'PHÂN BỔ TỐI ƯU & MÔ PHỎNG DÀI HẠN ✦',
+    pmAllocHint:'Chọn khẩu vị để xem gợi ý phân bổ...', pmAllocTitle:'GỢI Ý PHÂN BỔ', pmYearsLabel:'SỐ NĂM MÔ PHỎNG', pmYearsUnit:'năm',
+    pmDisclaimer:'⚠ Mô phỏng dựa trên lãi suất giả định — không phải dự báo thực tế.',
+    pmTypeStock:'Cổ phiếu/ETF', pmTypeCrypto:'Crypto', pmTypeCommodity:'Hàng hóa', pmTypeCash:'Tiền mặt', pmTypeRE:'Bất động sản',
+    pmAfter:'Tổng sau', pmProfit:'Lãi ròng', pmCAGR:'CAGR',
+    pmModalSub:'Mở khóa toàn bộ tính năng nâng cao',
+    pmFeat1:'Phân bổ % danh mục theo AI theo khẩu vị rủi ro', pmFeat2:'Mô phỏng tăng trưởng tùy chọn 3–100 năm',
+    pmFeat3:'Phân tích AI không giới hạn', pmFeat4:'Xuất báo cáo PDF',
+    pmMonthly:'HÀNG THÁNG', pmYearly:'TIẾT KIỆM 40%', pmPerMonth:'/tháng', pmPerYear2:'/tháng · $35.9/năm',
+    pmStartBtn:'✦ Bắt đầu dùng Premium', pmLater:'Để sau', pmDemo:'Demo: click "Bắt đầu" để mở khóa thử',
     // AI Advisor
     aiBtn:'AI Tư vấn',
     aiTitle:'AI Tư vấn Danh mục',
@@ -707,7 +719,7 @@ const LANG = {
   },
   en: {
     logo:'WEALTHOS', title:'See your entire wealth in one place',
-    refresh:'Refresh', addAsset:'Add Asset', holdingsTitle:'ENTER YOUR HOLDINGS', assetValTitle:'ASSET VALUES',
+    refresh:'Refresh', addAsset:'Add Asset', holdingsTitle:'YOUR HOLDINGS', assetValTitle:'ASSET VALUES BY TYPE',
     totalPortfolio:'TOTAL PORTFOLIO (USD)', byQty:'enter quantities below',
     chart7d:'7-DAY PERFORMANCE (indexed, day 1 = 100)',
     source:'Source', loading:'loading...', updatedAt:'updated',
@@ -759,6 +771,18 @@ const LANG = {
     locAu:'Australia (~7%/yr)', locJp:'Japan (~3%/yr)', locUk:'UK (~5%/yr)',
     locGroupVn:'🇻🇳 Vietnam', locGroupIntl:'🌏 International',
     today:'today',
+    // Premium
+    pmLockTitle:'Premium Feature', pmLockDesc:'AI-based portfolio allocation by risk profile + Growth simulation 3–100 years',
+    pmUpgradeBtn:'✦ Upgrade to Premium', pmTitle:'OPTIMAL ALLOCATION & LONG-TERM SIMULATION ✦',
+    pmAllocHint:'Select a risk profile to see allocation suggestion...', pmAllocTitle:'ALLOCATION SUGGESTION', pmYearsLabel:'SIMULATION YEARS', pmYearsUnit:'years',
+    pmDisclaimer:'⚠ Simulation based on assumed rates — not a real forecast.',
+    pmTypeStock:'Stocks/ETF', pmTypeCrypto:'Crypto', pmTypeCommodity:'Commodities', pmTypeCash:'Cash', pmTypeRE:'Real Estate',
+    pmAfter:'Total after', pmProfit:'Net Profit', pmCAGR:'CAGR',
+    pmModalSub:'Unlock all advanced features',
+    pmFeat1:'AI-based portfolio allocation by risk profile', pmFeat2:'Growth simulation 3–100 years',
+    pmFeat3:'Unlimited AI analysis', pmFeat4:'Export PDF report',
+    pmMonthly:'MONTHLY', pmYearly:'SAVE 40%', pmPerMonth:'/month', pmPerYear2:'/month · $35.9/year',
+    pmStartBtn:'✦ Start Premium', pmLater:'Maybe later', pmDemo:'Demo: click "Start" to unlock',
     // AI Advisor
     aiBtn:'AI Advisor',
     aiTitle:'AI Portfolio Advisor',
@@ -910,6 +934,7 @@ function applyLang() {
   renderHoldings();
   renderSummaryCards();
   if (typeof renderFcAssetScenarios === 'function') { renderFcAssetScenarios(); fcUpdate(); }
+  if (isPremium && typeof pmRenderAlloc === 'function') { pmRenderAlloc(); pmUpdate(); }
 }
 
 function toggleLang() {
@@ -2476,14 +2501,15 @@ function selectPmRisk(el) {
 function pmRenderAlloc() {
   const alloc = PM_ALLOC[pmSelectedRisk];
   const risk = PM_RISK[pmSelectedRisk];
-  const typeMap = { stock:'Cổ phiếu/ETF', crypto:'Crypto', commodity:'Hàng hóa', cash:'Tiền mặt', realestate:'Bất động sản' };
+  const typeMap = { stock:t('pmTypeStock'), crypto:t('pmTypeCrypto'), commodity:t('pmTypeCommodity'), cash:t('pmTypeCash'), realestate:t('pmTypeRE') };
   const colorMap = { stock:'#4f8ef7', crypto:'#8b6cf7', commodity:'#f5a623', cash:'#34d399', realestate:'#f87171' };
+  const riskName = t('aiRisk'+['conservative','balanced','growth','aggressive'].indexOf(pmSelectedRisk)+'Name');
 
-  let html = `<div style="font-size:11px;color:#a78bfa;font-weight:600;margin-bottom:10px;font-family:var(--mono);">GỢI Ý PHÂN BỔ · ${risk.label.toUpperCase()}</div>`;
+  let html = `<div style="font-size:11px;color:#a78bfa;font-weight:600;margin-bottom:10px;font-family:var(--mono);">${t('pmAllocTitle')} · ${riskName.toUpperCase()}</div>`;
   html += '<div style="display:flex;flex-direction:column;gap:6px;">';
   for (const [type, pct] of Object.entries(alloc)) {
     html += `<div style="display:flex;align-items:center;gap:8px;">
-      <div style="width:80px;font-size:11px;color:var(--mu);">${typeMap[type]||type}</div>
+      <div style="width:90px;font-size:11px;color:var(--mu);">${typeMap[type]||type}</div>
       <div style="flex:1;height:6px;background:var(--sur);border-radius:4px;overflow:hidden;">
         <div style="width:${pct}%;height:100%;background:${colorMap[type]||'#6b7280'};border-radius:4px;transition:width .4s;"></div>
       </div>
@@ -2541,9 +2567,9 @@ function pmUpdate() {
   const profit = final - inv[pmYears];
   const cagr = pmYears > 0 ? ((Math.pow(final/Math.max(initAmt,1),1/pmYears)-1)*100).toFixed(1) : 0;
   document.getElementById('pm-metrics').innerHTML = [
-    { l:`Tổng sau ${pmYears} năm`, v:'$'+Math.round(final).toLocaleString(), c:'var(--blue)' },
-    { l:'Lãi ròng', v:(profit>=0?'+':'')+'$'+Math.round(profit).toLocaleString(), c:profit>=0?'var(--gr)':'var(--re)' },
-    { l:'CAGR', v:cagr+'%/năm', c:'var(--tx)' },
+    { l:`${t('pmAfter')} ${pmYears} ${t('pmYearsUnit')}`, v:'$'+Math.round(final).toLocaleString(), c:'var(--blue)' },
+    { l:t('pmProfit'), v:(profit>=0?'+':'')+'$'+Math.round(profit).toLocaleString(), c:profit>=0?'var(--gr)':'var(--re)' },
+    { l:t('pmCAGR'), v:cagr+'%/'+t('pmYearsUnit').slice(0,2), c:'var(--tx)' },
   ].map(m=>`<div class="fc-metric"><div class="fc-ml">${m.l}</div><div class="fc-mv" style="color:${m.c}">${m.v}</div></div>`).join('');
 
   // Chart

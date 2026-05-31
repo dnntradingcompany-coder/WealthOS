@@ -486,6 +486,10 @@ const LANG = {
     enterQty:'nhập khối lượng', enterValue:'nhập giá trị', loading2:'đang tải...',
     noPrice:'Không tải được giá tự động', manualPrice:'Nhập giá thủ công', retry:'↻',
     perYear:'/năm', savingsRate:'Lãi suất/năm', growthRate:'Tăng trưởng/năm',
+    perYearShort:'%/năm',
+    currUSD:'USD – Đô la Mỹ', currVND:'VND – Đồng Việt Nam', currEUR:'EUR – Euro',
+    currSGD:'SGD – Đô la Singapore', currJPY:'JPY – Yên Nhật',
+    reHintText:'Tăng trưởng ước tính:', reHintSuffix:'lịch sử TP.HCM',
     portAlloc:'% danh mục',
     // Forecast
     fcYearLabel:'Năm', fcCapAccum:'Vốn tích lũy', fcTotal:'Tổng', fcProfit:'Lãi', fcMultiple:'×lần',
@@ -537,6 +541,10 @@ const LANG = {
     enterQty:'enter quantity', enterValue:'enter value', loading2:'loading...',
     noPrice:'Could not load price automatically', manualPrice:'Enter price manually', retry:'↻',
     perYear:'/yr', savingsRate:'Interest rate/yr', growthRate:'Growth rate/yr',
+    perYearShort:'%/yr',
+    currUSD:'USD – US Dollar', currVND:'VND – Vietnamese Dong', currEUR:'EUR – Euro',
+    currSGD:'SGD – Singapore Dollar', currJPY:'JPY – Japanese Yen',
+    reHintText:'Estimated growth:', reHintSuffix:'historical HCMC',
     portAlloc:'% of portfolio',
     // Forecast
     fcYearLabel:'Year', fcCapAccum:'Capital Invested', fcTotal:'Total', fcProfit:'Profit', fcMultiple:'×',
@@ -632,13 +640,43 @@ function applyLang() {
     if (txt.startsWith('Nhập giá trị BĐS') || txt.startsWith('Enter the property')) el.textContent = t('reHint');
     if (txt.startsWith('Crypto: nhập') || txt.startsWith('Crypto: enter')) el.textContent = t('customHint');
   });
+  // Currency options
+  const cashCur = document.getElementById('cash-currency');
+  if (cashCur) cashCur.innerHTML = `
+    <option value="USD">${t('currUSD')}</option>
+    <option value="VND">${t('currVND')}</option>
+    <option value="EUR">${t('currEUR')}</option>
+    <option value="SGD">${t('currSGD')}</option>
+    <option value="JPY">${t('currJPY')}</option>`;
+
+  // Default values cho cash/RE name inputs (chỉ set nếu chưa user sửa)
+  const cashNameEl = document.getElementById('cash-name');
+  if (cashNameEl && (cashNameEl.value === t('cashDefault') || cashNameEl.value === LANG[currentLang==='vi'?'en':'vi'].cashDefault || cashNameEl.value === '')) {
+    cashNameEl.value = t('cashDefault');
+  }
+  const reNameEl = document.getElementById('re-name');
+  if (reNameEl && (reNameEl.value === t('reDefault') || reNameEl.value === LANG[currentLang==='vi'?'en':'vi'].reDefault || reNameEl.value === '')) {
+    reNameEl.value = t('reDefault');
+  }
+
+  // %/năm → %/yr labels trong modal
+  document.querySelectorAll('.modal [style*="right:14px"]').forEach(el => {
+    if (el.textContent.includes('%')) el.textContent = t('perYearShort');
+  });
+
+  // RE hint text
+  const reHintEl = document.getElementById('re-hint');
+  if (reHintEl) {
+    const loc = document.getElementById('re-location')?.value || 'vn-hcm';
+    const g = RE_GROWTH[loc] || RE_GROWTH['vn-hcm'];
+    reHintEl.innerHTML = `📊 ${t('reHintText')} <strong id="re-hint-val">~${(g.r*100).toFixed(0)}%${t('perYearShort')}</strong>`;
+  }
   // Custom type select options
   const ciType = document.getElementById('ci-type');
   if (ciType) {
     ciType.options[0].text = t('optCrypto');
     ciType.options[1].text = t('optStock');
   }
-  // Update lang button
   const lb = document.getElementById('lang-btn');
   if (lb) lb.textContent = currentLang==='vi' ? '🇬🇧 EN' : '🇻🇳 VI';
   // Update s0c nếu đang hiển thị "byQty"
@@ -1082,7 +1120,8 @@ const RE_GROWTH = {
 function updateReGrowthHint() {
   const loc = $('re-location')?.value||'vn-hcm';
   const g = RE_GROWTH[loc]||RE_GROWTH['vn-hcm'];
-  const hv = $('re-hint-val'); if(hv) hv.textContent='~'+(g.r*100).toFixed(0)+'%/năm ('+g.label+')';
+  const reHintEl = $('re-hint');
+  if (reHintEl) reHintEl.innerHTML = `📊 ${t('reHintText')} <strong id="re-hint-val">~${(g.r*100).toFixed(0)}%${t('perYearShort')}</strong>`;
 }
 // ─────────────────────────────────────────────────────────────
 //  FX RATES  (các tiền tệ → USD)
@@ -1539,6 +1578,8 @@ function openModal() {
   buildCatalogGrid('stock-grid', STOCK_CATALOG);
   buildCatalogGrid('commodity-grid', COMMODITY_CATALOG);
   setTab('crypto');
+  // Apply ngôn ngữ hiện tại cho modal
+  setTimeout(() => applyLang(), 0);
 }
 function closeModal() { $('modal-overlay').classList.remove('open'); selectedAsset=null; }
 function maybeClose(e) { if(e.target===$('modal-overlay')) closeModal(); }

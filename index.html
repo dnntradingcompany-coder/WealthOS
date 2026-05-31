@@ -490,10 +490,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
         </div>
       </div>
 
-        <div style="margin-bottom:12px;display:none;">
+        <div style="margin-bottom:12px;">
         <div class="modal-label" style="margin-bottom:6px;"><span data-i18n="aiKeyLabel">GOOGLE GEMINI API KEY</span> <span style="color:#f5a623;font-size:9px;letter-spacing:0;">● Miễn phí tại aistudio.google.com</span></div>
         <div style="position:relative;">
-          <input id="ai-apikey" class="modal-input" type="password" placeholder="AIza..." style="margin-bottom:0;padding-right:70px;" oninput="saveApiKey(this.value)" value="AQ.Ab8RN6IOxVVJSzx5ArpYlwqcr30tPq3F8snIULuYd04pFRKolA">
+          <input id="ai-apikey" class="modal-input" type="password" placeholder="AIzaSy..." style="margin-bottom:0;padding-right:70px;" oninput="saveApiKey(this.value)" value="AIzaSyBedD9dEDIlQ4DW7lFZJkkhQTRGtjx5KbM">
           <span id="ai-key-status" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;font-family:var(--mono);color:var(--mu);"></span>
         </div>
         <div style="font-size:10px;color:var(--mu);font-family:var(--mono);margin-top:4px;margin-bottom:12px;" data-i18n="aiKeyHint">Key được lưu trong trình duyệt, không gửi đi đâu ngoài Google.</div>
@@ -2198,7 +2198,7 @@ let selectedRisk = null;
 function openAIAdvisor() {
   document.getElementById('ai-modal-overlay').classList.add('open');
   const keyEl = document.getElementById('ai-apikey');
-  if (keyEl && !keyEl.value) keyEl.value = 'AQ.Ab8RN6IOxVVJSzx5ArpYlwqcr30tPq3F8snIULuYd04pFRKolA';
+  if (keyEl && !keyEl.value) keyEl.value = 'AIzaSyBedD9dEDIlQ4DW7lFZJkkhQTRGtjx5KbM';
 }
 function saveApiKey(val) {
   localStorage.setItem('gemini_api_key', val);
@@ -2295,7 +2295,6 @@ Trả lời súc tích, thực tế, dễ hiểu. Không dùng markdown phức t
       errEl.style.display = 'block';
       return;
     }
-
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
     const response = await fetch(geminiUrl, {
       method: 'POST',

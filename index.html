@@ -2697,19 +2697,27 @@ Rules:
       const diff = item.target_pct - item.current_pct;
       const diffStr = diff > 0 ? `+${diff.toFixed(1)}%` : diff < 0 ? `${diff.toFixed(1)}%` : '±0%';
       const diffColor = diff > 0 ? '#34d399' : diff < 0 ? '#f87171' : '#6b7280';
-      return `<div style="background:${cfg.bg};border:1px solid ${cfg.border};border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;">
-        <div style="font-size:18px;flex-shrink:0;">${cfg.icon}</div>
-        <div style="flex:1;min-width:0;">
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
-            <span style="font-size:12px;font-weight:600;color:var(--tx);">${item.name}</span>
-            <span style="font-size:9px;font-family:var(--mono);color:var(--mu);">${item.ticker}</span>
-            ${item.isNew ? `<span style="font-size:8px;padding:1px 5px;border-radius:4px;background:rgba(167,139,250,0.2);color:#a78bfa;font-family:var(--mono);">NEW</span>` : ''}
+      const assetObj = assets.find(a => a.ticker === item.ticker);
+      const icon = assetObj ? assetObj.icon : (item.isNew ? '✨' : '💰');
+      const color = assetObj ? assetObj.color : (item.color || cfg.badge);
+
+      return `<div style="background:var(--sur);border:1px solid var(--b);border-radius:12px;padding:14px 16px;position:relative;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <div style="width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;background:${color}22;border:2px solid ${color}44;flex-shrink:0;">${icon}</div>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--tx);">${item.name}${item.isNew?` <span style="font-size:8px;padding:1px 5px;border-radius:4px;background:rgba(167,139,250,0.2);color:#a78bfa;font-family:var(--mono);vertical-align:middle;">NEW</span>`:''}
+            </div>
+            <div style="font-size:10px;color:var(--mu);font-family:var(--mono);">${item.ticker}</div>
           </div>
-          <div style="font-size:10px;color:var(--mu);line-height:1.4;">${item.reason}</div>
+          <div style="margin-left:auto;text-align:right;">
+            <div style="font-size:11px;color:var(--mu);font-family:var(--mono);">${vi?'Hiện tại':'Current'}</div>
+            <div style="font-size:12px;font-weight:600;font-family:var(--mono);color:var(--mu);">${item.current_pct}%</div>
+          </div>
         </div>
-        <div style="text-align:right;flex-shrink:0;">
-          <div style="font-size:16px;font-weight:700;font-family:var(--mono);color:${item.color||cfg.badge};">${item.target_pct}%</div>
-          <div style="font-size:9px;font-family:var(--mono);color:${diffColor};">${diffStr}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+          <button style="padding:4px 12px;border-radius:8px;border:none;background:${color};color:#fff;font-size:11px;font-weight:600;cursor:default;font-family:var(--sans);">${cfg.icon} ${cfg.label}</button>
+          <button style="padding:4px 12px;border-radius:8px;border:1px solid var(--b2);background:transparent;color:var(--tx);font-size:11px;font-weight:600;cursor:default;font-family:var(--mono);">${item.target_pct}% <span style="color:${diffColor};font-size:10px;">(${diffStr})</span></button>
+          <span style="font-size:10px;color:var(--mu);flex:1;">${item.reason}</span>
         </div>
       </div>`;
     }).join('');
@@ -2727,8 +2735,8 @@ Rules:
     }).join('');
 
     resultEl.innerHTML = `
-      <div style="font-size:11px;color:#a78bfa;font-weight:600;margin-bottom:10px;font-family:var(--mono);">${t('pmAllocTitle')} · ${riskName.toUpperCase()}</div>
-      <div style="display:flex;flex-direction:column;gap:7px;">${cards}</div>`;
+      <div style="font-size:11px;color:#a78bfa;font-weight:600;margin-bottom:12px;font-family:var(--mono);">${t('pmAllocTitle')} · ${riskName.toUpperCase()}</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">${cards}</div>`;
 
     // Cache kết quả để dùng cho PDF
     window._pmAllocItems = items;

@@ -2,8 +2,37 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quản lý tài sản</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Tài sản của tôi</title>
+
+<!-- PWA Meta Tags -->
+<meta name="application-name" content="Portfolio">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Portfolio">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0d0f14">
+<meta name="description" content="Theo dõi danh mục đầu tư cá nhân — crypto, cổ phiếu, hàng hóa, tiền mặt, bất động sản">
+<meta name="msapplication-TileColor" content="#0d0f14">
+
+<!-- PWA Icons (inline SVG encoded) -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230d0f14'/><text y='.9em' font-size='80' x='10'>📈</text></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230d0f14'/><text y='.9em' font-size='80' x='10'>📈</text></svg>">
+
+<!-- PWA Manifest inline -->
+<link rel="manifest" href="data:application/manifest+json,{
+  %22name%22:%22T%C3%A0i+s%E1%BA%A3n+c%E1%BB%A7a+t%C3%B4i%22,
+  %22short_name%22:%22Portfolio%22,
+  %22description%22:%22Theo+d%C3%B5i+danh+m%E1%BB%A5c+%C4%91%E1%BA%A7u+t%C6%B0+c%C3%A1+nh%C3%A2n%22,
+  %22start_url%22:%22.%22,
+  %22display%22:%22standalone%22,
+  %22background_color%22:%22%230d0f14%22,
+  %22theme_color%22:%22%230d0f14%22,
+  %22orientation%22:%22portrait-primary%22,
+  %22icons%22:[
+    {%22src%22:%22data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230d0f14'/><text y='.9em' font-size='80' x='10'>%F0%9F%93%88</text></svg>%22,%22sizes%22:%22any%22,%22type%22:%22image/svg+xml%22,%22purpose%22:%22any+maskable%22}
+  ]
+}">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
@@ -21,7 +50,44 @@
 body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100vh;}
 .app{max-width:960px;margin:0 auto;padding:2rem 1.5rem;}
 
-/* ── HEADER ── */
+/* ── PWA SAFE AREA (iPhone notch / Dynamic Island / home bar) ── */
+.app{
+  padding-top: max(2rem, env(safe-area-inset-top));
+  padding-bottom: max(2rem, env(safe-area-inset-bottom));
+  padding-left: max(1.5rem, env(safe-area-inset-left));
+  padding-right: max(1.5rem, env(safe-area-inset-right));
+}
+/* Sticky header khi scroll */
+.header{
+  position:sticky;top:0;z-index:10;
+  background:rgba(13,15,20,0.92);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  margin:-1rem -1.5rem 1.75rem;
+  padding:1rem 1.5rem;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+/* PWA install banner */
+#pwa-banner{
+  display:none;position:fixed;bottom:max(16px,env(safe-area-inset-bottom));
+  left:50%;transform:translateX(-50%);
+  background:var(--sur);border:1px solid var(--b2);border-radius:14px;
+  padding:14px 18px;z-index:200;
+  box-shadow:0 8px 32px rgba(0,0,0,0.4);
+  display:flex;align-items:center;gap:12px;max-width:340px;width:90%;
+}
+#pwa-banner.show{display:flex;}
+.pwa-icon{font-size:28px;flex-shrink:0;}
+.pwa-text{flex:1;}
+.pwa-title{font-size:13px;font-weight:600;color:var(--tx);margin-bottom:2px;}
+.pwa-sub{font-size:11px;color:var(--mu);}
+.pwa-btns{display:flex;gap:6px;flex-direction:column;}
+.pwa-install{padding:6px 14px;border-radius:8px;background:var(--blue);color:#fff;border:none;font-size:12px;cursor:pointer;font-family:var(--sans);font-weight:500;}
+.pwa-dismiss{padding:4px 10px;border-radius:8px;background:transparent;color:var(--mu);border:none;font-size:11px;cursor:pointer;font-family:var(--sans);}
+/* Khi chạy standalone (đã cài app) */
+@media(display-mode:standalone){
+  .header{padding-top:max(1rem,env(safe-area-inset-top));}
+}
 .header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.75rem;}
 .logo{font-size:10px;letter-spacing:2.5px;color:var(--mu);margin-bottom:4px;}
 .ttl{font-size:24px;font-weight:600;letter-spacing:-0.5px;}
@@ -240,6 +306,18 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
 </style>
 </head>
 <body>
+<!-- PWA Install Banner -->
+<div id="pwa-banner">
+  <div class="pwa-icon">📈</div>
+  <div class="pwa-text">
+    <div class="pwa-title" id="pwa-title">Cài ứng dụng</div>
+    <div class="pwa-sub" id="pwa-sub">Thêm vào màn hình chính để dùng như app</div>
+  </div>
+  <div class="pwa-btns">
+    <button class="pwa-install" id="pwa-install-btn">Cài ngay</button>
+    <button class="pwa-dismiss" onclick="dismissPWA()">Bỏ qua</button>
+  </div>
+</div>
 <div class="app">
 
   <div class="header">
@@ -2058,6 +2136,202 @@ async function silentRefresh() {
   $('ut').textContent = 'cập nhật '+new Date().toLocaleTimeString('vi-VN');
 }
 setInterval(silentRefresh, 5 * 60 * 1000); // 5 phút
+</script>
+
+<!-- ── PWA SERVICE WORKER + INSTALL ── -->
+<script>
+// ─────────────────────────────────────────────────────────────
+//  SERVICE WORKER  (cache offline)
+// ─────────────────────────────────────────────────────────────
+const SW_CODE = `
+const CACHE = 'portfolio-v1';
+const ASSETS = [
+  self.location.pathname,
+  'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@400;500;600&display=swap',
+  'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js',
+];
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE).then(c => c.addAll(ASSETS.map(u => new Request(u,{mode:'no-cors'})))).catch(()=>{})
+  );
+  self.skipWaiting();
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(keys =>
+    Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))
+  ));
+  self.clients.claim();
+});
+self.addEventListener('fetch', e => {
+  // Cache-first cho assets tĩnh, network-first cho API
+  const url = e.request.url;
+  const isAPI = url.includes('coingecko') || url.includes('cryptocompare') ||
+                url.includes('binance') || url.includes('yahoo') ||
+                url.includes('frankfurter') || url.includes('stooq') ||
+                url.includes('corsproxy') || url.includes('allorigins');
+  if (isAPI) {
+    // Network first, fallback cache
+    e.respondWith(
+      fetch(e.request).catch(() => caches.match(e.request))
+    );
+  } else {
+    // Cache first, fallback network
+    e.respondWith(
+      caches.match(e.request).then(cached => cached || fetch(e.request).then(res => {
+        if (res && res.status === 200) {
+          caches.open(CACHE).then(c => c.put(e.request, res.clone()));
+        }
+        return res;
+      }))
+    );
+  }
+});
+`;
+
+// Đăng ký Service Worker từ blob
+if ('serviceWorker' in navigator) {
+  const blob = new Blob([SW_CODE], { type: 'application/javascript' });
+  const swUrl = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swUrl, { scope: '/' })
+    .then(reg => console.log('[PWA] SW registered:', reg.scope))
+    .catch(err => console.warn('[PWA] SW failed:', err));
+}
+
+// ─────────────────────────────────────────────────────────────
+//  PWA INSTALL PROMPT
+// ─────────────────────────────────────────────────────────────
+let deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  if (!pwaInstalled()) showBanner('android');
+});
+
+function pwaInstalled() {
+  return window.matchMedia('(display-mode: standalone)').matches
+    || window.navigator.standalone === true
+    || localStorage.getItem('pwa-dismissed') === '1';
+}
+
+const banner     = document.getElementById('pwa-banner');
+const installBtn = document.getElementById('pwa-install-btn');
+
+// Detect browser
+const ua        = navigator.userAgent;
+const isIOS     = /iphone|ipad|ipod/i.test(ua);
+const isSafari  = isIOS && /safari/i.test(ua) && !/crios|fxios|opios|chrome/i.test(ua);
+const isChromeIOS = isIOS && /crios/i.test(ua);
+const isAndroid = /android/i.test(ua);
+
+// iOS Safari → hướng dẫn Add to Home Screen
+if (isSafari && !window.navigator.standalone && localStorage.getItem('pwa-dismissed') !== '1') {
+  setTimeout(() => showBanner('ios-safari'), 2500);
+}
+// Chrome iOS → không hỗ trợ, thông báo chuyển sang Safari
+if (isChromeIOS && localStorage.getItem('pwa-dismissed') !== '1') {
+  setTimeout(() => showBanner('ios-chrome'), 2500);
+}
+
+function showBanner(platform) {
+  if (!banner || pwaInstalled()) return;
+  const titleEl    = document.getElementById('pwa-title');
+  const subEl      = document.getElementById('pwa-sub');
+  const lang       = localStorage.getItem('lang') || 'vi';
+
+  const txt = {
+    'android': {
+      title: lang==='vi' ? '📲 Cài ứng dụng' : '📲 Install App',
+      sub:   lang==='vi' ? 'Thêm vào màn hình chính, dùng được offline' : 'Add to home screen, works offline',
+      btn:   true,
+    },
+    'ios-safari': {
+      title: lang==='vi' ? '📲 Cài lên iPhone' : '📲 Install on iPhone',
+      sub:   lang==='vi'
+        ? '① Nhấn nút <strong>⎙</strong> ở thanh dưới<br>② Chọn <strong><em>Add to Home Screen</em></strong>'
+        : '① Tap <strong>⎙ Share</strong> at the bottom<br>② Select <strong><em>Add to Home Screen</em></strong>',
+      btn: false,
+    },
+    'ios-chrome': {
+      title: lang==='vi' ? '⚠️ Mở bằng Safari' : '⚠️ Open in Safari',
+      sub:   lang==='vi'
+        ? 'Chrome trên iPhone không hỗ trợ cài app.<br>Vui lòng mở link này bằng <strong>Safari</strong> để cài.'
+        : 'Chrome on iPhone cannot install PWAs.<br>Please open this link in <strong>Safari</strong> to install.',
+      btn: false,
+    },
+  };
+
+  const cfg = txt[platform] || txt['android'];
+  if (titleEl) titleEl.textContent = cfg.title;
+  if (subEl)   subEl.innerHTML     = cfg.sub;
+  if (installBtn) {
+    installBtn.style.display = cfg.btn ? '' : 'none';
+    installBtn.textContent   = lang==='vi' ? 'Cài ngay' : 'Install';
+  }
+  banner.classList.add('show');
+}
+
+function dismissPWA() {
+  if (banner) banner.classList.remove('show');
+  localStorage.setItem('pwa-dismissed', '1');
+}
+
+if (installBtn) {
+  installBtn.addEventListener('click', async () => {
+    if (deferredPrompt) {
+      try {
+        await deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') dismissPWA();
+        deferredPrompt = null;
+      } catch(err) {
+        showManualInstructions();
+      }
+      return;
+    }
+    if (pwaInstalled()) { dismissPWA(); return; }
+    showManualInstructions();
+  });
+}
+
+function showManualInstructions() {
+  const subEl = document.getElementById('pwa-sub');
+  const lang  = localStorage.getItem('lang') || 'vi';
+  if (subEl) subEl.innerHTML = lang==='vi'
+    ? 'Chrome menu <strong>⋮</strong> → <em>Add to Home screen</em>'
+    : 'Chrome menu <strong>⋮</strong> → <em>Add to Home screen</em>';
+  if (installBtn) installBtn.style.display = 'none';
+}
+
+window.addEventListener('appinstalled', () => dismissPWA());
+
+// Ẩn banner sau khi đã cài
+window.addEventListener('appinstalled', () => dismissPWA());
+
+// ─────────────────────────────────────────────────────────────
+//  OFFLINE INDICATOR
+// ─────────────────────────────────────────────────────────────
+function updateOnlineStatus() {
+  const dot = document.querySelector('.dot');
+  const live = document.querySelector('.live');
+  if (!dot || !live) return;
+  if (!navigator.onLine) {
+    dot.style.background = '#f87171';
+    live.style.borderColor = 'rgba(248,113,113,0.3)';
+    live.style.background = 'rgba(248,113,113,0.06)';
+    live.style.color = '#f87171';
+    live.innerHTML = '<span class="dot" style="background:#f87171"></span>OFFLINE';
+  } else {
+    dot.style.background = '';
+    live.style.borderColor = '';
+    live.style.background = '';
+    live.style.color = '';
+    live.innerHTML = '<span class="dot"></span>LIVE';
+  }
+}
+window.addEventListener('online',  updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+updateOnlineStatus();
 </script>
 </body>
 </html>

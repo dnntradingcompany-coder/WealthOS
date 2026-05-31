@@ -2460,19 +2460,52 @@ const PM_ALLOC = {
 
 async function initPremium() {
   if (!isPremium) return;
-  // Kiểm tra valid_until còn hạn không
+
+  // 1. Check local expiry trước (nhanh)
   const validUntil = localStorage.getItem('wealthos_valid_until');
-  if (validUntil) {
-    const expired = new Date() > new Date(validUntil);
-    if (expired) {
-      // Hết hạn → lock lại
-      localStorage.removeItem('wealthos_premium');
-      localStorage.removeItem('wealthos_valid_until');
-      isPremium = false;
-      return;
-    }
+  if (validUntil && new Date() > new Date(validUntil)) {
+    lockPremium(); return;
   }
+
+  // 2. Unlock tạm thời để UX mượt
   unlockPremium();
+
+  // 3. Re-verify với Worker ở background
+  const email = localStorage.getItem('wealthos_email');
+  const key   = localStorage.getItem('wealthos_key');
+  if (!email || !key) { lockPremium(); return; }
+
+  try {
+    const res = await fetch('https://twilight-silence-ee34.dnntradingcompany.workers.dev/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, license_key: key }),
+    });
+    const data = await res.json();
+    if (!data.valid) {
+      lockPremium();
+    } else {
+      // Cập nhật valid_until mới nhất từ Sheet
+      localStorage.setItem('wealthos_valid_until', data.valid_until);
+    }
+  } catch {
+    // Nếu lỗi mạng → giữ unlock (tránh lock nhầm khi offline)
+  }
+}
+
+function lockPremium() {
+  localStorage.removeItem('wealthos_premium');
+  localStorage.removeItem('wealthos_valid_until');
+  localStorage.removeItem('wealthos_email');
+  localStorage.removeItem('wealthos_key');
+  localStorage.removeItem('wealthos_plan');
+  isPremium = false;
+  document.getElementById('premium-lock').style.display = 'flex';
+  const content = document.getElementById('premium-content');
+  content.style.filter = 'blur(4px)';
+  content.style.pointerEvents = 'none';
+  content.style.userSelect = 'none';
+  if (pmChart) { pmChart.destroy(); pmChart = null; }
 }
 
 function openUpgradeModal() {

@@ -2114,15 +2114,6 @@ function fcCalcAsset(init, dca, rate) {
   return res;
 }
 
-function fcGetScenarios(type) {
-  return FC_SCENARIOS[type] || FC_SCENARIOS.stock;
-}
-
-function fcDefaultScenario(type) {
-  const s = fcGetScenarios(type);
-  return Object.keys(s)[0];
-}
-
 function renderFcAssetScenarios() {
   const container = document.getElementById('fc-asset-scenarios');
   if (!assets.length) { container.innerHTML = `<div style="color:var(--mu);font-size:12px;">${t('noAssets')}</div>`; return; }

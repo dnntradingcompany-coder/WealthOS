@@ -84,7 +84,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
 .hval.ok{color:var(--gr);}
 .hval-alloc{font-size:10px;font-family:var(--mono);color:var(--mu);margin-top:3px;}
 .manual-price-row{display:flex;gap:6px;margin:6px 0 4px;align-items:center;}
-.extra-field{margin-top:8px;padding:8px 12px;background:var(--sur2);border-radius:8px;border:1px solid var(--b);display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.hico-wrap{display:flex;border-radius:7px;}
+.hico-wrap:hover .hico{filter:brightness(1.2);transform:scale(1.08);}
+.hico-wrap .hico{transition:all .2s;}
 .extra-field-label{font-size:10px;color:var(--mu);font-family:var(--mono);white-space:nowrap;}
 .einput{width:68px;background:transparent;border:none;border-bottom:1px solid var(--b2);font-size:13px;font-weight:600;font-family:var(--mono);color:var(--tx);outline:none;text-align:right;padding:2px 4px;}
 .einput:focus{border-bottom-color:var(--blue);}
@@ -1282,8 +1284,16 @@ function renderHoldings() {
     return `
     <div class="hfield" id="hf-${i}">
       <div class="hfield-top">
-        <div class="hico" style="background:${a.color}22;">${a.icon}</div>
-        <div><div class="hlabel">${a.name}</div><div class="hticker">${a.ticker} · USD</div></div>
+        <label class="hico-wrap" title="Đổi màu" style="cursor:pointer;position:relative;">
+          <div class="hico" id="hico-${i}" style="background:${a.color}22;border:2px solid ${a.color}44;transition:border-color .2s;">${a.icon}</div>
+          <input type="color" value="${a.color}"
+            onchange="changeAssetColor(${i},this.value)"
+            style="position:absolute;opacity:0;width:100%;height:100%;top:0;left:0;cursor:pointer;">
+        </label>
+        <div>
+          <div class="hlabel">${a.name}</div>
+          <div class="hticker">${a.ticker} · USD</div>
+        </div>
       </div>
       <button class="hdelete" onclick="removeAsset(${i})" title="Xoá">×</button>
       <div class="hinput-wrap">
@@ -1447,6 +1457,22 @@ async function retryFetch(i) {
 
 function updateCashRate(i,val) { assets[i].cashRate=parseFloat(val)||5.5; renderFcAssetScenarios(); fcUpdate(); saveAll(); }
 function updateReRate(i,val)   { assets[i].reGrowthRate=(parseFloat(val)||8)/100; renderFcAssetScenarios(); fcUpdate(); saveAll(); }
+function changeAssetColor(i, color) {
+  assets[i].color = color;
+  // Update icon background ngay không cần re-render toàn bộ
+  const hico = $(`hico-${i}`);
+  if (hico) {
+    hico.style.background = color+'22';
+    hico.style.borderColor = color+'44';
+  }
+  // Update alloc bar, legend, summary cards
+  recalc();
+  renderSummaryCards();
+  buildChart();
+  if (typeof renderFcAssetScenarios === 'function') renderFcAssetScenarios();
+  saveAll();
+}
+
 function onQtyChange(i) { recalc(); }
 
 // ─────────────────────────────────────────────────────────────

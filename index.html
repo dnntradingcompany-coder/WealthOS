@@ -326,21 +326,12 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
     <div id="fc-asset-scenarios" style="display:grid;gap:12px;margin-bottom:16px;"></div>
 
     <!-- Thông số -->
-    <div class="fc-params-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+    <div class="fc-params-grid" style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:16px;">
       <div class="hfield" style="padding:14px 16px;">
         <div class="sl" style="margin-bottom:8px;" data-i18n="initCapital">VỐN BAN ĐẦU (USD)</div>
         <div class="hinput-wrap">
           <input class="hinput" type="text" id="fc-init" value="30,000"
             placeholder="30,000" oninput="fcInputInit(this)"
-            style="font-size:15px;font-weight:600;padding-right:48px;">
-          <span class="hunit">USD</span>
-        </div>
-      </div>
-      <div class="hfield" style="padding:14px 16px;">
-        <div class="sl" style="margin-bottom:8px;" data-i18n="dcaMonth">DCA / THÁNG (USD)</div>
-        <div class="hinput-wrap">
-          <input class="hinput" type="text" id="fc-dca" value="0"
-            placeholder="0" oninput="fcInputDCA(this)"
             style="font-size:15px;font-weight:600;padding-right:48px;">
           <span class="hunit">USD</span>
         </div>
@@ -2686,8 +2677,13 @@ CURRENT PORTFOLIO (total $${Math.round(total).toLocaleString()}):
 
 Return ONLY a valid JSON array (no markdown, no explanation) with this exact structure:
 [
-  {"ticker":"VUAA.L","name":"VUAA ETF","action":"keep","current_pct":44.2,"target_pct":50,"reason":"${vi?'Nền tảng ổn định, tăng nhẹ':'Stable core holding'}","color":"#4f8ef7","isNew":false},
-  {"ticker":"BONDS","name":"Bonds/Fixed Income","action":"add","current_pct":0,"target_pct":20,"reason":"${vi?'Cần thêm để ổn định danh mục':'Add for portfolio stability'}","color":"#34d399","isNew":true}
+  {
+    "ticker":"VUAA.L","name":"VUAA ETF","action":"keep",
+    "current_pct":44.2,"target_pct":50,
+    "reason":"${vi?'Nền tảng ổn định, tăng nhẹ':'Stable core holding'}",
+    "color":"#4f8ef7","isNew":false,
+    "growth":{"hist10":10.2,"realistic":8.5,"optimistic":15.0,"pessimistic":3.0}
+  }
 ]
 
 Rules:
@@ -2695,6 +2691,7 @@ Rules:
 - Include ALL current assets + suggest new ones if needed
 - total target_pct must sum to 100
 - reason max 8 words
+- growth: annual % return estimates (hist10=10yr historical avg, realistic=base case, optimistic=bull case, pessimistic=bear case)
 - Return ONLY the JSON array, nothing else`;
 
   try {
@@ -2724,6 +2721,24 @@ Rules:
       const assetObj = assets.find(a => a.ticker === item.ticker);
       const icon = assetObj ? assetObj.icon : (item.isNew ? '✨' : '💰');
       const color = assetObj ? assetObj.color : (item.color || cfg.badge);
+      const g = item.growth || {};
+
+      // Growth scenario chips
+      const growthScenarios = g.hist10 != null ? `
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;">
+          <span style="padding:3px 9px;border-radius:6px;font-size:10px;font-weight:600;font-family:var(--mono);background:${color}22;color:${color};border:1px solid ${color}44;" title="${vi?'Trung bình 10 năm':'10yr Historical Avg'}">
+            ${vi?'TB':'Avg'} ${g.hist10 > 0 ? '+' : ''}${g.hist10?.toFixed(1)}%
+          </span>
+          <span style="padding:3px 9px;border-radius:6px;font-size:10px;font-weight:600;font-family:var(--mono);background:rgba(52,211,153,0.1);color:#34d399;border:1px solid rgba(52,211,153,0.2);" title="${vi?'Tăng trưởng khả thi':'Realistic growth'}">
+            ${vi?'Khả thi':'Real'} ${g.realistic > 0 ? '+' : ''}${g.realistic?.toFixed(1)}%
+          </span>
+          <span style="padding:3px 9px;border-radius:6px;font-size:10px;font-weight:600;font-family:var(--mono);background:rgba(79,142,247,0.1);color:#4f8ef7;border:1px solid rgba(79,142,247,0.2);" title="${vi?'Lạc quan':'Optimistic'}">
+            ${vi?'Lạc quan':'Bull'} ${g.optimistic > 0 ? '+' : ''}${g.optimistic?.toFixed(1)}%
+          </span>
+          <span style="padding:3px 9px;border-radius:6px;font-size:10px;font-weight:600;font-family:var(--mono);background:rgba(248,113,113,0.1);color:#f87171;border:1px solid rgba(248,113,113,0.2);" title="${vi?'Bi quan':'Pessimistic'}">
+            ${vi?'Bi quan':'Bear'} ${g.pessimistic > 0 ? '+' : ''}${g.pessimistic?.toFixed(1)}%
+          </span>
+        </div>` : '';
 
       return `<div style="background:var(--sur);border:1px solid var(--b);border-radius:12px;padding:14px 16px;position:relative;">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
@@ -2743,6 +2758,7 @@ Rules:
           <button style="padding:4px 12px;border-radius:8px;border:1px solid var(--b2);background:transparent;color:var(--tx);font-size:11px;font-weight:600;cursor:default;font-family:var(--mono);">${item.target_pct}% <span style="color:${diffColor};font-size:10px;">(${diffStr})</span></button>
         </div>
         <div style="font-size:10px;color:var(--mu);margin-top:6px;line-height:1.5;">${item.reason}</div>
+        ${growthScenarios}
       </div>`;
     }).join('');
 

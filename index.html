@@ -275,16 +275,17 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
   </div>
 
   <!-- HOLDINGS -->
-  <div class="holdings-row" id="holdings-row">
-    <!-- dynamic hfields -->
-  </div>
-
-  <!-- ADD BUTTON -->
-  <div class="add-row">
-    <button class="btn btn-add" onclick="openModal()">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      <span data-i18n="addAsset">Thêm tài sản</span>
-    </button>
+  <div class="csec" style="margin-bottom:1rem;">
+    <div class="chdr" style="margin-bottom:14px;">
+      <span class="ctit" data-i18n="holdingsTitle">NHẬP KHỐI LƯỢNG TÀI SẢN</span>
+      <button class="btn btn-add" onclick="openModal()" style="font-size:11px;padding:5px 12px;">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span data-i18n="addAsset">Thêm tài sản</span>
+      </button>
+    </div>
+    <div class="holdings-row" id="holdings-row">
+      <!-- dynamic hfields -->
+    </div>
   </div>
 
   <!-- CHART -->
@@ -626,7 +627,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
 const LANG = {
   vi: {
     logo:'WEALTHOS', title:'Nền tảng quản trị tài sản thông minh.',
-    refresh:'Làm mới', addAsset:'Thêm tài sản',
+    refresh:'Làm mới', addAsset:'Thêm tài sản', holdingsTitle:'NHẬP KHỐI LƯỢNG TÀI SẢN',
     totalPortfolio:'TỔNG DANH MỤC (USD)', byQty:'theo khối lượng nhập',
     chart7d:'BIẾN ĐỘNG 7 NGÀY (chỉ số hóa, ngày đầu = 100)',
     source:'Nguồn', loading:'đang tải...', updatedAt:'cập nhật',
@@ -699,7 +700,7 @@ const LANG = {
   },
   en: {
     logo:'WEALTHOS', title:'See your entire wealth in one place',
-    refresh:'Refresh', addAsset:'Add Asset',
+    refresh:'Refresh', addAsset:'Add Asset', holdingsTitle:'ENTER YOUR HOLDINGS',
     totalPortfolio:'TOTAL PORTFOLIO (USD)', byQty:'enter quantities below',
     chart7d:'7-DAY PERFORMANCE (indexed, day 1 = 100)',
     source:'Source', loading:'loading...', updatedAt:'updated',
@@ -1506,17 +1507,28 @@ function renderHoldings() {
           <div class="hlabel">${a.name}</div>
           <div class="hticker">${a.ticker} · USD</div>
         </div>
+        <button class="hdelete" onclick="removeAsset(${i})" title="Xoá" style="position:absolute;top:10px;right:10px;">×</button>
       </div>
-      <button class="hdelete" onclick="removeAsset(${i})" title="Xoá">×</button>
-      <div class="hinput-wrap">
-        <input class="hinput" id="qty-${i}" type="text" inputmode="decimal"
-          placeholder="${qtyPlaceholder}"
-          value="${a.qty ? fmtNum(a.qty) : ''}"
-          oninput="fmtQtyInput(this);onQtyChange(${i})"
-          onkeypress="return /[0-9.,]/.test(event.key)">
-        <span class="hunit">${qtyLabel}</span>
+
+      <!-- INPUT SECTION -->
+      <div style="margin-top:10px;padding:10px 10px 8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;">
+        <div style="font-size:9px;letter-spacing:1px;color:var(--mu);margin-bottom:6px;font-family:var(--mono);">✏ ${isCash ? (currentLang==='vi'?'SỐ DƯ':'BALANCE') : isRE ? (currentLang==='vi'?'GIÁ TRỊ BĐS':'PROPERTY VALUE') : (currentLang==='vi'?'KHỐI LƯỢNG NẮM GIỮ':'QUANTITY HELD')}</div>
+        <div class="hinput-wrap">
+          <input class="hinput" id="qty-${i}" type="text" inputmode="decimal"
+            placeholder="${qtyPlaceholder}"
+            value="${a.qty ? fmtNum(a.qty) : ''}"
+            oninput="fmtQtyInput(this);onQtyChange(${i})"
+            onkeypress="return /[0-9.,]/.test(event.key)">
+          <span class="hunit">${qtyLabel}</span>
+        </div>
+        ${extraField}
       </div>
-      <div class="hval-block">${valBlock}</div>
+
+      <!-- VALUE SECTION -->
+      <div style="margin-top:6px;padding:10px;background:var(--sur2);border:1px solid var(--b);border-radius:8px;">
+        <div style="font-size:9px;letter-spacing:1px;color:var(--mu);margin-bottom:6px;font-family:var(--mono);">💰 ${currentLang==='vi'?'GIÁ TRỊ QUY ĐỔI (USD)':'CURRENT VALUE (USD)'}</div>
+        ${valBlock}
+      </div>
     </div>`;
   }).join('');
   recalc();

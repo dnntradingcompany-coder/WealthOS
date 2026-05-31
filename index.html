@@ -2270,13 +2270,10 @@ async function runAIAnalysis() {
   const extraContext = document.getElementById('ai-context').value.trim();
   const riskLabel = RISK_LABELS[selectedRisk]();
 
-  const prompt = `Phân tích danh mục này (khẩu vị: ${riskLabel}):
+  const prompt = `Phân tích ngắn gọn danh mục này (khẩu vị: ${riskLabel}):
 ${portfolioText}${extraContext ? '\nThêm: '+extraContext : ''}
 
-Trả lời tiếng Việt, ngắn gọn:
-1. Nhận xét danh mục (điểm mạnh/yếu)
-2. Gợi ý % phân bổ tối ưu cho từng tài sản
-3. Lưu ý rủi ro`;
+Chỉ nhận xét điểm mạnh và điểm yếu của danh mục hiện tại. Không đề xuất thêm tài sản mới. Trả lời tiếng Việt, súc tích, dùng bullet points.`;
 
   try {
     const workerUrl = 'https://twilight-silence-ee34.dnntradingcompany.workers.dev';
@@ -2306,16 +2303,15 @@ Trả lời tiếng Việt, ngắn gọn:
 }
 
 function formatAIResponse(text) {
-  // Convert numbered sections to styled headers, bold text, bullet points
   return text
+    .replace(/^###\s+(.+)/gm, '<h3>$1</h3>')
+    .replace(/^##\s+(.+)/gm, '<h3>$1</h3>')
+    .replace(/^#\s+(.+)/gm, '<h3>$1</h3>')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/^(\d+\.\s+\*\*(.+?)\*\*)/gm, '<h3>$2</h3>')
-    .replace(/^(\d+\.\s+)(.+)/gm, '<h3>$2</h3>')
     .replace(/^[-•]\s+(.+)/gm, '<li>$1</li>')
-    .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
+    .replace(/(<li>[\s\S]*?<\/li>)/g, '<ul>$1</ul>')
     .replace(/\n{2,}/g, '<br><br>')
     .replace(/\n/g, '<br>')
-    // Highlight percentage allocations
     .replace(/(\d+[-–]\d+%|\d+%)/g, '<span class="alloc-chip">$1</span>');
 }
 </script>

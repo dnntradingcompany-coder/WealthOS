@@ -1053,8 +1053,60 @@ function updateReGrowthHint() {
   const g = RE_GROWTH[loc]||RE_GROWTH['vn-hcm'];
   const hv = $('re-hint-val'); if(hv) hv.textContent='~'+(g.r*100).toFixed(0)+'%/năm ('+g.label+')';
 }
+// ─────────────────────────────────────────────────────────────
+//  FX RATES  (các tiền tệ → USD)
+// ─────────────────────────────────────────────────────────────
+const FX_RATES = { USD:1, VND:null, EUR:null, SGD:null, JPY:null }; // null = chưa load
+const FX_SYMBOLS = { VND:'VND=X', EUR:'EURUSD=X', SGD:'SGDUSD=X', JPY:'JPY=X' };
+// Tỷ giá fallback nếu không fetch được
+const FX_FALLBACK = { USD:1, VND:1/25400, EUR:1.08, SGD:0.74, JPY:1/149 };
+
+async function loadFxRates(currencies) {
+  const needed = [...new Set(currencies)].filter(c => c!=='USD' && FX_RATES[c]==null);
+  if (!needed.length) return;
+  await Promise.allSettled(needed.map(async cur => {
+    try {
+      // Thử Frankfurter API (free, no CORS, EUR-based)
+      const r = await fetchWithTimeout(`https://api.frankfurter.app/latest?from=${cur}&to=USD`);
+      if (r.ok) {
+        const d = await r.json();
+        if (d?.rates?.USD) { FX_RATES[cur] = d.rates.USD; return; }
+      }
+    } catch(_) {}
+    try {
+      // Fallback: Yahoo Finance forex
+      const sym = FX_SYMBOLS[cur];
+      if (sym) {
+        const v = await fetchYahoo(sym);
+        if (v?.price) { FX_RATES[cur] = cur==='VND'||cur==='JPY' ? 1/v.price : v.price; return; }
+      }
+    } catch(_) {}
+    // Dùng fallback cứng
+    FX_RATES[cur] = FX_FALLBACK[cur] ?? 1;
+  }));
+}
+
+function toUSD(amount, currency) {
+  const rate = FX_RATES[currency] ?? FX_FALLBACK[currency] ?? 1;
+  return amount * rate;
+}
+
+function fxLabel(currency) {
+  if (currency==='USD' || !currency) return '';
+  const rate = FX_RATES[currency] ?? FX_FALLBACK[currency];
+  if (!rate) return '';
+  const per1USD = Math.round(1/rate);
+  return currency==='VND' ? `1 USD ≈ ${per1USD.toLocaleString('en-US')} VND`
+       : currency==='JPY' ? `1 USD ≈ ${per1USD.toLocaleString('en-US')} JPY`
+       : `1 ${currency} ≈ ${(rate).toFixed(4)} USD`;
+}
+
 function getAssetValue(a,i) {
-  if (a.type==='cash'||a.type==='realestate') return a.qty||0;
+  if (a.type==='cash') {
+    const usdVal = toUSD(a.qty||0, a.currency||'USD');
+    return usdVal;
+  }
+  if (a.type==='realestate') return a.qty||0;
   if (a.price!=null) return a.price*(a.qty||0);
   if (a.manualPrice) return a.manualPrice*(a.qty||0);
   return 0;
@@ -1092,9 +1144,20 @@ function renderHoldings() {
 
     // Value block
     let valBlock;
-    if (isCash || isRE) {
+    if (isCash) {
+      const usdVal = toUSD(a.qty||0, a.currency||'USD');
+      const isNotUSD = a.currency && a.currency !== 'USD';
+      const fxInfo = isNotUSD ? fxLabel(a.currency) : '';
+      valBlock = `
+        ${isNotUSD && fxInfo ? `<div class="hval-price" id="price-${i}" style="color:var(--mu);font-size:10px;">💱 ${fxInfo}</div>` : `<div id="price-${i}" style="display:none"></div>`}
+        <div class="hval ${usdVal>0?'ok':''}" id="val-${i}">${usdVal>0 ? usd(usdVal) : '—'}${isNotUSD&&usdVal>0?' <span style="font-size:10px;opacity:.6;font-weight:400">USD</span>':''}</div>
+        ${isNotUSD&&usdVal>0 ? `<div style="font-size:10px;color:var(--mu);font-family:var(--mono);margin-top:2px;">${(a.qty||0).toLocaleString('en-US')} ${a.currency}</div>` : ''}
+        <div class="hval-alloc" id="alloc-${i}"></div>
+        ${extraField}`;
+    } else if (isRE) {
       const v = a.qty||0;
-      valBlock = `<div class="hval ${v>0?'ok':''}" id="val-${i}">${v>0?usd(v):'—'}</div>
+      valBlock = `<div id="price-${i}" style="display:none"></div>
+                  <div class="hval ${v>0?'ok':''}" id="val-${i}">${v>0?usd(v):'—'}</div>
                   <div class="hval-alloc" id="alloc-${i}"></div>${extraField}`;
     } else if (effectivePrice != null) {
       valBlock = `<div class="hval-price" id="price-${i}">Giá: ${usd(effectivePrice,effectivePrice>100?2:effectivePrice>1?3:5)}</div>
@@ -1200,16 +1263,28 @@ function recalc() {
 
     // update hval in each holding card
     vals.forEach((v, i) => {
+      const a = assets[i];
       const valEl = $(`val-${i}`);
       const allocEl = $(`alloc-${i}`);
+      const priceEl = $(`price-${i}`);
       if (valEl) {
-        if (v != null) {
-          valEl.textContent = v > 0 ? usd(v) : '—';
-          valEl.className = v > 0 ? 'hval ok' : 'hval';
+        if (a.type==='cash') {
+          const usdVal = toUSD(a.qty||0, a.currency||'USD');
+          const isNotUSD = a.currency && a.currency!=='USD';
+          valEl.innerHTML = usdVal>0 ? usd(usdVal)+(isNotUSD?` <span style="font-size:10px;opacity:.6;font-weight:400">USD</span>`:'') : '—';
+          valEl.className = usdVal>0 ? 'hval ok' : 'hval';
+          if (priceEl && isNotUSD) {
+            const fx = fxLabel(a.currency);
+            priceEl.textContent = fx ? '💱 '+fx : '';
+            priceEl.style.display = fx ? '' : 'none';
+          }
+        } else {
+          if (v > 0) { valEl.textContent = usd(v); valEl.className = 'hval ok'; }
+          else if (v === 0) { valEl.textContent = '—'; valEl.className = 'hval'; }
         }
       }
       if (allocEl) {
-        const pct = v!=null&&v>0 ? (v/total*100).toFixed(1) : null;
+        const pct = v>0 ? (v/total*100).toFixed(1) : null;
         allocEl.textContent = pct ? pct+'% '+t('portAlloc').split('%')[1].trim() : '';
       }
     });
@@ -1329,13 +1404,18 @@ async function loadAll() {
     } catch(_) {}
   }));
 
+  // Load tỷ giá cho tất cả cash assets
+  const cashCurrencies = assets.filter(a=>a.type==='cash'&&a.currency!=='USD').map(a=>a.currency);
+  if (cashCurrencies.length) await loadFxRates(cashCurrencies);
+
   renderHoldings();
   buildChart();
   recalc();
   setTimeout(() => buildChart(), 200);
 
   $('msgs').innerHTML = msgs.map(m=>`<div class="${m.type==='err'?'err':'info'}">${m.type==='err'?'⚠':'ℹ'} ${m.text}</div>`).join('');
-  $('ut').textContent = 'cập nhật '+new Date().toLocaleTimeString('vi-VN');
+  const timeStr = new Date().toLocaleTimeString('vi-VN');
+  $('ut').textContent = t('updatedAt')+' '+timeStr;
   $('rico').classList.remove('spin');
   $('rbtn').disabled = false;
   busy = false;
@@ -1478,11 +1558,14 @@ function addSelectedAsset() {
   asset.qty = 0; asset.price = null; asset.pct = null; asset.history = [];
   assets.push(asset);
   closeModal();
+  // Load tỷ giá nếu là cash với tiền tệ khác USD
+  if (asset.type==='cash' && asset.currency && asset.currency!=='USD') {
+    loadFxRates([asset.currency]).then(() => { renderHoldings(); recalc(); });
+  }
   renderHoldings();
   recalc();
   renderFcAssetScenarios();
   fcUpdate();
-  // fetch price for new asset
   fetchSingleAsset(assets.length-1);
 }
 

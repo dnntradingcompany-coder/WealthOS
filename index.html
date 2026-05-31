@@ -383,6 +383,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
     <div id="premium-content" style="filter:blur(4px);pointer-events:none;user-select:none;">
       <div class="chdr" style="margin-bottom:16px;">
         <span class="ctit" data-i18n="pmTitle">PHÂN BỔ TỐI ƯU & MÔ PHỎNG DÀI HẠN ✦</span>
+        <button onclick="exportPDF()" style="display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;border:1px solid rgba(167,139,250,0.3);background:rgba(167,139,250,0.08);color:#a78bfa;font-size:11px;cursor:pointer;font-family:var(--sans);">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span data-i18n="pmExportPDF">Xuất PDF</span>
+        </button>
       </div>
 
       <!-- Risk selector -->
@@ -540,13 +544,19 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
 <!-- ── AI ADVISOR MODAL ── -->
 <div class="modal-overlay" id="ai-modal-overlay" onclick="maybeCloseAI(event)" style="z-index:200;">
   <div class="modal" style="width:min(520px,94vw);max-height:90vh;">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
-      <span style="font-size:20px;">✦</span>
-      <h3 style="font-size:16px;" data-i18n="aiTitle">AI Tư vấn Danh mục</h3>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:20px;">✦</span>
+        <h3 style="font-size:16px;" data-i18n="aiTitle">AI Tư vấn Danh mục</h3>
+      </div>
+      <span id="ai-plan-badge" style="display:none;font-size:9px;padding:2px 8px;border-radius:20px;font-family:var(--mono);font-weight:600;background:linear-gradient(135deg,#7c3aed,#4f8ef7);color:#fff;letter-spacing:.5px;">PREMIUM</span>
     </div>
     <div class="modal-sub" id="ai-modal-sub" data-i18n="aiSub">Phân tích điểm mạnh và điểm yếu danh mục hiện tại</div>
 
     <div id="ai-setup" style="margin-top:12px;">
+      <div id="ai-premium-note" style="display:none;font-size:11px;color:#a78bfa;background:rgba(139,108,247,0.08);border:1px solid rgba(139,108,247,0.2);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-family:var(--mono);">
+        ✦ Premium: Phân tích sâu + gợi ý % phân bổ tối ưu
+      </div>
       <div id="ai-setup-err" class="modal-err"></div>
       <div class="modal-btns">
         <button class="mbtn" id="ai-close-btn" onclick="closeAIAdvisor()" data-i18n="aiClose">Đóng</button>
@@ -687,7 +697,7 @@ const LANG = {
     pmAllocHint:'Chọn khẩu vị để xem gợi ý phân bổ...', pmAllocTitle:'GỢI Ý PHÂN BỔ', pmYearsLabel:'SỐ NĂM MÔ PHỎNG', pmYearsUnit:'năm',
     pmDisclaimer:'⚠ Mô phỏng dựa trên lãi suất giả định — không phải dự báo thực tế.',
     pmTypeStock:'Cổ phiếu/ETF', pmTypeCrypto:'Crypto', pmTypeCommodity:'Hàng hóa', pmTypeCash:'Tiền mặt', pmTypeRE:'Bất động sản',
-    pmAfter:'Tổng sau', pmProfit:'Lãi ròng', pmCAGR:'CAGR',
+    pmAfter:'Tổng sau', pmProfit:'Lãi ròng', pmCAGR:'CAGR', pmExportPDF:'Xuất PDF',
     pmModalSub:'Mở khóa toàn bộ tính năng nâng cao',
     pmFeat1:'Phân bổ % danh mục theo AI theo khẩu vị rủi ro', pmFeat2:'Mô phỏng tăng trưởng tùy chọn 3–100 năm',
     pmFeat3:'Phân tích AI không giới hạn', pmFeat4:'Xuất báo cáo PDF',
@@ -776,7 +786,7 @@ const LANG = {
     pmAllocHint:'Select a risk profile to see allocation suggestion...', pmAllocTitle:'ALLOCATION SUGGESTION', pmYearsLabel:'SIMULATION YEARS', pmYearsUnit:'years',
     pmDisclaimer:'⚠ Simulation based on assumed rates — not a real forecast.',
     pmTypeStock:'Stocks/ETF', pmTypeCrypto:'Crypto', pmTypeCommodity:'Commodities', pmTypeCash:'Cash', pmTypeRE:'Real Estate',
-    pmAfter:'Total after', pmProfit:'Net Profit', pmCAGR:'CAGR',
+    pmAfter:'Total after', pmProfit:'Net Profit', pmCAGR:'CAGR', pmExportPDF:'Export PDF',
     pmModalSub:'Unlock all advanced features',
     pmFeat1:'AI-based portfolio allocation by risk profile', pmFeat2:'Growth simulation 3–100 years',
     pmFeat3:'Unlimited AI analysis', pmFeat4:'Export PDF report',
@@ -2325,8 +2335,17 @@ let selectedRisk = null;
 
 function openAIAdvisor() {
   document.getElementById('ai-modal-overlay').classList.add('open');
-  const keyEl = document.getElementById('ai-apikey');
-  if (keyEl && !keyEl.value) keyEl.value = 'AQ.Ab8RN6IZiG7hXMlIffSJsbXrHU7YRI26FP6izsqsnoBJtk06jg';
+  const badge = document.getElementById('ai-plan-badge');
+  const note  = document.getElementById('ai-premium-note');
+  const sub   = document.getElementById('ai-modal-sub');
+  if (isPremium) {
+    if (badge) badge.style.display = 'inline-block';
+    if (note) { note.style.display = 'block'; note.textContent = currentLang==='vi' ? '✦ Premium: Phân tích sâu + gợi ý % phân bổ tối ưu' : '✦ Premium: Deep analysis + optimal allocation %'; }
+    if (sub) sub.textContent = currentLang==='vi' ? 'Phân tích chuyên sâu · Gợi ý % phân bổ · Cảnh báo rủi ro' : 'Deep analysis · Optimal allocation % · Risk warnings';
+  } else {
+    if (badge) badge.style.display = 'none';
+    if (note) note.style.display = 'none';
+  }
 }
 function saveApiKey(val) {
   localStorage.setItem('gemini_api_key', val);
@@ -2391,13 +2410,23 @@ async function runAIAnalysis() {
 
   const portfolioText = buildPortfolioSummary();
 
-  const prompt = `Phân tích ngắn gọn danh mục đầu tư này:
+  // Premium prompt: sâu hơn, có gợi ý % phân bổ
+  const prompt = isPremium
+    ? `Bạn là chuyên gia tư vấn tài chính cá nhân. Phân tích chi tiết danh mục sau:
+${portfolioText}
+
+Trả lời tiếng Việt, gồm 4 phần rõ ràng:
+1. **Nhận xét**: điểm mạnh, điểm yếu, rủi ro tập trung
+2. **Gợi ý % phân bổ tối ưu**: cho từng tài sản hiện có (VD: VUAA 45%, HYPE 20%...)
+3. **Lý do**: giải thích ngắn gọn từng điều chỉnh
+4. **Cảnh báo rủi ro**: 1-2 điểm quan trọng nhất`
+    : `Phân tích ngắn gọn danh mục đầu tư này:
 ${portfolioText}
 
 Chỉ nhận xét điểm mạnh và điểm yếu của danh mục hiện tại. Trả lời tiếng Việt, súc tích, dùng bullet points.`;
 
   try {
-    const workerUrl = 'https://twilight-silence-ee34.dnntradingcompany.workers.dev';
+    const workerUrl = 'https://twilight-silence-ee34.dnntradingcompany.workers.dev' + (isPremium ? '/ai' : '/');
     const response = await fetch(workerUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2411,7 +2440,7 @@ Chỉ nhận xét điểm mạnh và điểm yếu của danh mục hiện tại
 
     document.getElementById('ai-setup').style.display = 'none';
     document.getElementById('ai-result').style.display = '';
-    document.getElementById('ai-modal-sub').textContent = `${t('aiRisk' + ['conservative','balanced','growth','aggressive'].indexOf(selectedRisk) + 'Name')}`;
+    document.getElementById('ai-modal-sub').textContent = isPremium ? '✦ Premium Analysis' : t('aiSub');
 
     const body = document.getElementById('ai-result-body');
     body.innerHTML = formatAIResponse(text);
@@ -2693,6 +2722,161 @@ function pmUpdate() {
       }
     }
   });
+}
+
+// ─────────────────────────────────────────────────────────────
+//  EXPORT PDF
+// ─────────────────────────────────────────────────────────────
+function exportPDF() {
+  if (!isPremium) return;
+
+  const total = assets.reduce((s, a) => {
+    const v = (a.price != null && (a.qty||0) > 0) ? a.price * (a.qty||0) : (a.manualValue || a.qty || 0);
+    return s + v;
+  }, 0);
+
+  const alloc = PM_ALLOC[pmSelectedRisk] || PM_ALLOC.conservative;
+  const riskName = t('aiRisk'+['conservative','balanced','growth','aggressive'].indexOf(pmSelectedRisk)+'Name');
+  const validUntil = localStorage.getItem('wealthos_valid_until') || '';
+  const userEmail  = localStorage.getItem('wealthos_email') || '';
+  const now = new Date().toLocaleDateString(currentLang==='vi'?'vi-VN':'en-US', {year:'numeric',month:'long',day:'numeric'});
+
+  const typeLabel = { stock:t('pmTypeStock'), crypto:t('pmTypeCrypto'), commodity:t('pmTypeCommodity'), cash:t('pmTypeCash'), realestate:t('pmTypeRE'), custom:'Custom' };
+  const colorMap  = { stock:'#4f8ef7', crypto:'#8b6cf7', commodity:'#f5a623', cash:'#34d399', realestate:'#f87171' };
+
+  const assetRows = assets.map(a => {
+    const val = (a.price != null && (a.qty||0) > 0) ? a.price * (a.qty||0) : (a.manualValue || a.qty || 0);
+    const pct = total > 0 ? ((val/total)*100).toFixed(1) : '0';
+    const pct24 = a.pct != null ? `<span style="color:${a.pct>=0?'#34d399':'#f87171'}">${a.pct>=0?'+':''}${a.pct?.toFixed(2)}%</span>` : '—';
+    return `<tr>
+      <td>${a.icon} ${a.name}</td>
+      <td style="color:var(--mu)">${a.ticker}</td>
+      <td>${typeLabel[a.type]||a.type}</td>
+      <td style="text-align:right">${a.price!=null?'$'+a.price.toLocaleString('en-US',{maximumFractionDigits:2}):'—'}</td>
+      <td style="text-align:right">${(a.qty||0).toLocaleString()}</td>
+      <td style="text-align:right;font-weight:600">$${Math.round(val).toLocaleString()}</td>
+      <td style="text-align:right">${pct}%</td>
+      <td style="text-align:right">${pct24}</td>
+    </tr>`;
+  }).join('');
+
+  const allocRows = Object.entries(alloc).map(([type, pct]) =>
+    `<tr>
+      <td style="display:flex;align-items:center;gap:8px;">
+        <span style="width:10px;height:10px;border-radius:2px;background:${colorMap[type]||'#6b7280'};display:inline-block;"></span>
+        ${typeLabel[type]||type}
+      </td>
+      <td style="text-align:right;font-weight:600;color:${colorMap[type]||'#fff'}">${pct}%</td>
+      <td style="padding-left:12px;">
+        <div style="height:8px;background:#1c2030;border-radius:4px;overflow:hidden;">
+          <div style="width:${pct}%;height:100%;background:${colorMap[type]||'#6b7280'};border-radius:4px;"></div>
+        </div>
+      </td>
+    </tr>`
+  ).join('');
+
+  const pmFinal = document.querySelector('#pm-metrics .fc-metric:first-child .fc-mv')?.textContent || '—';
+  const pmProfit = document.querySelector('#pm-metrics .fc-metric:nth-child(2) .fc-mv')?.textContent || '—';
+  const pmCagr   = document.querySelector('#pm-metrics .fc-metric:nth-child(3) .fc-mv')?.textContent || '—';
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>WealthOS Report · ${now}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#0d0f14;color:#e8eaf0;padding:32px;font-size:13px;}
+  .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.1);}
+  .logo{font-size:22px;font-weight:700;letter-spacing:3px;}
+  .badge{font-size:9px;padding:2px 8px;border-radius:20px;background:linear-gradient(135deg,#7c3aed,#4f8ef7);color:#fff;letter-spacing:1px;margin-left:8px;vertical-align:middle;}
+  .meta{font-size:11px;color:#6b7280;text-align:right;line-height:1.8;}
+  .section{margin-bottom:24px;}
+  .section-title{font-size:9px;letter-spacing:1.5px;color:#6b7280;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.06);}
+  .total-box{background:linear-gradient(135deg,#1a1f35,#0d1528);border:1px solid rgba(79,142,247,0.3);border-radius:12px;padding:20px 24px;margin-bottom:20px;}
+  .total-label{font-size:10px;color:rgba(79,142,247,0.8);letter-spacing:2px;margin-bottom:6px;}
+  .total-val{font-size:36px;font-weight:700;font-family:monospace;letter-spacing:-1px;}
+  table{width:100%;border-collapse:collapse;}
+  th{font-size:9px;color:#6b7280;letter-spacing:.5px;padding:6px 8px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.08);font-weight:500;}
+  td{padding:8px 8px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
+  .metric{background:#151820;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:14px;}
+  .metric-label{font-size:9px;color:#6b7280;margin-bottom:4px;letter-spacing:.5px;}
+  .metric-val{font-size:18px;font-weight:700;font-family:monospace;}
+  .footer{margin-top:28px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06);font-size:10px;color:#6b7280;display:flex;justify-content:space-between;}
+  @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <div class="logo">WEALTHOS <span class="badge">PREMIUM</span></div>
+    <div style="font-size:12px;color:#6b7280;margin-top:4px;">${currentLang==='vi'?'Báo cáo Danh mục Đầu tư':'Investment Portfolio Report'}</div>
+  </div>
+  <div class="meta">
+    <div>${now}</div>
+    ${userEmail ? `<div>${userEmail}</div>` : ''}
+    ${validUntil ? `<div>${currentLang==='vi'?'Hạn dùng':'Valid until'}: ${validUntil}</div>` : ''}
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">${currentLang==='vi'?'TỔNG DANH MỤC':'TOTAL PORTFOLIO'}</div>
+  <div class="total-box">
+    <div class="total-label">${currentLang==='vi'?'TỔNG GIÁ TRỊ (USD)':'TOTAL VALUE (USD)'}</div>
+    <div class="total-val">$${Math.round(total).toLocaleString()}</div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">${currentLang==='vi'?'CHI TIẾT TÀI SẢN':'ASSET DETAILS'}</div>
+  <table>
+    <thead><tr>
+      <th>${currentLang==='vi'?'Tên':'Name'}</th>
+      <th>Ticker</th>
+      <th>${currentLang==='vi'?'Loại':'Type'}</th>
+      <th style="text-align:right">${currentLang==='vi'?'Giá':'Price'}</th>
+      <th style="text-align:right">${currentLang==='vi'?'Khối lượng':'Qty'}</th>
+      <th style="text-align:right">${currentLang==='vi'?'Giá trị':'Value'}</th>
+      <th style="text-align:right">%</th>
+      <th style="text-align:right">24h</th>
+    </tr></thead>
+    <tbody>${assetRows}</tbody>
+  </table>
+</div>
+
+<div class="section">
+  <div class="section-title">${currentLang==='vi'?`GỢI Ý PHÂN BỔ · ${riskName.toUpperCase()}`:`ALLOCATION SUGGESTION · ${riskName.toUpperCase()}`}</div>
+  <table>
+    <thead><tr>
+      <th>${currentLang==='vi'?'Loại tài sản':'Asset Type'}</th>
+      <th style="text-align:right">%</th>
+      <th style="padding-left:12px;">${currentLang==='vi'?'Tỷ trọng':'Weight'}</th>
+    </tr></thead>
+    <tbody>${allocRows}</tbody>
+  </table>
+</div>
+
+<div class="section">
+  <div class="section-title">${currentLang==='vi'?`MÔ PHỎNG ${pmYears} NĂM`:`${pmYears}-YEAR SIMULATION`}</div>
+  <div class="metrics">
+    <div class="metric"><div class="metric-label">${currentLang==='vi'?`Tổng sau ${pmYears} năm`:`Total after ${pmYears} years`}</div><div class="metric-val" style="color:#4f8ef7">${pmFinal}</div></div>
+    <div class="metric"><div class="metric-label">${currentLang==='vi'?'Lãi ròng':'Net Profit'}</div><div class="metric-val" style="color:#34d399">${pmProfit}</div></div>
+    <div class="metric"><div class="metric-label">CAGR</div><div class="metric-val">${pmCagr}</div></div>
+  </div>
+</div>
+
+<div class="footer">
+  <div>⚠ ${currentLang==='vi'?'Mô phỏng dựa trên lãi suất giả định — không phải dự báo thực tế.':'Simulation based on assumed rates — not a real forecast.'}</div>
+  <div>WealthOS Premium · wealthos.app</div>
+</div>
+</body></html>`;
+
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
+  setTimeout(() => { win.print(); }, 500);
 }
 </script>
 </body>

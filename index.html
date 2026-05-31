@@ -2634,13 +2634,11 @@ async function pmRenderAlloc() {
   const riskName = t('aiRisk'+['conservative','balanced','growth','aggressive'].indexOf(pmSelectedRisk)+'Name');
   const resultEl = document.getElementById('pm-alloc-result');
 
-  // Show loading
   resultEl.innerHTML = `<div style="font-size:11px;color:#a78bfa;font-weight:600;margin-bottom:10px;font-family:var(--mono);">${t('pmAllocTitle')} · ${riskName.toUpperCase()}</div>
     <div style="display:flex;align-items:center;gap:8px;color:var(--mu);font-size:11px;font-family:var(--mono);">
-      <span class="ai-typing"></span> ${vi?'Đang phân tích danh mục của bạn...':'Analyzing your portfolio...'}
+      <span class="ai-typing"></span> ${vi?'Đang phân tích danh mục...':'Analyzing your portfolio...'}
     </div>`;
 
-  // Build portfolio summary
   const total = assets.reduce((s, a) => {
     const v = (a.price!=null&&(a.qty||0)>0) ? a.price*(a.qty||0) : (a.manualValue||a.qty||0);
     return s + v;
@@ -2654,32 +2652,26 @@ async function pmRenderAlloc() {
   const portfolioLines = assets.map(a => {
     const val = (a.price!=null&&(a.qty||0)>0) ? a.price*(a.qty||0) : (a.manualValue||a.qty||0);
     const pct = ((val/total)*100).toFixed(1);
-    return `- ${a.name} (${a.ticker}, ${a.type}): $${Math.round(val).toLocaleString()} = ${pct}%`;
-  }).join('\n');
+    return `{"ticker":"${a.ticker}","name":"${a.name}","type":"${a.type}","value":${Math.round(val)},"current_pct":${pct}}`;
+  }).join(',\n');
 
-  const prompt = vi
-    ? `Bạn là chuyên gia tư vấn danh mục. Phân tích danh mục sau với khẩu vị "${riskName}" và đưa ra gợi ý % phân bổ cụ thể cho từng tài sản hiện có.
-
-DANH MỤC HIỆN TẠI (tổng $${Math.round(total).toLocaleString()}):
-${portfolioLines}
-
-Yêu cầu:
-1. Với MỖI tài sản hiện có: ghi rõ nên GIỮ/TĂNG/GIẢM và % mục tiêu
-2. Nếu cần, đề xuất THÊM loại tài sản mới (VD: thêm vàng, tiền mặt...)
-3. Tổng % phải = 100%
-4. Format rõ ràng, dùng bullet points, có icon ✅ (giữ), 📈 (tăng), 📉 (giảm), ➕ (thêm mới)
-5. Ngắn gọn, tối đa 150 từ`
-    : `You are a portfolio advisor. Analyze this portfolio with "${riskName}" risk profile and suggest specific % allocation for each asset.
+  const prompt = `You are a portfolio advisor. Analyze this portfolio with "${riskName}" risk profile.
 
 CURRENT PORTFOLIO (total $${Math.round(total).toLocaleString()}):
-${portfolioLines}
+[${portfolioLines}]
 
-Requirements:
-1. For EACH asset: state KEEP/INCREASE/DECREASE and target %
-2. If needed, suggest adding NEW asset types (e.g. add gold, cash...)
-3. Total % must = 100%
-4. Use bullet points with icons ✅ (keep), 📈 (increase), 📉 (decrease), ➕ (add new)
-5. Concise, max 150 words`;
+Return ONLY a valid JSON array (no markdown, no explanation) with this exact structure:
+[
+  {"ticker":"VUAA.L","name":"VUAA ETF","action":"keep","current_pct":44.2,"target_pct":50,"reason":"${vi?'Nền tảng ổn định, tăng nhẹ':'Stable core holding'}","color":"#4f8ef7","isNew":false},
+  {"ticker":"BONDS","name":"Bonds/Fixed Income","action":"add","current_pct":0,"target_pct":20,"reason":"${vi?'Cần thêm để ổn định danh mục':'Add for portfolio stability'}","color":"#34d399","isNew":true}
+]
+
+Rules:
+- action must be: "keep", "increase", "decrease", or "add"
+- Include ALL current assets + suggest new ones if needed
+- total target_pct must sum to 100
+- reason max 8 words
+- Return ONLY the JSON array, nothing else`;
 
   try {
     const res = await fetch('https://twilight-silence-ee34.dnntradingcompany.workers.dev/ai', {
@@ -2688,20 +2680,62 @@ Requirements:
       body: JSON.stringify({ messages: [{ role: 'user', content: prompt }] }),
     });
     const data = await res.json();
-    const text = data.content?.map(b => b.text||'').join('') || '';
+    let text = data.content?.map(b => b.text||'').join('') || '[]';
+    // Strip markdown fences
+    text = text.replace(/```json|```/g, '').trim();
+    const items = JSON.parse(text);
 
-    const formatted = text
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/^[-•]\s+(.+)/gm, '<li>$1</li>')
-      .replace(/(<li>[\s\S]*?<\/li>)/g, '<ul style="padding-left:14px;margin:4px 0;">$1</ul>')
-      .replace(/\n{2,}/g, '<br>')
-      .replace(/\n/g, '<br>')
-      .replace(/(\d+[-–]\d+%|\d+%)/g, '<span class="alloc-chip">$1</span>');
+    const actionConfig = {
+      keep:     { icon:'✅', label: vi?'Giữ nguyên':'Keep',     bg:'rgba(52,211,153,0.08)',  border:'rgba(52,211,153,0.2)',  badge:'#34d399' },
+      increase: { icon:'📈', label: vi?'Tăng thêm':'Increase',  bg:'rgba(79,142,247,0.08)',  border:'rgba(79,142,247,0.25)', badge:'#4f8ef7' },
+      decrease: { icon:'📉', label: vi?'Giảm bớt':'Decrease',   bg:'rgba(248,113,113,0.08)', border:'rgba(248,113,113,0.2)', badge:'#f87171' },
+      add:      { icon:'➕', label: vi?'Thêm mới':'Add New',    bg:'rgba(167,139,250,0.08)', border:'rgba(167,139,250,0.25)','badge':'#a78bfa' },
+    };
+
+    const cards = items.map(item => {
+      const cfg = actionConfig[item.action] || actionConfig.keep;
+      const diff = item.target_pct - item.current_pct;
+      const diffStr = diff > 0 ? `+${diff.toFixed(1)}%` : diff < 0 ? `${diff.toFixed(1)}%` : '±0%';
+      const diffColor = diff > 0 ? '#34d399' : diff < 0 ? '#f87171' : '#6b7280';
+      return `<div style="background:${cfg.bg};border:1px solid ${cfg.border};border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;">
+        <div style="font-size:18px;flex-shrink:0;">${cfg.icon}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+            <span style="font-size:12px;font-weight:600;color:var(--tx);">${item.name}</span>
+            <span style="font-size:9px;font-family:var(--mono);color:var(--mu);">${item.ticker}</span>
+            ${item.isNew ? `<span style="font-size:8px;padding:1px 5px;border-radius:4px;background:rgba(167,139,250,0.2);color:#a78bfa;font-family:var(--mono);">NEW</span>` : ''}
+          </div>
+          <div style="font-size:10px;color:var(--mu);line-height:1.4;">${item.reason}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-size:16px;font-weight:700;font-family:var(--mono);color:${item.color||cfg.badge};">${item.target_pct}%</div>
+          <div style="font-size:9px;font-family:var(--mono);color:${diffColor};">${diffStr}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    // Bar chart tổng quan
+    const barItems = items.map(item => {
+      const cfg = actionConfig[item.action] || actionConfig.keep;
+      return `<div style="display:flex;align-items:center;gap:6px;">
+        <div style="width:8px;height:8px;border-radius:2px;background:${item.color||cfg.badge};flex-shrink:0;"></div>
+        <div style="flex:1;height:5px;background:var(--sur);border-radius:3px;overflow:hidden;">
+          <div style="width:${item.target_pct}%;height:100%;background:${item.color||cfg.badge};border-radius:3px;transition:width .5s;"></div>
+        </div>
+        <div style="font-size:9px;font-family:var(--mono);color:var(--mu);min-width:26px;text-align:right;">${item.target_pct}%</div>
+      </div>`;
+    }).join('');
 
     resultEl.innerHTML = `
       <div style="font-size:11px;color:#a78bfa;font-weight:600;margin-bottom:10px;font-family:var(--mono);">${t('pmAllocTitle')} · ${riskName.toUpperCase()}</div>
-      <div style="font-size:12px;line-height:1.8;color:var(--tx);">${formatted}</div>`;
-  } catch {
+      <div style="background:var(--sur2);border-radius:8px;padding:10px 12px;margin-bottom:12px;display:flex;flex-direction:column;gap:5px;">${barItems}</div>
+      <div style="display:flex;flex-direction:column;gap:7px;">${cards}</div>`;
+
+    // Cache kết quả để dùng cho PDF
+    window._pmAllocItems = items;
+    window._pmAllocRiskName = riskName;
+
+  } catch(e) {
     resultEl.innerHTML = `<span style="color:var(--mu);font-size:11px;">${vi?'Không thể tải gợi ý. Vui lòng thử lại.':'Could not load suggestion. Please try again.'}</span>`;
   }
 }

@@ -2202,11 +2202,9 @@ if ('serviceWorker' in navigator) {
 // ─────────────────────────────────────────────────────────────
 let deferredPrompt = null;
 
-// Lắng nghe NGAY từ đầu, trước mọi thứ khác
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
   deferredPrompt = e;
-  console.log('[PWA] beforeinstallprompt captured');
   if (!pwaInstalled()) showBanner('android');
 });
 
@@ -2216,36 +2214,59 @@ function pwaInstalled() {
     || localStorage.getItem('pwa-dismissed') === '1';
 }
 
-const banner    = document.getElementById('pwa-banner');
+const banner     = document.getElementById('pwa-banner');
 const installBtn = document.getElementById('pwa-install-btn');
 
-// iOS Safari
-const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
-if (isIOS && !window.navigator.standalone && localStorage.getItem('pwa-dismissed') !== '1') {
-  setTimeout(() => showBanner('ios'), 2500);
+// Detect browser
+const ua        = navigator.userAgent;
+const isIOS     = /iphone|ipad|ipod/i.test(ua);
+const isSafari  = isIOS && /safari/i.test(ua) && !/crios|fxios|opios|chrome/i.test(ua);
+const isChromeIOS = isIOS && /crios/i.test(ua);
+const isAndroid = /android/i.test(ua);
+
+// iOS Safari → hướng dẫn Add to Home Screen
+if (isSafari && !window.navigator.standalone && localStorage.getItem('pwa-dismissed') !== '1') {
+  setTimeout(() => showBanner('ios-safari'), 2500);
+}
+// Chrome iOS → không hỗ trợ, thông báo chuyển sang Safari
+if (isChromeIOS && localStorage.getItem('pwa-dismissed') !== '1') {
+  setTimeout(() => showBanner('ios-chrome'), 2500);
 }
 
 function showBanner(platform) {
   if (!banner || pwaInstalled()) return;
-  const titleEl = document.getElementById('pwa-title');
-  const subEl   = document.getElementById('pwa-sub');
-  const lang = (typeof currentLang !== 'undefined' ? currentLang : null) || localStorage.getItem('lang') || 'vi';
+  const titleEl    = document.getElementById('pwa-title');
+  const subEl      = document.getElementById('pwa-sub');
+  const lang       = localStorage.getItem('lang') || 'vi';
 
-  if (platform === 'ios') {
-    if (titleEl) titleEl.textContent = lang==='vi' ? 'Cài lên iPhone' : 'Install on iPhone';
-    if (subEl)   subEl.innerHTML = lang==='vi'
-      ? 'Safari → nhấn <strong>⎙</strong> → <em>Add to Home Screen</em>'
-      : 'Safari → tap <strong>⎙ Share</strong> → <em>Add to Home Screen</em>';
-    if (installBtn) installBtn.style.display = 'none';
-  } else {
-    if (titleEl) titleEl.textContent = lang==='vi' ? 'Cài ứng dụng' : 'Install App';
-    if (subEl)   subEl.textContent   = lang==='vi'
-      ? 'Thêm vào màn hình chính, dùng offline'
-      : 'Add to home screen, works offline';
-    if (installBtn) {
-      installBtn.style.display = '';
-      installBtn.textContent = lang==='vi' ? 'Cài ngay' : 'Install';
-    }
+  const txt = {
+    'android': {
+      title: lang==='vi' ? '📲 Cài ứng dụng' : '📲 Install App',
+      sub:   lang==='vi' ? 'Thêm vào màn hình chính, dùng được offline' : 'Add to home screen, works offline',
+      btn:   true,
+    },
+    'ios-safari': {
+      title: lang==='vi' ? '📲 Cài lên iPhone' : '📲 Install on iPhone',
+      sub:   lang==='vi'
+        ? '① Nhấn nút <strong>⎙</strong> ở thanh dưới<br>② Chọn <strong><em>Add to Home Screen</em></strong>'
+        : '① Tap <strong>⎙ Share</strong> at the bottom<br>② Select <strong><em>Add to Home Screen</em></strong>',
+      btn: false,
+    },
+    'ios-chrome': {
+      title: lang==='vi' ? '⚠️ Mở bằng Safari' : '⚠️ Open in Safari',
+      sub:   lang==='vi'
+        ? 'Chrome trên iPhone không hỗ trợ cài app.<br>Vui lòng mở link này bằng <strong>Safari</strong> để cài.'
+        : 'Chrome on iPhone cannot install PWAs.<br>Please open this link in <strong>Safari</strong> to install.',
+      btn: false,
+    },
+  };
+
+  const cfg = txt[platform] || txt['android'];
+  if (titleEl) titleEl.textContent = cfg.title;
+  if (subEl)   subEl.innerHTML     = cfg.sub;
+  if (installBtn) {
+    installBtn.style.display = cfg.btn ? '' : 'none';
+    installBtn.textContent   = lang==='vi' ? 'Cài ngay' : 'Install';
   }
   banner.classList.add('show');
 }
@@ -2255,53 +2276,34 @@ function dismissPWA() {
   localStorage.setItem('pwa-dismissed', '1');
 }
 
-// Install button — xử lý cả 3 trường hợp
 if (installBtn) {
   installBtn.addEventListener('click', async () => {
-    // Trường hợp 1: có deferredPrompt — cài trực tiếp
     if (deferredPrompt) {
       try {
         await deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
-        console.log('[PWA] outcome:', outcome);
         if (outcome === 'accepted') dismissPWA();
         deferredPrompt = null;
       } catch(err) {
-        console.warn('[PWA] prompt error:', err);
         showManualInstructions();
       }
       return;
     }
-    // Trường hợp 2: đang standalone — đã cài rồi
-    if (pwaInstalled()) {
-      dismissPWA();
-      return;
-    }
-    // Trường hợp 3: không có prompt (Chrome chưa sẵn sàng, hoặc đã dismiss trước)
+    if (pwaInstalled()) { dismissPWA(); return; }
     showManualInstructions();
   });
 }
 
 function showManualInstructions() {
   const subEl = document.getElementById('pwa-sub');
-  const lang = localStorage.getItem('lang') || 'vi';
-  const isAndroid = /android/i.test(navigator.userAgent);
-  if (subEl) {
-    subEl.innerHTML = isAndroid
-      ? (lang==='vi'
-          ? 'Chrome menu <strong>⋮</strong> → <em>Add to Home screen</em>'
-          : 'Chrome menu <strong>⋮</strong> → <em>Add to Home screen</em>')
-      : (lang==='vi'
-          ? 'Safari → <strong>⎙ Share</strong> → <em>Add to Home Screen</em>'
-          : 'Safari → <strong>⎙ Share</strong> → <em>Add to Home Screen</em>');
-  }
+  const lang  = localStorage.getItem('lang') || 'vi';
+  if (subEl) subEl.innerHTML = lang==='vi'
+    ? 'Chrome menu <strong>⋮</strong> → <em>Add to Home screen</em>'
+    : 'Chrome menu <strong>⋮</strong> → <em>Add to Home screen</em>';
   if (installBtn) installBtn.style.display = 'none';
 }
 
-window.addEventListener('appinstalled', () => {
-  console.log('[PWA] App installed!');
-  dismissPWA();
-});
+window.addEventListener('appinstalled', () => dismissPWA());
 
 // Ẩn banner sau khi đã cài
 window.addEventListener('appinstalled', () => dismissPWA());

@@ -2626,7 +2626,7 @@ Chỉ nhận xét điểm mạnh và điểm yếu của danh mục hiện tại
     if (data.error) throw new Error(JSON.stringify(data.error));
     const text = data.content?.map(b => b.text || '').join('') || 'Không nhận được phản hồi.';
 
-    document.getElementById('ai-setup').style.display = 'none';
+    btn.style.display = 'none';
     document.getElementById('ai-result').style.display = '';
     document.getElementById('ai-modal-sub').textContent = isPremium ? '✦ Premium Analysis' : t('aiSub');
 

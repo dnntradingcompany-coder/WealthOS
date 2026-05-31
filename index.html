@@ -704,7 +704,26 @@ const usd = (n, d=2) => '$' + Number(n).toLocaleString('en-US', {minimumFraction
 const big = n => !n ? '—' : n>=1e9 ? '$'+(n/1e9).toFixed(2)+'B' : n>=1e6 ? '$'+(n/1e6).toFixed(1)+'M' : '$'+Number(n).toLocaleString();
 const norm = arr => { if(!arr?.length) return []; const b=arr[0]; return arr.map(v=>+(v/b*100).toFixed(2)); };
 const fmtChg = pct => pct==null ? '' : (pct>=0?'▲ +':'▼ ')+Math.abs(pct).toFixed(2)+'% (24h)';
-const qty = id => { const el = $(id); return el ? Math.max(0, parseFloat(el.value)||0) : 0; };
+const qty = id => { const el = $(id); if(!el) return 0; const raw = String(el.value).replace(/,/g,''); return Math.max(0, parseFloat(raw)||0); };
+
+// Format số có dấu phẩy cho qty input (giữ nguyên số thập phân)
+function fmtQtyInput(el) {
+  const raw = String(el.value).replace(/,/g,'');
+  const num = parseFloat(raw);
+  if (isNaN(num) || num < 0) return;
+  // Giữ số thập phân nếu đang nhập
+  const hasDot = raw.includes('.');
+  const decimals = hasDot ? raw.split('.')[1] : null;
+  const intPart = Math.floor(Math.abs(num)).toLocaleString('en-US');
+  const pos = el.selectionStart, oldLen = el.value.length;
+  if (hasDot) {
+    el.value = intPart + '.' + (decimals ?? '');
+  } else {
+    el.value = intPart === '0' && raw === '0' ? '0' : intPart;
+  }
+  const diff = el.value.length - oldLen;
+  try { el.setSelectionRange(pos+diff, pos+diff); } catch(_) {}
+}
 
 // Palette màu cho asset tùy chỉnh khi chọn preset
 const PALETTE = ['#4f8ef7','#8b6cf7','#f5a623','#34d399','#f87171','#60a5fa','#a78bfa','#34d399','#fb923c','#e879f9'];
@@ -1167,8 +1186,12 @@ function renderHoldings() {
       valBlock = `<div class="hval-price" id="price-${i}" style="color:var(--mu)">${t('noPrice')}</div>
                   <div class="manual-price-row">
                     <div class="hinput-wrap" style="flex:1">
-                      <input class="hinput" id="mprice-${i}" type="number" min="0" step="any" placeholder="${t('manualPrice')}"
-                        value="${a.manualPrice||''}" oninput="setManualPrice(${i},this.value)" style="font-size:12px;padding:6px 10px;">
+                      <input class="hinput" id="mprice-${i}" type="text" inputmode="decimal"
+                        placeholder="${t('manualPrice')}"
+                        value="${a.manualPrice ? Number(a.manualPrice).toLocaleString('en-US',{maximumFractionDigits:2}) : ''}"
+                        oninput="fmtQtyInput(this);setManualPrice(${i},this.value)"
+                        onkeypress="return /[0-9.,]/.test(event.key)"
+                        style="font-size:12px;padding:6px 10px;">
                       <span class="hunit" style="font-size:9px">USD</span>
                     </div>
                     <button class="btn" onclick="retryFetch(${i})" title="${t('retry')}" style="padding:6px 8px;min-width:32px;flex-shrink:0;">${t('retry')}</button>
@@ -1185,8 +1208,11 @@ function renderHoldings() {
       </div>
       <button class="hdelete" onclick="removeAsset(${i})" title="Xoá">×</button>
       <div class="hinput-wrap">
-        <input class="hinput" id="qty-${i}" type="number" min="0" step="any"
-          placeholder="${qtyPlaceholder}" value="${a.qty||''}" oninput="onQtyChange(${i})">
+        <input class="hinput" id="qty-${i}" type="text" inputmode="decimal"
+          placeholder="${qtyPlaceholder}"
+          value="${a.qty ? Number(a.qty).toLocaleString('en-US', {maximumFractionDigits:8}) : ''}"
+          oninput="fmtQtyInput(this);onQtyChange(${i})"
+          onkeypress="return /[0-9.,]/.test(event.key)">
         <span class="hunit">${qtyLabel}</span>
       </div>
       <div class="hval-block">${valBlock}</div>
@@ -1316,9 +1342,9 @@ function recalc() {
 }
 
 function setManualPrice(i, val) {
-  const p = parseFloat(val);
+  const p = parseFloat(String(val).replace(/,/g,''));
   assets[i].manualPrice = p > 0 ? p : null;
-  assets[i].price = assets[i].manualPrice; // dùng làm giá chính
+  assets[i].price = assets[i].manualPrice;
   const priceEl = $(`price-${i}`);
   if (priceEl && assets[i].price) priceEl.textContent = 'Không tải được giá tự động';
   recalc();

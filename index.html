@@ -308,7 +308,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
   <!-- ── DỰ BÁO TĂNG TRƯỞNG ── -->
   <div class="csec" style="margin-top:1.5rem;" id="forecast-section">
     <div class="chdr" style="margin-bottom:16px;">
-      <span class="ctit" data-i18n="forecastTitle">DỰ BÁO TĂNG TRƯỞNG 10 NĂM</span>
+      <span class="ctit" data-i18n="forecastTitle">DỰ BÁO TĂNG TRƯỞNG 3 NĂM</span>
       <button class="btn" onclick="syncFromPortfolio()" style="font-size:11px;padding:5px 12px;color:var(--gr);border-color:rgba(52,211,153,0.3);">
         ↺ <span data-i18n="syncPortfolio">Đồng bộ từ danh mục</span>
       </button>
@@ -510,7 +510,7 @@ const LANG = {
     totalPortfolio:'TỔNG DANH MỤC (USD)', byQty:'theo khối lượng nhập',
     chart7d:'BIẾN ĐỘNG 7 NGÀY (chỉ số hóa, ngày đầu = 100)',
     source:'Nguồn', loading:'đang tải...', updatedAt:'cập nhật',
-    forecastTitle:'DỰ BÁO TĂNG TRƯỞNG 10 NĂM',
+    forecastTitle:'DỰ BÁO TĂNG TRƯỞNG 3 NĂM',
     syncPortfolio:'Đồng bộ từ danh mục',
     initCapital:'VỐN BAN ĐẦU (USD)', dcaMonth:'DCA / THÁNG (USD)',
     disclaimer:'⚠ Đây là mô phỏng dựa trên lãi suất giả định — không phải dự báo thực tế. Crypto và hàng hóa có biến động cực cao, kịch bản thực tế có thể khác đáng kể.',
@@ -583,7 +583,7 @@ const LANG = {
     totalPortfolio:'TOTAL PORTFOLIO (USD)', byQty:'enter quantities below',
     chart7d:'7-DAY PERFORMANCE (indexed, day 1 = 100)',
     source:'Source', loading:'loading...', updatedAt:'updated',
-    forecastTitle:'10-YEAR GROWTH FORECAST',
+    forecastTitle:'3-YEAR GROWTH FORECAST',
     syncPortfolio:'Sync from Portfolio',
     initCapital:'INITIAL CAPITAL (USD)', dcaMonth:'DCA / MONTH (USD)',
     disclaimer:'⚠ This is a simulation based on assumed rates — not a real forecast. Crypto and commodities are highly volatile; actual results may differ significantly.',
@@ -1898,7 +1898,7 @@ const FC_SCENARIOS = {
   cash:      { fixed:{r:0.055,lk:'base'} },
   realestate:{ fixed:{r:0.08, lk:'base'} },
 };
-const FC_YRS = 10;
+const FC_YRS = 3;
 let fcInitAmt = 30000, fcDCA = 0;
 let fcScenarios = {}; // assetIndex → scenarioKey
 let fcChart2 = null;

@@ -2424,11 +2424,10 @@ function openAIAdvisor() {
 
   if (isPremium) {
     if (badge) badge.style.display = 'inline-block';
-    if (sub)   sub.textContent = vi ? '💬 Chat với AI tư vấn tài chính cá nhân' : '💬 Chat with your personal AI financial advisor';
+    if (sub)   { sub.removeAttribute('data-i18n'); sub.textContent = vi ? '💬 Chat với AI tư vấn tài chính cá nhân' : '💬 Chat with your personal AI financial advisor'; }
     if (freePanel) freePanel.style.display = 'none';
     if (chatPanel) chatPanel.style.display = 'flex';
     updateSuggestions();
-    // Init welcome only on first open; re-init if language changed
     const msgs = document.getElementById('ai-chat-messages');
     if (msgs && (msgs.children.length === 0 || msgs.dataset.lang !== currentLang)) {
       msgs.innerHTML = '';
@@ -2438,7 +2437,7 @@ function openAIAdvisor() {
     }
   } else {
     if (badge)     badge.style.display = 'none';
-    if (sub)       { sub.dataset.i18n = 'aiSub'; sub.textContent = t('aiSub'); }
+    if (sub)       { sub.removeAttribute('data-i18n'); sub.textContent = vi ? 'Phân tích điểm mạnh và điểm yếu danh mục hiện tại' : 'Analyze portfolio strengths and weaknesses'; }
     if (freePanel) freePanel.style.display = '';
     if (chatPanel) chatPanel.style.display = 'none';
   }
@@ -2622,21 +2621,23 @@ async function runAIAnalysis() {
   btn.innerHTML = `<span class="ai-typing"></span> ${t('aiAnalyzing')}`;
 
   const portfolioText = buildPortfolioSummary();
+  const lang = currentLang === 'vi' ? 'Vietnamese' : 'English';
+  const vi = currentLang === 'vi';
 
-  // Premium prompt: sâu hơn, có gợi ý % phân bổ
+  // Premium prompt: deep analysis with allocation suggestions
   const prompt = isPremium
-    ? `Bạn là chuyên gia tư vấn tài chính cá nhân. Phân tích chi tiết danh mục sau:
+    ? `You are a personal financial advisor. Analyze this portfolio in detail.
 ${portfolioText}
 
-Trả lời tiếng Việt, gồm 4 phần rõ ràng:
-1. **Nhận xét**: điểm mạnh, điểm yếu, rủi ro tập trung
-2. **Gợi ý % phân bổ tối ưu**: cho từng tài sản hiện có (VD: VUAA 45%, HYPE 20%...)
-3. **Lý do**: giải thích ngắn gọn từng điều chỉnh
-4. **Cảnh báo rủi ro**: 1-2 điểm quan trọng nhất`
-    : `Phân tích ngắn gọn danh mục đầu tư này:
+Reply in ${lang} with 4 clear sections:
+1. **${vi?'Nhận xét':'Analysis'}**: strengths, weaknesses, concentration risk
+2. **${vi?'Gợi ý % phân bổ tối ưu':'Optimal allocation %'}**: for each current asset (e.g. VUAA 45%, HYPE 20%...)
+3. **${vi?'Lý do':'Reasoning'}**: brief explanation for each adjustment
+4. **${vi?'Cảnh báo rủi ro':'Risk warnings'}**: 1-2 most important points`
+    : `Briefly analyze this investment portfolio:
 ${portfolioText}
 
-Chỉ nhận xét điểm mạnh và điểm yếu của danh mục hiện tại. Trả lời tiếng Việt, súc tích, dùng bullet points.`;
+Reply in ${lang}. Only comment on strengths and weaknesses of the current portfolio. Be concise, use bullet points.`;
 
   try {
     const workerUrl = 'https://proud-feather-b76c.dnntradingcompany.workers.dev' + (isPremium ? '/ai' : '/');

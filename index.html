@@ -2700,7 +2700,7 @@ function pmUpdate() {
   document.getElementById('pm-metrics').innerHTML = [
     { l:`${t('pmAfter')} ${pmYears} ${t('pmYearsUnit')}`, v:'$'+Math.round(final).toLocaleString(), c:'var(--blue)' },
     { l:t('pmProfit'), v:(profit>=0?'+':'')+'$'+Math.round(profit).toLocaleString(), c:profit>=0?'var(--gr)':'var(--re)' },
-    { l:t('pmCAGR'), v:cagr+'%/'+t('pmYearsUnit').slice(0,2), c:'var(--tx)' },
+    { l:t('pmCAGR'), v:cagr+'%/'+( currentLang==='vi' ? 'năm' : 'yr'), c:'var(--tx)' },
   ].map(m=>`<div class="fc-metric"><div class="fc-ml">${m.l}</div><div class="fc-mv" style="color:${m.c}">${m.v}</div></div>`).join('');
 
   // Chart
@@ -2730,44 +2730,65 @@ function pmUpdate() {
 function exportPDF() {
   if (!isPremium) return;
 
+  const vi = currentLang === 'vi';
   const total = assets.reduce((s, a) => {
     const v = (a.price != null && (a.qty||0) > 0) ? a.price * (a.qty||0) : (a.manualValue || a.qty || 0);
     return s + v;
   }, 0);
 
-  const alloc = PM_ALLOC[pmSelectedRisk] || PM_ALLOC.conservative;
+  const alloc    = PM_ALLOC[pmSelectedRisk] || PM_ALLOC.conservative;
   const riskName = t('aiRisk'+['conservative','balanced','growth','aggressive'].indexOf(pmSelectedRisk)+'Name');
   const validUntil = localStorage.getItem('wealthos_valid_until') || '';
   const userEmail  = localStorage.getItem('wealthos_email') || '';
-  const now = new Date().toLocaleDateString(currentLang==='vi'?'vi-VN':'en-US', {year:'numeric',month:'long',day:'numeric'});
-
+  const now = new Date().toLocaleDateString(vi?'vi-VN':'en-US', {year:'numeric',month:'long',day:'numeric'});
   const typeLabel = { stock:t('pmTypeStock'), crypto:t('pmTypeCrypto'), commodity:t('pmTypeCommodity'), cash:t('pmTypeCash'), realestate:t('pmTypeRE'), custom:'Custom' };
   const colorMap  = { stock:'#4f8ef7', crypto:'#8b6cf7', commodity:'#f5a623', cash:'#34d399', realestate:'#f87171' };
 
+  // 1. Chart PNG từ canvas
+  const pmCanvas  = document.getElementById('pm-chart');
+  const chartImg  = pmCanvas ? pmCanvas.toDataURL('image/png') : '';
+
+  // 2. Alloc bar
+  const allocBarItems = assets.map(a => {
+    const val = (a.price != null && (a.qty||0) > 0) ? a.price * (a.qty||0) : (a.manualValue || a.qty || 0);
+    const pct = total > 0 ? ((val/total)*100).toFixed(1) : 0;
+    return `<div style="display:flex;align-items:center;gap:6px;font-size:10px;">
+      <div style="width:10px;height:10px;border-radius:2px;background:${a.color};flex-shrink:0;"></div>
+      <span style="color:#9ca3af;">${a.ticker}</span>
+      <div style="flex:1;height:5px;background:#1c2030;border-radius:3px;overflow:hidden;">
+        <div style="width:${pct}%;height:100%;background:${a.color};border-radius:3px;"></div>
+      </div>
+      <span style="color:#e8eaf0;font-weight:600;min-width:36px;text-align:right;">${pct}%</span>
+    </div>`;
+  }).join('');
+
+  // 3. Asset rows
   const assetRows = assets.map(a => {
     const val = (a.price != null && (a.qty||0) > 0) ? a.price * (a.qty||0) : (a.manualValue || a.qty || 0);
     const pct = total > 0 ? ((val/total)*100).toFixed(1) : '0';
     const pct24 = a.pct != null ? `<span style="color:${a.pct>=0?'#34d399':'#f87171'}">${a.pct>=0?'+':''}${a.pct?.toFixed(2)}%</span>` : '—';
+    const price = a.price != null ? '$'+a.price.toLocaleString('en-US',{maximumFractionDigits:a.price>100?2:a.price>1?3:5}) : '—';
     return `<tr>
-      <td>${a.icon} ${a.name}</td>
-      <td style="color:var(--mu)">${a.ticker}</td>
+      <td><span style="margin-right:5px;">${a.icon}</span>${a.name}</td>
+      <td style="color:#6b7280;font-family:monospace;">${a.ticker}</td>
       <td>${typeLabel[a.type]||a.type}</td>
-      <td style="text-align:right">${a.price!=null?'$'+a.price.toLocaleString('en-US',{maximumFractionDigits:2}):'—'}</td>
-      <td style="text-align:right">${(a.qty||0).toLocaleString()}</td>
-      <td style="text-align:right;font-weight:600">$${Math.round(val).toLocaleString()}</td>
-      <td style="text-align:right">${pct}%</td>
-      <td style="text-align:right">${pct24}</td>
+      <td style="text-align:right;font-family:monospace;">${price}</td>
+      <td style="text-align:right;font-family:monospace;">${(a.qty||0).toLocaleString()}</td>
+      <td style="text-align:right;font-weight:700;color:#e8eaf0;font-family:monospace;">$${Math.round(val).toLocaleString()}</td>
+      <td style="text-align:right;font-weight:600;color:#4f8ef7;">${pct}%</td>
+      <td style="text-align:right;">${pct24}</td>
     </tr>`;
   }).join('');
 
+  // 4. Alloc suggestion rows
   const allocRows = Object.entries(alloc).map(([type, pct]) =>
     `<tr>
       <td style="display:flex;align-items:center;gap:8px;">
-        <span style="width:10px;height:10px;border-radius:2px;background:${colorMap[type]||'#6b7280'};display:inline-block;"></span>
+        <span style="width:10px;height:10px;border-radius:2px;background:${colorMap[type]||'#6b7280'};display:inline-block;flex-shrink:0;"></span>
         ${typeLabel[type]||type}
       </td>
-      <td style="text-align:right;font-weight:600;color:${colorMap[type]||'#fff'}">${pct}%</td>
-      <td style="padding-left:12px;">
+      <td style="text-align:right;font-weight:700;color:${colorMap[type]||'#fff'};font-family:monospace;">${pct}%</td>
+      <td style="padding-left:12px;width:50%;">
         <div style="height:8px;background:#1c2030;border-radius:4px;overflow:hidden;">
           <div style="width:${pct}%;height:100%;background:${colorMap[type]||'#6b7280'};border-radius:4px;"></div>
         </div>
@@ -2775,9 +2796,30 @@ function exportPDF() {
     </tr>`
   ).join('');
 
-  const pmFinal = document.querySelector('#pm-metrics .fc-metric:first-child .fc-mv')?.textContent || '—';
-  const pmProfit = document.querySelector('#pm-metrics .fc-metric:nth-child(2) .fc-mv')?.textContent || '—';
-  const pmCagr   = document.querySelector('#pm-metrics .fc-metric:nth-child(3) .fc-mv')?.textContent || '—';
+  // 5. Year table từ DOM
+  const fcTbody = document.getElementById('fc-tbody');
+  const fcTheadRow = document.querySelector('#fc-thead tr');
+  const fcHeaders = fcTheadRow ? Array.from(fcTheadRow.querySelectorAll('th')).map(th => `<th style="font-size:9px;color:#6b7280;padding:5px 8px;text-align:right;border-bottom:1px solid rgba(255,255,255,0.08);">${th.textContent}</th>`).join('') : '';
+  const fcRows = fcTbody ? Array.from(fcTbody.querySelectorAll('tr')).map(tr =>
+    `<tr>${Array.from(tr.querySelectorAll('td')).map((td,i) => `<td style="padding:5px 8px;text-align:${i===0?'left':'right'};border-bottom:1px solid rgba(255,255,255,0.04);font-family:monospace;font-size:11px;${td.style.color?'color:'+td.style.color+';':''}">${td.textContent}</td>`).join('')}</tr>`
+  ).join('') : '';
+
+  // 6. PM year table
+  const pmMetrics = document.getElementById('pm-metrics');
+  const pmFinal  = pmMetrics?.querySelector('.fc-metric:nth-child(1) .fc-mv')?.textContent || '—';
+  const pmProfit = pmMetrics?.querySelector('.fc-metric:nth-child(2) .fc-mv')?.textContent || '—';
+  const pmCagr   = pmMetrics?.querySelector('.fc-metric:nth-child(3) .fc-mv')?.textContent || '—';
+
+  // 7. AI result nếu có
+  const aiResultEl = document.getElementById('ai-result-body');
+  const aiText = aiResultEl?.innerHTML?.trim() || '';
+  const aiSection = aiText ? `
+  <div class="section" style="page-break-before:always;">
+    <div class="section-title">AI ${vi?'PHÂN TÍCH':'ANALYSIS'}</div>
+    <div style="background:#151820;border:1px solid rgba(167,139,250,0.15);border-radius:10px;padding:16px;font-size:12px;line-height:1.8;color:#e8eaf0;">
+      ${aiText}
+    </div>
+  </div>` : '';
 
   const html = `<!DOCTYPE html>
 <html>
@@ -2786,59 +2828,74 @@ function exportPDF() {
 <title>WealthOS Report · ${now}</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:'Segoe UI',Arial,sans-serif;background:#0d0f14;color:#e8eaf0;padding:32px;font-size:13px;}
-  .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.1);}
-  .logo{font-size:22px;font-weight:700;letter-spacing:3px;}
-  .badge{font-size:9px;padding:2px 8px;border-radius:20px;background:linear-gradient(135deg,#7c3aed,#4f8ef7);color:#fff;letter-spacing:1px;margin-left:8px;vertical-align:middle;}
-  .meta{font-size:11px;color:#6b7280;text-align:right;line-height:1.8;}
-  .section{margin-bottom:24px;}
-  .section-title{font-size:9px;letter-spacing:1.5px;color:#6b7280;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.06);}
-  .total-box{background:linear-gradient(135deg,#1a1f35,#0d1528);border:1px solid rgba(79,142,247,0.3);border-radius:12px;padding:20px 24px;margin-bottom:20px;}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#0d0f14;color:#e8eaf0;padding:32px 36px;font-size:13px;line-height:1.5;}
+  .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;padding-bottom:16px;border-bottom:2px solid rgba(79,142,247,0.3);}
+  .logo{font-size:24px;font-weight:800;letter-spacing:4px;color:#e8eaf0;}
+  .badge{font-size:9px;padding:3px 10px;border-radius:20px;background:linear-gradient(135deg,#7c3aed,#4f8ef7);color:#fff;letter-spacing:1px;margin-left:10px;vertical-align:middle;}
+  .meta{font-size:11px;color:#6b7280;text-align:right;line-height:2;}
+  .section{margin-bottom:28px;}
+  .section-title{font-size:9px;letter-spacing:2px;color:#6b7280;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.07);text-transform:uppercase;}
+  .total-box{background:linear-gradient(135deg,#1a1f35 0%,#0d1528 100%);border:1px solid rgba(79,142,247,0.35);border-radius:14px;padding:22px 28px;display:flex;align-items:center;justify-content:space-between;}
   .total-label{font-size:10px;color:rgba(79,142,247,0.8);letter-spacing:2px;margin-bottom:6px;}
-  .total-val{font-size:36px;font-weight:700;font-family:monospace;letter-spacing:-1px;}
+  .total-val{font-size:38px;font-weight:800;font-family:monospace;letter-spacing:-2px;}
+  .change{font-size:13px;font-family:monospace;}
   table{width:100%;border-collapse:collapse;}
-  th{font-size:9px;color:#6b7280;letter-spacing:.5px;padding:6px 8px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.08);font-weight:500;}
+  th{font-size:9px;color:#6b7280;letter-spacing:.5px;padding:7px 8px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.1);font-weight:500;}
   td{padding:8px 8px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle;}
   tr:last-child td{border-bottom:none;}
-  .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
-  .metric{background:#151820;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:14px;}
-  .metric-label{font-size:9px;color:#6b7280;margin-bottom:4px;letter-spacing:.5px;}
-  .metric-val{font-size:18px;font-weight:700;font-family:monospace;}
-  .footer{margin-top:28px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06);font-size:10px;color:#6b7280;display:flex;justify-content:space-between;}
-  @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+  tr:hover td{background:rgba(255,255,255,0.02);}
+  .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+  .metric{background:#151820;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:16px;}
+  .metric-label{font-size:9px;color:#6b7280;margin-bottom:6px;letter-spacing:.5px;}
+  .metric-val{font-size:20px;font-weight:700;font-family:monospace;}
+  .footer{margin-top:32px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.07);font-size:10px;color:#6b7280;display:flex;justify-content:space-between;align-items:center;}
+  h3{font-size:12px;font-weight:600;color:#a78bfa;margin:14px 0 6px;letter-spacing:.5px;}
+  strong{color:#e8eaf0;}
+  ul{padding-left:16px;margin:4px 0 8px;}
+  li{margin-bottom:4px;}
+  .alloc-chip{display:inline-block;padding:1px 7px;border-radius:5px;font-size:11px;font-weight:600;font-family:monospace;background:rgba(167,139,250,0.12);border:1px solid rgba(167,139,250,0.25);color:#c4b5fd;}
+  @media print{
+    body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .section{page-break-inside:avoid;}
+  }
 </style>
 </head>
 <body>
+
+<!-- HEADER -->
 <div class="header">
   <div>
     <div class="logo">WEALTHOS <span class="badge">PREMIUM</span></div>
-    <div style="font-size:12px;color:#6b7280;margin-top:4px;">${currentLang==='vi'?'Báo cáo Danh mục Đầu tư':'Investment Portfolio Report'}</div>
+    <div style="font-size:12px;color:#6b7280;margin-top:5px;">${vi?'Báo cáo Danh mục Đầu tư':'Investment Portfolio Report'}</div>
   </div>
   <div class="meta">
-    <div>${now}</div>
+    <div><strong style="color:#e8eaf0;">${now}</strong></div>
     ${userEmail ? `<div>${userEmail}</div>` : ''}
-    ${validUntil ? `<div>${currentLang==='vi'?'Hạn dùng':'Valid until'}: ${validUntil}</div>` : ''}
+    ${validUntil ? `<div>${vi?'Hạn Premium':'Premium until'}: ${validUntil}</div>` : ''}
   </div>
 </div>
 
+<!-- TỔNG DANH MỤC -->
 <div class="section">
-  <div class="section-title">${currentLang==='vi'?'TỔNG DANH MỤC':'TOTAL PORTFOLIO'}</div>
+  <div class="section-title">${vi?'TỔNG DANH MỤC':'TOTAL PORTFOLIO'}</div>
   <div class="total-box">
-    <div class="total-label">${currentLang==='vi'?'TỔNG GIÁ TRỊ (USD)':'TOTAL VALUE (USD)'}</div>
-    <div class="total-val">$${Math.round(total).toLocaleString()}</div>
+    <div>
+      <div class="total-label">${vi?'TỔNG GIÁ TRỊ (USD)':'TOTAL VALUE (USD)'}</div>
+      <div class="total-val">$${Math.round(total).toLocaleString()}</div>
+    </div>
+    <div style="width:55%;display:flex;flex-direction:column;gap:6px;">${allocBarItems}</div>
   </div>
 </div>
 
+<!-- CHI TIẾT TÀI SẢN -->
 <div class="section">
-  <div class="section-title">${currentLang==='vi'?'CHI TIẾT TÀI SẢN':'ASSET DETAILS'}</div>
+  <div class="section-title">${vi?'CHI TIẾT TÀI SẢN':'ASSET DETAILS'}</div>
   <table>
     <thead><tr>
-      <th>${currentLang==='vi'?'Tên':'Name'}</th>
-      <th>Ticker</th>
-      <th>${currentLang==='vi'?'Loại':'Type'}</th>
-      <th style="text-align:right">${currentLang==='vi'?'Giá':'Price'}</th>
-      <th style="text-align:right">${currentLang==='vi'?'Khối lượng':'Qty'}</th>
-      <th style="text-align:right">${currentLang==='vi'?'Giá trị':'Value'}</th>
+      <th>${vi?'Tên':'Name'}</th><th>Ticker</th><th>${vi?'Loại':'Type'}</th>
+      <th style="text-align:right">${vi?'Giá':'Price'}</th>
+      <th style="text-align:right">${vi?'Khối lượng':'Qty'}</th>
+      <th style="text-align:right">${vi?'Giá trị':'Value'}</th>
       <th style="text-align:right">%</th>
       <th style="text-align:right">24h</th>
     </tr></thead>
@@ -2846,37 +2903,51 @@ function exportPDF() {
   </table>
 </div>
 
+<!-- GỢI Ý PHÂN BỔ -->
 <div class="section">
-  <div class="section-title">${currentLang==='vi'?`GỢI Ý PHÂN BỔ · ${riskName.toUpperCase()}`:`ALLOCATION SUGGESTION · ${riskName.toUpperCase()}`}</div>
+  <div class="section-title">${vi?`GỢI Ý PHÂN BỔ · ${riskName.toUpperCase()}`:`ALLOCATION SUGGESTION · ${riskName.toUpperCase()}`}</div>
   <table>
     <thead><tr>
-      <th>${currentLang==='vi'?'Loại tài sản':'Asset Type'}</th>
+      <th>${vi?'Loại tài sản':'Asset Type'}</th>
       <th style="text-align:right">%</th>
-      <th style="padding-left:12px;">${currentLang==='vi'?'Tỷ trọng':'Weight'}</th>
+      <th style="padding-left:12px;">${vi?'Tỷ trọng':'Weight'}</th>
     </tr></thead>
     <tbody>${allocRows}</tbody>
   </table>
 </div>
 
+<!-- DỰ BÁO 3 NĂM (free forecast table) -->
+${fcRows ? `<div class="section">
+  <div class="section-title">${vi?`DỰ BÁO ${FC_YRS} NĂM`:`${FC_YRS}-YEAR FREE FORECAST`}</div>
+  <table><thead><tr>${fcHeaders}</tr></thead><tbody>${fcRows}</tbody></table>
+</div>` : ''}
+
+<!-- MÔ PHỎNG PREMIUM -->
 <div class="section">
-  <div class="section-title">${currentLang==='vi'?`MÔ PHỎNG ${pmYears} NĂM`:`${pmYears}-YEAR SIMULATION`}</div>
+  <div class="section-title">${vi?`MÔ PHỎNG PREMIUM · ${pmYears} NĂM`:`PREMIUM SIMULATION · ${pmYears} YEARS`}</div>
   <div class="metrics">
-    <div class="metric"><div class="metric-label">${currentLang==='vi'?`Tổng sau ${pmYears} năm`:`Total after ${pmYears} years`}</div><div class="metric-val" style="color:#4f8ef7">${pmFinal}</div></div>
-    <div class="metric"><div class="metric-label">${currentLang==='vi'?'Lãi ròng':'Net Profit'}</div><div class="metric-val" style="color:#34d399">${pmProfit}</div></div>
+    <div class="metric"><div class="metric-label">${vi?`Tổng sau ${pmYears} năm`:`Total after ${pmYears} yrs`}</div><div class="metric-val" style="color:#4f8ef7;">${pmFinal}</div></div>
+    <div class="metric"><div class="metric-label">${vi?'Lãi ròng':'Net Profit'}</div><div class="metric-val" style="color:#34d399;">${pmProfit}</div></div>
     <div class="metric"><div class="metric-label">CAGR</div><div class="metric-val">${pmCagr}</div></div>
   </div>
+  ${chartImg ? `<img src="${chartImg}" style="width:100%;border-radius:10px;margin-top:4px;" />` : ''}
 </div>
 
+<!-- AI ANALYSIS -->
+${aiSection}
+
+<!-- FOOTER -->
 <div class="footer">
-  <div>⚠ ${currentLang==='vi'?'Mô phỏng dựa trên lãi suất giả định — không phải dự báo thực tế.':'Simulation based on assumed rates — not a real forecast.'}</div>
-  <div>WealthOS Premium · wealthos.app</div>
+  <div>⚠ ${vi?'Mô phỏng dựa trên lãi suất giả định — không phải dự báo thực tế.':'Simulation based on assumed rates — not a real forecast.'}</div>
+  <div style="color:#4f8ef7;font-weight:600;">WealthOS Premium</div>
 </div>
+
 </body></html>`;
 
   const win = window.open('', '_blank');
   win.document.write(html);
   win.document.close();
-  setTimeout(() => { win.print(); }, 500);
+  setTimeout(() => { win.print(); }, 600);
 }
 </script>
 </body>

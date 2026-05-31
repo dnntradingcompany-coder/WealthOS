@@ -2480,21 +2480,27 @@ function selectGrowthChip(el) {
   const ticker = el.dataset.ticker;
   const rate   = parseFloat(el.dataset.rate) / 100;
 
-  // Update visual — deactivate siblings, activate this
+  // Reset all siblings to dim state
   const siblings = el.parentElement.querySelectorAll('.growth-chip');
   siblings.forEach(s => {
-    s.style.borderWidth = '1px';
+    const c = s.dataset.color || '#6b7280';
+    s.style.border      = `1px solid ${c}44`;
+    s.style.background  = `${c}08`;
     s.style.fontWeight  = '600';
-    s.style.opacity     = '0.8';
+    s.style.boxShadow   = 'none';
+    s.style.transform   = 'scale(1)';
   });
-  el.style.borderWidth = '2px';
-  el.style.fontWeight  = '800';
-  el.style.opacity     = '1';
 
-  // Store selected rate
+  // Highlight selected chip
+  const c = el.dataset.color || '#6b7280';
+  el.style.border     = `2px solid ${c}`;
+  el.style.background = `${c}30`;
+  el.style.fontWeight = '800';
+  el.style.boxShadow  = `0 0 8px ${c}50`;
+  el.style.transform  = 'scale(1.05)';
+
+  // Store selected rate and re-run simulation
   pmSelectedRates[ticker] = rate;
-
-  // Re-run simulation
   pmUpdate();
 }
 
@@ -2715,7 +2721,7 @@ Rules:
 - Include ALL current assets + suggest new ones if needed
 - total target_pct must sum to 100
 - reason max 8 words
-- growth: annual % return estimates (hist10=10yr historical avg, realistic=base case, optimistic=bull case, pessimistic=bear case)
+- growth: ALWAYS include annual % return estimates for ALL assets regardless of target_pct (hist10=10yr historical avg, realistic=base case, optimistic=bull case, pessimistic=bear case). Never omit or set to null.
 - Return ONLY the JSON array, nothing else`;
 
   try {
@@ -2745,33 +2751,45 @@ Rules:
       const assetObj = assets.find(a => a.ticker === item.ticker);
       const icon = assetObj ? assetObj.icon : (item.isNew ? '✨' : '💰');
       const color = assetObj ? assetObj.color : (item.color || cfg.badge);
-      const g = item.growth || {};
+      const g = item.growth || (() => {
+        const fallbacks = {
+          crypto:    { hist10:30, realistic:20, optimistic:80, pessimistic:-20 },
+          stock:     { hist10:10, realistic:8,  optimistic:15, pessimistic:3   },
+          commodity: { hist10:5,  realistic:4,  optimistic:12, pessimistic:-2  },
+          cash:      { hist10:2,  realistic:4,  optimistic:5,  pessimistic:1   },
+          realestate:{ hist10:7,  realistic:6,  optimistic:12, pessimistic:0   },
+        };
+        return fallbacks[assetObj?.type] || fallbacks.stock;
+      })();
 
-      // Growth scenario chips — clickable
       const growthScenarios = g.hist10 != null ? `
         <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;" id="growth-chips-${item.ticker.replace(/\./g,'_')}">
-          <span class="growth-chip active-chip" data-ticker="${item.ticker}" data-rate="${g.hist10}" data-type="hist10"
-            style="padding:3px 9px;border-radius:6px;font-size:10px;font-weight:600;font-family:var(--mono);background:${color}33;color:${color};border:2px solid ${color};cursor:pointer;"
+          <span class="growth-chip" data-ticker="${item.ticker}" data-rate="${g.hist10}" data-type="hist10"
+            data-color="${color}"
+            style="padding:3px 9px;border-radius:6px;font-size:10px;font-weight:700;font-family:var(--mono);background:${color}22;color:${color};border:2px solid ${color};cursor:pointer;transition:all .15s;"
             onclick="selectGrowthChip(this)"
-            title="${vi?'Trung bình 10 năm':'10yr Historical Avg'}">
+            title="${vi?'Trung bình 10 năm lịch sử':'10yr Historical Average'}">
             ${vi?'TB':'Avg'} ${g.hist10>=0?'+':''}${g.hist10?.toFixed(1)}%
           </span>
           <span class="growth-chip" data-ticker="${item.ticker}" data-rate="${g.realistic}" data-type="realistic"
-            style="padding:3px 9px;border-radius:6px;font-size:10px;font-weight:600;font-family:var(--mono);background:rgba(52,211,153,0.1);color:#34d399;border:1px solid rgba(52,211,153,0.2);cursor:pointer;"
+            data-color="#34d399"
+            style="padding:3px 9px;border-radius:6px;font-size:10px;font-weight:600;font-family:var(--mono);background:rgba(52,211,153,0.08);color:#34d399;border:1px solid rgba(52,211,153,0.25);cursor:pointer;transition:all .15s;"
             onclick="selectGrowthChip(this)"
             title="${vi?'Tăng trưởng khả thi':'Realistic growth'}">
             ${vi?'Khả thi':'Real'} ${g.realistic>=0?'+':''}${g.realistic?.toFixed(1)}%
           </span>
           <span class="growth-chip" data-ticker="${item.ticker}" data-rate="${g.optimistic}" data-type="optimistic"
-            style="padding:3px 9px;border-radius:6px;font-size:10px;font-weight:600;font-family:var(--mono);background:rgba(79,142,247,0.1);color:#4f8ef7;border:1px solid rgba(79,142,247,0.2);cursor:pointer;"
+            data-color="#4f8ef7"
+            style="padding:3px 9px;border-radius:6px;font-size:10px;font-weight:600;font-family:var(--mono);background:rgba(79,142,247,0.08);color:#4f8ef7;border:1px solid rgba(79,142,247,0.25);cursor:pointer;transition:all .15s;"
             onclick="selectGrowthChip(this)"
-            title="${vi?'Lạc quan':'Optimistic'}">
+            title="${vi?'Kịch bản lạc quan':'Optimistic / Bull case'}">
             ${vi?'Lạc quan':'Bull'} ${g.optimistic>=0?'+':''}${g.optimistic?.toFixed(1)}%
           </span>
           <span class="growth-chip" data-ticker="${item.ticker}" data-rate="${g.pessimistic}" data-type="pessimistic"
-            style="padding:3px 9px;border-radius:6px;font-size:10px;font-weight:600;font-family:var(--mono);background:rgba(248,113,113,0.1);color:#f87171;border:1px solid rgba(248,113,113,0.2);cursor:pointer;"
+            data-color="#f87171"
+            style="padding:3px 9px;border-radius:6px;font-size:10px;font-weight:600;font-family:var(--mono);background:rgba(248,113,113,0.08);color:#f87171;border:1px solid rgba(248,113,113,0.25);cursor:pointer;transition:all .15s;"
             onclick="selectGrowthChip(this)"
-            title="${vi?'Bi quan':'Pessimistic'}">
+            title="${vi?'Kịch bản bi quan':'Pessimistic / Bear case'}">
             ${vi?'Bi quan':'Bear'} ${g.pessimistic>=0?'+':''}${g.pessimistic?.toFixed(1)}%
           </span>
         </div>` : '';

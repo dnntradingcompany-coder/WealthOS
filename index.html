@@ -269,9 +269,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
       <div class="alloc-bar" id="alloc-bar"></div>
       <div class="alloc-labels" id="alloc-labels"></div>
     </div>
-    <div class="smry-sub" id="smry-sub">
-      <!-- dynamic summary cards -->
-    </div>
   </div>
 
   <!-- HOLDINGS -->
@@ -285,6 +282,16 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
     </div>
     <div class="holdings-row" id="holdings-row">
       <!-- dynamic hfields -->
+    </div>
+  </div>
+
+  <!-- GIÁ TRỊ TỪNG TÀI SẢN -->
+  <div class="csec" style="margin-top:1rem;">
+    <div class="chdr" style="margin-bottom:14px;">
+      <span class="ctit" data-i18n="assetValTitle">GIÁ TRỊ TỪNG TÀI SẢN</span>
+    </div>
+    <div class="smry-sub" id="smry-sub" style="grid-template-columns:repeat(3,1fr);">
+      <!-- dynamic summary cards -->
     </div>
   </div>
 
@@ -627,7 +634,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
 const LANG = {
   vi: {
     logo:'WEALTHOS', title:'Nền tảng quản trị tài sản thông minh.',
-    refresh:'Làm mới', addAsset:'Thêm tài sản', holdingsTitle:'NHẬP KHỐI LƯỢNG TÀI SẢN',
+    refresh:'Làm mới', addAsset:'Thêm tài sản', holdingsTitle:'NHẬP KHỐI LƯỢNG TÀI SẢN', assetValTitle:'GIÁ TRỊ TỪNG TÀI SẢN',
     totalPortfolio:'TỔNG DANH MỤC (USD)', byQty:'theo khối lượng nhập',
     chart7d:'BIẾN ĐỘNG 7 NGÀY (chỉ số hóa, ngày đầu = 100)',
     source:'Nguồn', loading:'đang tải...', updatedAt:'cập nhật',
@@ -700,7 +707,7 @@ const LANG = {
   },
   en: {
     logo:'WEALTHOS', title:'See your entire wealth in one place',
-    refresh:'Refresh', addAsset:'Add Asset', holdingsTitle:'ENTER YOUR HOLDINGS',
+    refresh:'Refresh', addAsset:'Add Asset', holdingsTitle:'ENTER YOUR HOLDINGS', assetValTitle:'ASSET VALUES',
     totalPortfolio:'TOTAL PORTFOLIO (USD)', byQty:'enter quantities below',
     chart7d:'7-DAY PERFORMANCE (indexed, day 1 = 100)',
     source:'Source', loading:'loading...', updatedAt:'updated',

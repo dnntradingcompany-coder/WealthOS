@@ -1542,7 +1542,7 @@ function renderHoldings() {
           <div class="hticker">${a.ticker} · USD</div>
         </div>
         <div style="margin-left:auto;text-align:right;">
-          <div id="pct-badge-${i}" style="font-size:13px;font-weight:700;font-family:var(--mono);color:${a.color};"></div>
+          <div id="pct-badge-${i}" style="font-size:16px;font-weight:700;font-family:var(--mono);color:${a.color};"></div>
         </div>
         <button class="hdelete" onclick="removeAsset(${i})" title="Xoá" style="position:absolute;top:10px;right:10px;">×</button>
       </div>
@@ -2060,27 +2060,43 @@ function loadSaved() {
 // ─────────────────────────────────────────────────────────────
 //  FORECAST ENGINE
 // ─────────────────────────────────────────────────────────────
-const FC_SCENARIO_LABELS = {
-  vi: {
-    base:'TB 10%', hist:'Lịch sử 18.5%', bull15:'Lạc quan 15%', bear6:'Bi quan 6%',
-    base30:'TB 30%', bull80:'Lạc quan 80%', bear20:'Bi quan −20%', real20:'Thực tế 20%',
-    hist86:'Lịch sử 8.6%', bull15c:'Lạc quan 15%', bear3:'Bi quan 3%', mid10:'TB 10%',
-  },
-  en: {
-    base:'Avg 10%', hist:'Historical 18.5%', bull15:'Optimistic 15%', bear6:'Pessimistic 6%',
-    base30:'Avg 30%', bull80:'Optimistic 80%', bear20:'Pessimistic −20%', real20:'Realistic 20%',
-    hist86:'Historical 8.6%', bull15c:'Optimistic 15%', bear3:'Pessimistic 3%', mid10:'Avg 10%',
-  }
-};
-const fcL = () => FC_SCENARIO_LABELS[currentLang] || FC_SCENARIO_LABELS.vi;
 
-const FC_SCENARIOS = {
-  stock:     { base:{r:0.10,lk:'base'}, hist:{r:0.185,lk:'hist'}, bull:{r:0.15,lk:'bull15'}, bear:{r:0.06,lk:'bear6'} },
-  crypto:    { base:{r:0.30,lk:'base30'}, bull:{r:0.80,lk:'bull80'}, bear:{r:-0.20,lk:'bear20'}, real:{r:0.20,lk:'real20'} },
-  commodity: { base:{r:0.086,lk:'hist86'}, bull:{r:0.15,lk:'bull15c'}, bear:{r:0.03,lk:'bear3'}, mid:{r:0.10,lk:'mid10'} },
-  cash:      { fixed:{r:0.055,lk:'base'} },
-  realestate:{ fixed:{r:0.08, lk:'base'} },
+// Dynamic label builder based on actual period
+function fcRateLabel(type, period, rate, lang) {
+  const vi = lang === 'vi';
+  const pctStr = (rate >= 0 ? '+' : '') + (rate * 100).toFixed(1) + '%';
+  const periodMap = { '10yr': vi?'10 năm':'10yr', '5yr': vi?'5 năm':'5yr', '3yr': vi?'3 năm':'3yr', '1yr': vi?'1 năm':'1yr', 'since launch': vi?'từ ra mắt':'since launch' };
+  const p = periodMap[period] || period;
+  return { avg: `${vi?'TB':'Avg'} ${p} ${pctStr}`, optimistic: `${vi?'Lạc quan':'Bull'} ${pctStr}`, pessimistic: `${vi?'Bi quan':'Bear'} ${pctStr}`, realistic: `${vi?'Khả thi':'Real'} ${pctStr}` };
+}
+
+// Best available historical data per asset type
+const FC_ASSET_DATA = {
+  stock:      { histRate:0.103, histPeriod:'10yr', bull:0.18,  real:0.09,  bear:0.03  },
+  crypto:     { histRate:0.50,  histPeriod:'5yr',  bull:0.80,  real:0.20,  bear:-0.20 },
+  commodity:  { histRate:0.055, histPeriod:'10yr', bull:0.15,  real:0.05,  bear:-0.05 },
+  cash:       { histRate:0.04,  histPeriod:'1yr',  bull:0.055, real:0.04,  bear:0.02  },
+  realestate: { histRate:0.072, histPeriod:'5yr',  bull:0.12,  real:0.07,  bear:0.00  },
+  custom:     { histRate:0.08,  histPeriod:'5yr',  bull:0.15,  real:0.08,  bear:0.02  },
 };
+
+function fcGetScenarios(type) {
+  const d = FC_ASSET_DATA[type] || FC_ASSET_DATA.stock;
+  const lang = currentLang || 'vi';
+  const vi = lang === 'vi';
+  const pMap = { '10yr':vi?'10 năm':'10yr','5yr':vi?'5 năm':'5yr','3yr':vi?'3 năm':'3yr','1yr':vi?'1 năm':'1yr','since launch':vi?'từ ra mắt':'since launch' };
+  const p = pMap[d.histPeriod] || d.histPeriod;
+  const fmt = r => (r>=0?'+':'') + (r*100).toFixed(1)+'%';
+  return {
+    hist: { r: d.histRate, label: `${vi?'TB':'Avg'} ${p} ${fmt(d.histRate)}` },
+    bull: { r: d.bull,     label: `${vi?'Lạc quan':'Bull'} ${fmt(d.bull)}`  },
+    real: { r: d.real,     label: `${vi?'Khả thi':'Real'} ${fmt(d.real)}`   },
+    bear: { r: d.bear,     label: `${vi?'Bi quan':'Bear'} ${fmt(d.bear)}`   },
+  };
+}
+
+function fcDefaultScenario(type) { return 'hist'; }
+
 const FC_YRS = 3;
 let fcInitAmt = 30000, fcDCA = 0;
 let fcScenarios = {}; // assetIndex → scenarioKey
@@ -2135,10 +2151,10 @@ function renderFcAssetScenarios() {
         </div>
       </div>`;
     const scens = fcGetScenarios(a.type);
-    const cur = fcScenarios[i]||fcDefaultScenario(a.type);
-    const btns = Object.entries(scens).map(([k,v])=>
+    const cur = fcScenarios[i] || fcDefaultScenario(a.type);
+    const btns = Object.entries(scens).map(([k,v]) =>
       `<button class="fc-sc-btn${cur===k?' active':''}" style="${cur===k?'background:'+a.color+';':''}"
-        onclick="fcSetScenario(${i},'${k}')">${fcL()[v.lk]||v.lk}</button>`).join('');
+        onclick="fcSetScenario(${i},'${k}')">${v.label}</button>`).join('');
     return `
     <div class="hfield" style="padding:14px 16px;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
@@ -2715,18 +2731,30 @@ Return ONLY a valid JSON array (no markdown, no explanation) with this exact str
   {
     "ticker":"VUAA.L","name":"VUAA ETF","action":"keep",
     "current_pct":44.2,"target_pct":50,
-    "reason":"${vi?'Nền tảng ổn định, tăng nhẹ':'Stable core holding'}",
+    "reason":"Stable core holding",
     "color":"#4f8ef7","isNew":false,
-    "growth":{"hist10":10.2,"realistic":8.5,"optimistic":15.0,"pessimistic":3.0}
+    "growth":{
+      "hist_period":"10yr",
+      "hist10":10.2,
+      "realistic":8.5,
+      "optimistic":15.0,
+      "pessimistic":3.0
+    }
   }
 ]
 
 Rules:
-- action must be: "keep", "increase", "decrease", or "add"
+- action: "keep", "increase", "decrease", or "add"
 - Include ALL current assets + suggest new ones if needed
 - total target_pct must sum to 100
 - reason max 8 words
-- growth: ALWAYS include annual % return estimates for ALL assets regardless of target_pct (hist10=10yr historical avg, realistic=base case, optimistic=bull case, pessimistic=bear case). Never omit or set to null.
+- growth object: ALWAYS required for ALL assets
+  - hist10: best available historical annual return % — use 10yr if available, else 5yr, 3yr, 1yr (whatever is most recent/reliable)
+  - hist_period: label the period used e.g. "10yr", "5yr", "3yr", "1yr"
+  - realistic: base case annual % return going forward
+  - optimistic: bull case annual % return
+  - pessimistic: bear case annual % return
+  - For very new assets with no history, use available data since launch
 - Return ONLY the JSON array, nothing else`;
 
   try {
@@ -2758,14 +2786,18 @@ Rules:
       const color = assetObj ? assetObj.color : (item.color || cfg.badge);
       const g = item.growth && item.growth.hist10 != null ? item.growth : (() => {
         const fallbacks = {
-          crypto:    { hist10:30, realistic:20, optimistic:80, pessimistic:-20 },
-          stock:     { hist10:10, realistic:8,  optimistic:15, pessimistic:3   },
-          commodity: { hist10:5,  realistic:4,  optimistic:12, pessimistic:-2  },
-          cash:      { hist10:2,  realistic:4,  optimistic:5,  pessimistic:1   },
-          realestate:{ hist10:7,  realistic:6,  optimistic:12, pessimistic:0   },
+          crypto:    { hist_period:'since launch', hist10:30, realistic:20, optimistic:80, pessimistic:-20 },
+          stock:     { hist_period:'5yr',          hist10:10, realistic:8,  optimistic:15, pessimistic:3   },
+          commodity: { hist_period:'5yr',          hist10:5,  realistic:4,  optimistic:12, pessimistic:-2  },
+          cash:      { hist_period:'1yr',          hist10:4,  realistic:4,  optimistic:5,  pessimistic:1   },
+          realestate:{ hist_period:'5yr',          hist10:7,  realistic:6,  optimistic:12, pessimistic:0   },
         };
         return fallbacks[assetObj?.type] || fallbacks.stock;
       })();
+      const histPeriod = g.hist_period || '10yr';
+      const histLabel = vi
+        ? (histPeriod === '10yr' ? 'TB 10 năm' : histPeriod === '5yr' ? 'TB 5 năm' : histPeriod === '3yr' ? 'TB 3 năm' : histPeriod === '1yr' ? 'TB 1 năm' : `TB ${histPeriod}`)
+        : `Avg ${histPeriod}`;
 
       const growthScenarios = g.hist10 != null ? `
         <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;" id="growth-chips-${item.ticker.replace(/\./g,'_')}">
@@ -2773,8 +2805,8 @@ Rules:
             data-color="#e8eaf0"
             style="padding:3px 9px;border-radius:6px;font-size:10px;font-weight:700;font-family:var(--mono);background:rgba(232,234,240,0.08);color:#e8eaf0;border:2px solid rgba(232,234,240,0.5);cursor:pointer;transition:all .15s;"
             onclick="selectGrowthChip(this)"
-            title="${vi?'Trung bình 10 năm lịch sử':'10yr Historical Average'}">
-            ${vi?'TB':'Avg'} ${g.hist10>=0?'+':''}${g.hist10?.toFixed(1)}%
+            title="${vi?`Trung bình lịch sử (${histPeriod})`:`Historical avg (${histPeriod})`}">
+            ${histLabel} ${g.hist10>=0?'+':''}${g.hist10?.toFixed(1)}%
           </span>
           <span class="growth-chip" data-ticker="${item.ticker}" data-rate="${g.realistic}" data-type="realistic"
             data-color="#34d399"

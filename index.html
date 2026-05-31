@@ -586,36 +586,31 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
   <div class="modal" style="width:min(480px,94vw);text-align:center;">
     <div style="font-size:40px;margin-bottom:12px;">✦</div>
     <h3 style="font-size:20px;margin-bottom:6px;">WealthOS Premium</h3>
-    <div class="modal-sub" style="margin-bottom:24px;" data-i18n="pmModalSub">Mở khóa toàn bộ tính năng nâng cao</div>
+    <div class="modal-sub" style="margin-bottom:20px;" data-i18n="pmModalSub">Mở khóa toàn bộ tính năng nâng cao</div>
 
     <!-- Features list -->
-    <div style="text-align:left;background:var(--sur2);border-radius:12px;padding:16px;margin-bottom:20px;">
-      <div style="display:flex;flex-direction:column;gap:10px;">
-        <div style="display:flex;align-items:center;gap:10px;font-size:13px;"><span style="color:var(--gr);font-size:16px;">✓</span> <span data-i18n="pmFeat1">Phân bổ % danh mục theo AI theo khẩu vị rủi ro</span></div>
-        <div style="display:flex;align-items:center;gap:10px;font-size:13px;"><span style="color:var(--gr);font-size:16px;">✓</span> <span data-i18n="pmFeat2">Mô phỏng tăng trưởng tùy chọn 3–100 năm</span></div>
-        <div style="display:flex;align-items:center;gap:10px;font-size:13px;"><span style="color:var(--gr);font-size:16px;">✓</span> <span data-i18n="pmFeat3">Phân tích AI không giới hạn</span></div>
-        <div style="display:flex;align-items:center;gap:10px;font-size:13px;"><span style="color:var(--gr);font-size:16px;">✓</span> <span data-i18n="pmFeat4">Xuất báo cáo PDF</span></div>
+    <div style="text-align:left;background:var(--sur2);border-radius:12px;padding:14px 16px;margin-bottom:16px;">
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;align-items:center;gap:10px;font-size:12px;"><span style="color:var(--gr);">✓</span> <span data-i18n="pmFeat1">Phân bổ % danh mục theo AI theo khẩu vị rủi ro</span></div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:12px;"><span style="color:var(--gr);">✓</span> <span data-i18n="pmFeat2">Mô phỏng tăng trưởng tùy chọn 3–100 năm</span></div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:12px;"><span style="color:var(--gr);">✓</span> <span data-i18n="pmFeat3">Phân tích AI không giới hạn</span></div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:12px;"><span style="color:var(--gr);">✓</span> <span data-i18n="pmFeat4">Xuất báo cáo PDF</span></div>
       </div>
     </div>
 
-    <!-- Pricing -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
-      <div id="plan-monthly" class="plan-card active" onclick="selectPlan('monthly')">
-        <div style="font-size:11px;color:var(--mu);margin-bottom:4px;" data-i18n="pmMonthly">HÀNG THÁNG</div>
-        <div style="font-size:22px;font-weight:700;font-family:var(--mono);">$4.99</div>
-        <div style="font-size:10px;color:var(--mu);" data-i18n="pmPerMonth">/tháng</div>
+    <!-- License key input -->
+    <div id="pm-license-form">
+      <div style="text-align:left;margin-bottom:8px;">
+        <div class="modal-label" style="margin-bottom:5px;" data-i18n="pmEmailLabel">EMAIL ĐÃ ĐĂNG KÝ</div>
+        <input id="pm-email-input" class="modal-input" type="email" placeholder="your@email.com" style="margin-bottom:8px;">
+        <div class="modal-label" style="margin-bottom:5px;" data-i18n="pmKeyLabel">LICENSE KEY</div>
+        <input id="pm-key-input" class="modal-input" type="text" placeholder="WLTH-XXXX-XXXX-XXXX" style="margin-bottom:0;letter-spacing:1px;font-family:var(--mono);">
       </div>
-      <div id="plan-yearly" class="plan-card" onclick="selectPlan('yearly')">
-        <div style="font-size:11px;color:var(--amb);margin-bottom:4px;" data-i18n="pmYearly">TIẾT KIỆM 40%</div>
-        <div style="font-size:22px;font-weight:700;font-family:var(--mono);">$2.99</div>
-        <div style="font-size:10px;color:var(--mu);" data-i18n="pmPerYear2">/tháng · $35.9/năm</div>
-      </div>
+      <div id="pm-verify-err" style="font-size:11px;color:var(--re);margin:8px 0;display:none;text-align:left;"></div>
+      <button onclick="verifyAndUnlock()" id="pm-verify-btn" style="width:100%;padding:11px;border-radius:10px;border:none;background:linear-gradient(135deg,#7c3aed,#4f8ef7);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);margin-bottom:8px;" data-i18n="pmVerifyBtn">✦ Kích hoạt Premium</button>
+      <button class="mbtn" onclick="closeUpgradeModal()" style="width:100%;" data-i18n="pmLater">Để sau</button>
+      <div style="font-size:10px;color:var(--mu);margin-top:10px;font-family:var(--mono);text-align:center;" data-i18n="pmContactHint">Chưa có key? Liên hệ admin để được cấp.</div>
     </div>
-
-    <button onclick="activatePremium()" style="width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#7c3aed,#4f8ef7);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans);margin-bottom:10px;" data-i18n="pmStartBtn">✦ Bắt đầu dùng Premium</button>
-    <button class="mbtn" onclick="closeUpgradeModal()" style="width:100%;" data-i18n="pmLater">Để sau</button>
-
-    <div style="font-size:10px;color:var(--mu);margin-top:12px;font-family:var(--mono);" data-i18n="pmDemo">Demo: click "Bắt đầu" để mở khóa thử</div>
   </div>
 </div>
 
@@ -698,6 +693,10 @@ const LANG = {
     pmFeat3:'Phân tích AI không giới hạn', pmFeat4:'Xuất báo cáo PDF',
     pmMonthly:'HÀNG THÁNG', pmYearly:'TIẾT KIỆM 40%', pmPerMonth:'/tháng', pmPerYear2:'/tháng · $35.9/năm',
     pmStartBtn:'✦ Bắt đầu dùng Premium', pmLater:'Để sau', pmDemo:'Demo: click "Bắt đầu" để mở khóa thử',
+    pmEmailLabel:'EMAIL ĐÃ ĐĂNG KÝ', pmKeyLabel:'LICENSE KEY',
+    pmVerifyBtn:'✦ Kích hoạt Premium', pmContactHint:'Chưa có key? Liên hệ admin để được cấp.',
+    pmVerifying:'Đang xác thực...', pmErrNotFound:'Email hoặc key không đúng. Vui lòng kiểm tra lại.',
+    pmErrExpired:'License key đã hết hạn.', pmErrNetwork:'Lỗi kết nối. Vui lòng thử lại.',
     // AI Advisor
     aiBtn:'AI Tư vấn',
     aiTitle:'AI Tư vấn Danh mục',
@@ -783,6 +782,10 @@ const LANG = {
     pmFeat3:'Unlimited AI analysis', pmFeat4:'Export PDF report',
     pmMonthly:'MONTHLY', pmYearly:'SAVE 40%', pmPerMonth:'/month', pmPerYear2:'/month · $35.9/year',
     pmStartBtn:'✦ Start Premium', pmLater:'Maybe later', pmDemo:'Demo: click "Start" to unlock',
+    pmEmailLabel:'REGISTERED EMAIL', pmKeyLabel:'LICENSE KEY',
+    pmVerifyBtn:'✦ Activate Premium', pmContactHint:"Don't have a key? Contact admin.",
+    pmVerifying:'Verifying...', pmErrNotFound:'Email or key is incorrect. Please check again.',
+    pmErrExpired:'License key has expired.', pmErrNetwork:'Connection error. Please try again.',
     // AI Advisor
     aiBtn:'AI Advisor',
     aiTitle:'AI Portfolio Advisor',
@@ -2455,8 +2458,21 @@ const PM_ALLOC = {
   aggressive:   { stock:25, crypto:55, commodity:5,  cash:5,  realestate:10 },
 };
 
-function initPremium() {
-  if (isPremium) unlockPremium();
+async function initPremium() {
+  if (!isPremium) return;
+  // Kiểm tra valid_until còn hạn không
+  const validUntil = localStorage.getItem('wealthos_valid_until');
+  if (validUntil) {
+    const expired = new Date() > new Date(validUntil);
+    if (expired) {
+      // Hết hạn → lock lại
+      localStorage.removeItem('wealthos_premium');
+      localStorage.removeItem('wealthos_valid_until');
+      isPremium = false;
+      return;
+    }
+  }
+  unlockPremium();
 }
 
 function openUpgradeModal() {
@@ -2478,6 +2494,59 @@ function activatePremium() {
   isPremium = true;
   closeUpgradeModal();
   unlockPremium();
+}
+
+async function verifyAndUnlock() {
+  const email = document.getElementById('pm-email-input').value.trim();
+  const key = document.getElementById('pm-key-input').value.trim();
+  const errEl = document.getElementById('pm-verify-err');
+  const btn = document.getElementById('pm-verify-btn');
+
+  errEl.style.display = 'none';
+  if (!email || !key) {
+    errEl.textContent = t('pmErrNotFound');
+    errEl.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = t('pmVerifying');
+
+  try {
+    const workerUrl = 'https://twilight-silence-ee34.dnntradingcompany.workers.dev/verify';
+    const res = await fetch(workerUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, license_key: key }),
+    });
+    const data = await res.json();
+
+    if (data.valid) {
+      // Lưu thông tin premium vào localStorage
+      localStorage.setItem('wealthos_premium', '1');
+      localStorage.setItem('wealthos_email', data.email);
+      localStorage.setItem('wealthos_plan', data.plan);
+      localStorage.setItem('wealthos_valid_until', data.valid_until);
+      localStorage.setItem('wealthos_key', key);
+      isPremium = true;
+      closeUpgradeModal();
+      unlockPremium();
+    } else {
+      if (data.reason === 'expired') {
+        errEl.textContent = t('pmErrExpired') + ' (' + data.expired_at + ')';
+      } else {
+        errEl.textContent = t('pmErrNotFound');
+      }
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = t('pmVerifyBtn');
+    }
+  } catch {
+    errEl.textContent = t('pmErrNetwork');
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = t('pmVerifyBtn');
+  }
 }
 
 function unlockPremium() {

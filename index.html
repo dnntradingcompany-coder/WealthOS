@@ -2751,7 +2751,7 @@ Rules:
       const assetObj = assets.find(a => a.ticker === item.ticker);
       const icon = assetObj ? assetObj.icon : (item.isNew ? '✨' : '💰');
       const color = assetObj ? assetObj.color : (item.color || cfg.badge);
-      const g = item.growth || (() => {
+      const g = item.growth && item.growth.hist10 != null ? item.growth : (() => {
         const fallbacks = {
           crypto:    { hist10:30, realistic:20, optimistic:80, pessimistic:-20 },
           stock:     { hist10:10, realistic:8,  optimistic:15, pessimistic:3   },
@@ -2765,8 +2765,8 @@ Rules:
       const growthScenarios = g.hist10 != null ? `
         <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;" id="growth-chips-${item.ticker.replace(/\./g,'_')}">
           <span class="growth-chip" data-ticker="${item.ticker}" data-rate="${g.hist10}" data-type="hist10"
-            data-color="${color}"
-            style="padding:3px 9px;border-radius:6px;font-size:10px;font-weight:700;font-family:var(--mono);background:${color}22;color:${color};border:2px solid ${color};cursor:pointer;transition:all .15s;"
+            data-color="#e8eaf0"
+            style="padding:3px 9px;border-radius:6px;font-size:10px;font-weight:700;font-family:var(--mono);background:rgba(232,234,240,0.08);color:#e8eaf0;border:2px solid rgba(232,234,240,0.5);cursor:pointer;transition:all .15s;"
             onclick="selectGrowthChip(this)"
             title="${vi?'Trung bình 10 năm lịch sử':'10yr Historical Average'}">
             ${vi?'TB':'Avg'} ${g.hist10>=0?'+':''}${g.hist10?.toFixed(1)}%

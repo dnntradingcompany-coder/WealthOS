@@ -51,9 +51,12 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
 .sc-total .sl{font-size:10px;color:rgba(79,142,247,0.8);letter-spacing:2px;margin-bottom:8px;font-weight:500;}
 .sc-total .sv{font-size:40px;font-weight:700;font-family:var(--mono);letter-spacing:-2px;min-height:48px;background:linear-gradient(135deg,#ffffff 40%,rgba(79,142,247,0.9));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 .sc-total .ss{font-size:13px;margin-top:6px;font-family:var(--mono);}
-.alloc-bar{display:flex;height:4px;border-radius:4px;overflow:hidden;margin-top:16px;gap:2px;}
+.alloc-bar{display:flex;height:6px;border-radius:4px;overflow:hidden;margin-top:16px;gap:2px;}
 .alloc-bar span{border-radius:4px;transition:width .4s;}
-.alloc-labels{display:flex;flex-wrap:wrap;gap:10px 16px;margin-top:8px;}
+.alloc-labels{display:flex;flex-wrap:wrap;gap:10px 16px;margin-top:10px;}
+.alloc-lbl{font-size:13px;font-weight:600;color:var(--tx);}
+.alloc-dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:middle;}
+.alloc-pct{font-family:var(--mono);font-size:14px;font-weight:700;}
 .alloc-lbl{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--mu);font-family:var(--mono);}
 .alloc-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
 .alloc-pct{color:var(--tx);font-weight:500;}
@@ -1546,6 +1549,9 @@ function renderHoldings() {
           <div class="hlabel">${a.name}</div>
           <div class="hticker">${a.ticker} · USD</div>
         </div>
+        <div style="margin-left:auto;text-align:right;">
+          <div id="pct-badge-${i}" style="font-size:13px;font-weight:700;font-family:var(--mono);color:${a.color};"></div>
+        </div>
         <button class="hdelete" onclick="removeAsset(${i})" title="Xoá" style="position:absolute;top:10px;right:10px;">×</button>
       </div>
 
@@ -1642,8 +1648,11 @@ function recalc() {
     }).join('');
     lbl.innerHTML = assets.map((a,i) => {
       const v = vals[i]??0;
-      const pct = v>0 ? (v/total*100).toFixed(1)+'%' : '—';
-      return `<span class="alloc-lbl"><span class="alloc-dot" style="background:${a.color}"></span>${a.ticker.split('.')[0]} <span class="alloc-pct">${pct}</span></span>`;
+      const pct = v>0 ? (v/total*100).toFixed(1) : '—';
+      // Update card header badge
+      const badge = document.getElementById(`pct-badge-${i}`);
+      if (badge) badge.textContent = v>0 ? `${pct}%` : '';
+      return `<span class="alloc-lbl"><span class="alloc-dot" style="background:${a.color}"></span>${a.ticker.split('.')[0]} <span class="alloc-pct" style="color:${a.color};">${pct}${v>0?'%':''}</span></span>`;
     }).join('');
 
     // update hval in each holding card

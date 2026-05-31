@@ -722,6 +722,14 @@ const STOCK_CATALOG = [
   { id:'SPY',     name:'S&P 500 ETF', ticker:'SPY',     icon:'🇺🇸', color:'#34d399', type:'stock' },
   { id:'QQQ',     name:'Nasdaq ETF',  ticker:'QQQ',     icon:'💹', color:'#818cf8', type:'stock' },
   { id:'VCB.VN',  name:'Vietcombank', ticker:'VCB.VN',  icon:'🏦', color:'#00b14f', type:'stock' },
+  { id:'FPT.VN',  name:'FPT Corp',    ticker:'FPT.VN',  icon:'💻', color:'#f97316', type:'stock' },
+  { id:'VNM.VN',  name:'Vinamilk',    ticker:'VNM.VN',  icon:'🥛', color:'#3b82f6', type:'stock' },
+  { id:'HPG.VN',  name:'Hoà Phát',    ticker:'HPG.VN',  icon:'🏭', color:'#dc2626', type:'stock' },
+  { id:'MSN.VN',  name:'Masan',       ticker:'MSN.VN',  icon:'🛒', color:'#7c3aed', type:'stock' },
+  { id:'TCB.VN',  name:'Techcombank', ticker:'TCB.VN',  icon:'🏧', color:'#d97706', type:'stock' },
+  { id:'VHM.VN',  name:'Vinhomes',    ticker:'VHM.VN',  icon:'🏘️', color:'#059669', type:'stock' },
+  { id:'VPB.VN',  name:'VPBank',      ticker:'VPB.VN',  icon:'🏛️', color:'#0ea5e9', type:'stock' },
+  { id:'MWG.VN',  name:'Thế Giới Di Động', ticker:'MWG.VN', icon:'📱', color:'#8b5cf6', type:'stock' },
 ];
 const COMMODITY_CATALOG = [
   { id:'XAUUSD', name:'Vàng',         ticker:'GOLD',   icon:'🥇', color:'#ffd700', type:'commodity', stooq:'xauusd', cc:'XAU' },
@@ -837,9 +845,14 @@ async function fetchTwelveData(symbol) {
   return { price, pct, history: [] };
 }
 
+// Các suffix cổ phiếu trả về giá VND từ Yahoo
+const VND_SUFFIXES = ['.VN'];
+const isVNStock = sym => VND_SUFFIXES.some(s => sym.toUpperCase().endsWith(s));
+
 async function fetchYahoo(symbol) {
   const cached = cacheGet('yahoo:'+symbol);
   if (cached) return { price: cached.price, pct: cached.pct, history: [] };
+
   const parseYahoo = d => {
     if (d?.chart?.result?.[0]) {
       const res = d.chart.result[0];
@@ -885,6 +898,15 @@ async function fetchYahoo(symbol) {
 
   try {
     const result = await Promise.any(allAttempts);
+    // Nếu là cổ phiếu VN, giá trả về là VND → cần convert sang USD
+    if (isVNStock(symbol)) {
+      await loadFxRates(['VND']); // đảm bảo có tỷ giá
+      const fxRate = FX_RATES['VND'] ?? FX_FALLBACK['VND'];
+      result.price    = result.price * fxRate;
+      result.history  = (result.history || []).map(p => p * fxRate);
+      // pct giữ nguyên vì đã là %
+      result.isVND = true; // đánh dấu để hiển thị
+    }
     cacheSet('yahoo:'+symbol, result.price, result.pct);
     return result;
   }
@@ -1230,7 +1252,13 @@ function renderHoldings() {
                   <div class="hval ${v>0?'ok':''}" id="val-${i}">${v>0?usd(v):'—'}</div>
                   <div class="hval-alloc" id="alloc-${i}"></div>${extraField}`;
     } else if (effectivePrice != null) {
-      valBlock = `<div class="hval-price" id="price-${i}">Giá: ${usd(effectivePrice,effectivePrice>100?2:effectivePrice>1?3:5)}</div>
+      const isVN = isVNStock(a.id);
+      const fxRate = FX_RATES['VND'] ?? FX_FALLBACK['VND'];
+      const priceVND = isVN && fxRate ? Math.round(effectivePrice / fxRate) : null;
+      const priceLabel = isVN && priceVND
+        ? `Giá: ${usd(effectivePrice)} (${priceVND.toLocaleString('en-US')} VND)`
+        : `Giá: ${usd(effectivePrice, effectivePrice>100?2:effectivePrice>1?3:5)}`;
+      valBlock = `<div class="hval-price" id="price-${i}">${priceLabel}</div>
                   <div class="hval ${(a.qty||0)>0?'ok':''}" id="val-${i}">${(a.qty||0)>0?usd(effectivePrice*(a.qty||0)):'—'}</div>
                   <div class="hval-alloc" id="alloc-${i}"></div>`;
     } else {
@@ -1308,8 +1336,15 @@ function renderSummaryCards() {
 function recalc() {
   assets.forEach((a,i) => {
     const priceEl = $(`price-${i}`);
-    if (priceEl && a.price!=null && a.type!=='cash' && a.type!=='realestate')
-      priceEl.textContent = 'Giá: '+usd(a.price,a.price>100?2:a.price>1?3:5);
+    if (priceEl && a.price!=null && a.type!=='cash' && a.type!=='realestate') {
+      if (isVNStock(a.id)) {
+        const fxRate = FX_RATES['VND'] ?? FX_FALLBACK['VND'];
+        const priceVND = fxRate ? Math.round(a.price / fxRate) : null;
+        priceEl.textContent = `Giá: ${usd(a.price)} (${priceVND ? priceVND.toLocaleString('en-US')+' VND' : '...'})`;
+      } else {
+        priceEl.textContent = 'Giá: '+usd(a.price, a.price>100?2:a.price>1?3:5);
+      }
+    }
   });
 
   const vals = assets.map((a,i) => {
@@ -1481,9 +1516,11 @@ async function loadAll() {
     } catch(_) {}
   }));
 
-  // Load tỷ giá cho tất cả cash assets
+  // Load FX cho cash assets và VN stocks
+  const needVND = assets.some(a => (a.type==='cash'&&a.currency==='VND') || isVNStock(a.id));
   const cashCurrencies = assets.filter(a=>a.type==='cash'&&a.currency!=='USD').map(a=>a.currency);
-  if (cashCurrencies.length) await loadFxRates(cashCurrencies);
+  const fxCurrencies = [...new Set([...cashCurrencies, ...(needVND?['VND']:[])])];
+  if (fxCurrencies.length) await loadFxRates(fxCurrencies);
 
   renderHoldings();
   buildChart();

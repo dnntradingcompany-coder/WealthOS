@@ -2673,6 +2673,13 @@ function unlockPremium() {
     window._pmInitFromPortfolio = total;
   }
 
+  // Pre-fill rates từ FC_ASSET_DATA hist làm default
+  assets.forEach(a => {
+    if (pmSelectedRates[a.ticker] === undefined) {
+      pmSelectedRates[a.ticker] = (FC_ASSET_DATA[a.type] || FC_ASSET_DATA.stock).histRate;
+    }
+  });
+
   pmRenderAlloc();
   pmUpdate();
 }
@@ -2902,10 +2909,11 @@ function pmUpdate() {
   assets.forEach(a => { totalByType[a.type] = (totalByType[a.type]||0) + 1; });
 
   const datasets = assets.map(a => {
-    // Use user-selected rate if available, otherwise fall back to PM_RISK rates
+    // Priority: 1) user clicked chip, 2) AI alloc card hist rate, 3) FC_ASSET_DATA realistic
+    const defaultRate = (FC_ASSET_DATA[a.type] || FC_ASSET_DATA.stock).histRate;
     const rate = pmSelectedRates[a.ticker] !== undefined
       ? pmSelectedRates[a.ticker]
-      : (PM_RISK[pmSelectedRisk].rates[a.type] || PM_RISK[pmSelectedRisk].rates.stock);
+      : defaultRate;
     const assetPct = (alloc[a.type]||20) / 100 / (totalByType[a.type]||1);
     let v = initAmt * assetPct;
     const series = [Math.round(v)];

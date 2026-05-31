@@ -2411,25 +2411,29 @@ let selectedRisk = null;
 
 function openAIAdvisor() {
   document.getElementById('ai-modal-overlay').classList.add('open');
-  const badge = document.getElementById('ai-plan-badge');
-  const sub   = document.getElementById('ai-modal-sub');
+  const badge     = document.getElementById('ai-plan-badge');
+  const sub       = document.getElementById('ai-modal-sub');
   const freePanel = document.getElementById('ai-free-panel');
   const chatPanel = document.getElementById('ai-chat-panel');
-  const note  = document.getElementById('ai-premium-note');
+  const vi        = currentLang === 'vi';
 
   if (isPremium) {
     if (badge) badge.style.display = 'inline-block';
-    if (sub) sub.textContent = currentLang==='vi' ? '💬 Chat với AI tư vấn tài chính cá nhân' : '💬 Chat with your personal AI financial advisor';
+    if (sub)   sub.textContent = vi ? '💬 Chat với AI tư vấn tài chính cá nhân' : '💬 Chat with your personal AI financial advisor';
     if (freePanel) freePanel.style.display = 'none';
-    if (chatPanel) { chatPanel.style.display = 'flex'; }
-    // Init chat if empty
-    const msgs = document.getElementById('ai-chat-messages');
-    if (msgs && msgs.children.length === 0) initChatWelcome();
-    // Update suggestions language
+    if (chatPanel) chatPanel.style.display = 'flex';
     updateSuggestions();
+    // Init welcome only on first open; re-init if language changed
+    const msgs = document.getElementById('ai-chat-messages');
+    if (msgs && (msgs.children.length === 0 || msgs.dataset.lang !== currentLang)) {
+      msgs.innerHTML = '';
+      msgs.dataset.lang = currentLang;
+      chatHistory = [];
+      initChatWelcome();
+    }
   } else {
-    if (badge) badge.style.display = 'none';
-    if (sub) sub.textContent = t('aiSub');
+    if (badge)     badge.style.display = 'none';
+    if (sub)       sub.textContent = t('aiSub');
     if (freePanel) freePanel.style.display = '';
     if (chatPanel) chatPanel.style.display = 'none';
   }

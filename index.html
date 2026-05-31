@@ -2420,7 +2420,7 @@ ${portfolioText}
 Chỉ nhận xét điểm mạnh và điểm yếu của danh mục hiện tại. Trả lời tiếng Việt, súc tích, dùng bullet points.`;
 
   try {
-    const workerUrl = 'https://twilight-silence-ee34.dnntradingcompany.workers.dev' + (isPremium ? '/ai' : '/');
+    const workerUrl = 'https://proud-feather-b76c.dnntradingcompany.workers.dev' + (isPremium ? '/ai' : '/');
     const response = await fetch(workerUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2528,7 +2528,7 @@ async function initPremium() {
   if (!email || !key) { lockPremium(); return; }
 
   try {
-    const res = await fetch('https://twilight-silence-ee34.dnntradingcompany.workers.dev/verify', {
+    const res = await fetch('https://proud-feather-b76c.dnntradingcompany.workers.dev/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, license_key: key }),
@@ -2598,7 +2598,7 @@ async function verifyAndUnlock() {
   btn.textContent = t('pmVerifying');
 
   try {
-    const workerUrl = 'https://twilight-silence-ee34.dnntradingcompany.workers.dev/verify';
+    const workerUrl = 'https://proud-feather-b76c.dnntradingcompany.workers.dev/verify';
     const res = await fetch(workerUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2717,7 +2717,7 @@ Rules:
 - Return ONLY the JSON array, nothing else`;
 
   try {
-    const res = await fetch('https://twilight-silence-ee34.dnntradingcompany.workers.dev/ai', {
+    const res = await fetch('https://proud-feather-b76c.dnntradingcompany.workers.dev/ai', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages: [{ role: 'user', content: prompt }] }),

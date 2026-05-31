@@ -594,8 +594,12 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
 <!-- ── UPGRADE MODAL ── -->
 <div class="modal-overlay" id="upgrade-modal-overlay" onclick="maybeCloseUpgrade(event)" style="z-index:300;">
   <div class="modal" style="width:min(480px,94vw);text-align:center;">
-    <div style="font-size:40px;margin-bottom:12px;">✦</div>
-    <h3 style="font-size:20px;margin-bottom:6px;">WealthOS Premium</h3>
+    <div style="font-size:40px;margin-bottom:8px;">✦</div>
+    <h3 style="font-size:20px;margin-bottom:4px;">WealthOS Premium</h3>
+    <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.25);border-radius:20px;padding:4px 14px;margin-bottom:16px;">
+      <span style="font-size:18px;font-weight:800;font-family:var(--mono);color:#34d399;">$24</span>
+      <span style="font-size:11px;color:#34d399;font-family:var(--mono);">USDT / <span data-i18n="pmYearsUnit">năm</span></span>
+    </div>
     <div class="modal-sub" style="margin-bottom:20px;" data-i18n="pmModalSub">Mở khóa toàn bộ tính năng nâng cao</div>
 
     <!-- Features list -->
@@ -619,7 +623,15 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
       <div id="pm-verify-err" style="font-size:11px;color:var(--re);margin:8px 0;display:none;text-align:left;"></div>
       <button onclick="verifyAndUnlock()" id="pm-verify-btn" style="width:100%;padding:11px;border-radius:10px;border:none;background:linear-gradient(135deg,#7c3aed,#4f8ef7);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);margin-bottom:8px;" data-i18n="pmVerifyBtn">✦ Kích hoạt Premium</button>
       <button class="mbtn" onclick="closeUpgradeModal()" style="width:100%;" data-i18n="pmLater">Để sau</button>
-      <div style="font-size:10px;color:var(--mu);margin-top:10px;font-family:var(--mono);text-align:center;" data-i18n="pmContactHint">Chưa có key? Liên hệ admin để được cấp.</div>
+      <div style="margin-top:14px;padding:12px;background:var(--sur2);border-radius:10px;border:1px solid var(--b);">
+        <div style="font-size:11px;color:var(--mu);margin-bottom:8px;text-align:center;" data-i18n="pmContactHint">Chưa có key? Mua license qua email:</div>
+        <a href="mailto:admin@wealthos.world?subject=WealthOS%20Premium%20License%20Key&body=Xin%20chào%2C%20tôi%20muốn%20mua%20license%20key%20WealthOS%20Premium.%0A%0ATên%3A%20%0AEmail%20nhận%20key%3A%20" 
+           style="display:flex;align-items:center;justify-content:center;gap:8px;padding:9px 16px;border-radius:8px;background:rgba(79,142,247,0.1);border:1px solid rgba(79,142,247,0.25);color:#4f8ef7;font-size:12px;font-weight:600;text-decoration:none;transition:background .2s;"
+           onmouseover="this.style.background='rgba(79,142,247,0.2)'" onmouseout="this.style.background='rgba(79,142,247,0.1)'">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          admin@wealthos.world
+        </a>
+      </div>
     </div>
   </div>
 </div>
@@ -704,7 +716,7 @@ const LANG = {
     pmMonthly:'HÀNG THÁNG', pmYearly:'TIẾT KIỆM 40%', pmPerMonth:'/tháng', pmPerYear2:'/tháng · $35.9/năm',
     pmStartBtn:'✦ Bắt đầu dùng Premium', pmLater:'Để sau', pmDemo:'Demo: click "Bắt đầu" để mở khóa thử',
     pmEmailLabel:'EMAIL ĐÃ ĐĂNG KÝ', pmKeyLabel:'LICENSE KEY',
-    pmVerifyBtn:'✦ Kích hoạt Premium', pmContactHint:'Chưa có key? Liên hệ admin để được cấp.',
+    pmVerifyBtn:'✦ Kích hoạt Premium', pmContactHint:'Chưa có key? Mua license qua email:',
     pmVerifying:'Đang xác thực...', pmErrNotFound:'Email hoặc key không đúng. Vui lòng kiểm tra lại.',
     pmErrExpired:'License key đã hết hạn.', pmErrNetwork:'Lỗi kết nối. Vui lòng thử lại.',
     // AI Advisor
@@ -793,7 +805,7 @@ const LANG = {
     pmMonthly:'MONTHLY', pmYearly:'SAVE 40%', pmPerMonth:'/month', pmPerYear2:'/month · $35.9/year',
     pmStartBtn:'✦ Start Premium', pmLater:'Maybe later', pmDemo:'Demo: click "Start" to unlock',
     pmEmailLabel:'REGISTERED EMAIL', pmKeyLabel:'LICENSE KEY',
-    pmVerifyBtn:'✦ Activate Premium', pmContactHint:"Don't have a key? Contact admin.",
+    pmVerifyBtn:'✦ Activate Premium', pmContactHint:"Don't have a key? Buy license via email:",
     pmVerifying:'Verifying...', pmErrNotFound:'Email or key is incorrect. Please check again.',
     pmErrExpired:'License key has expired.', pmErrNetwork:'Connection error. Please try again.',
     // AI Advisor

@@ -1220,7 +1220,13 @@ function fetchWithTimeout(url, opts={}) {
   return fetch(url, { ...opts, signal: ctrl.signal }).finally(() => clearTimeout(t));
 }
 
+// ── CLOUDFLARE WORKER PROXY ──────────────────────────────────────────
+// Deploy worker tại workers.cloudflare.com, paste URL vào đây:
+const CF_WORKER_URL = 'https://wealthos-proxy-worker.dnntradingcompany.workers.dev';
+// ─────────────────────────────────────────────────────────────────────
+
 const PROXIES = [
+  ...(CF_WORKER_URL ? [url => `${CF_WORKER_URL}?url=${encodeURIComponent(url)}`] : []),
   url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
   url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
   url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
@@ -1311,21 +1317,24 @@ async function fetchVNStock(symbol) {
     return { price, pct: prev ? (price-prev)/prev*100 : null, history: res?.indicators?.quote?.[0]?.close?.filter(Boolean)||[] };
   };
 
+  const cfProxy = url => CF_WORKER_URL ? `${CF_WORKER_URL}?url=${encodeURIComponent(url)}` : null;
+
   const stooqUrl  = `https://stooq.com/q/l/?s=${stooqSym}&f=sd2t2ohlcv&h&e=csv`;
   const yahooUrl  = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`;
   const yahoo2Url = `https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`;
 
+  const mkProxies = u => [
+    cfProxy(u),
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+    `https://corsproxy.io/?${encodeURIComponent(u)}`,
+    u, // direct
+  ].filter(Boolean);
+
   const attempts = [
-    // Stooq via each proxy
-    parseStooq(ftVN(`https://api.allorigins.win/raw?url=${encodeURIComponent(stooqUrl)}`)).catch(()=>Promise.reject('s1')),
-    parseStooq(ftVN(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(stooqUrl)}`)).catch(()=>Promise.reject('s2')),
-    parseStooq(ftVN(`https://corsproxy.io/?${encodeURIComponent(stooqUrl)}`)).catch(()=>Promise.reject('s3')),
-    parseStooq(ftVN(stooqUrl)).catch(()=>Promise.reject('s4')),
-    // Yahoo via each proxy
-    parseYahoo(ftVN(`https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`)).catch(()=>Promise.reject('y1')),
-    parseYahoo(ftVN(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(yahooUrl)}`)).catch(()=>Promise.reject('y2')),
-    parseYahoo(ftVN(`https://corsproxy.io/?${encodeURIComponent(yahoo2Url)}`)).catch(()=>Promise.reject('y3')),
-    parseYahoo(ftVN(yahooUrl)).catch(()=>Promise.reject('y4')),
+    ...mkProxies(stooqUrl).map(p => parseStooq(ftVN(p)).catch(()=>Promise.reject())),
+    ...mkProxies(yahooUrl).map(p => parseYahoo(ftVN(p)).catch(()=>Promise.reject())),
+    parseYahoo(ftVN(`https://corsproxy.io/?${encodeURIComponent(yahoo2Url)}`)).catch(()=>Promise.reject()),
   ];
 
   return Promise.any(attempts);

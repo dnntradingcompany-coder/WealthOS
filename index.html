@@ -1662,6 +1662,9 @@ function fmtNum(n, maxDec=8) {
 }
 function fmtQtyInput(el) {
   const cur = el.selectionStart;
+  // Strip any character that's not a digit, dot, or comma (handles iOS paste etc.)
+  const cleaned = el.value.replace(/[^0-9.,]/g, '');
+  if (cleaned !== el.value) { el.value = cleaned; }
   const oldVal = el.value;
   const raw = oldVal.replace(/,/g, '');
   if (raw === '' || raw === '.') return;
@@ -2269,7 +2272,6 @@ function renderHoldings() {
                         placeholder="${t('manualPrice')}"
                         value="${a.manualPrice ? fmtNum(a.manualPrice, 2) : ''}"
                         oninput="fmtQtyInput(this);setManualPrice(${i},this.value)"
-                        onkeypress="return /[0-9.,]/.test(event.key)"
                         style="font-size:12px;padding:6px 10px;">
                       <span class="hunit" style="font-size:9px">USD</span>
                     </div>
@@ -2304,8 +2306,7 @@ function renderHoldings() {
           <input class="hinput" id="qty-${i}" type="text" inputmode="decimal"
             placeholder="${qtyPlaceholder}"
             value="${a.qty ? fmtNum(a.qty) : ''}"
-            oninput="fmtQtyInput(this);onQtyChange(${i})"
-            onkeypress="return /[0-9.,]/.test(event.key)">
+            oninput="fmtQtyInput(this);onQtyChange(${i})">
           <span class="hunit">${qtyLabel}</span>
         </div>
         ${extraField}

@@ -1221,10 +1221,12 @@ function fetchWithTimeout(url, opts={}) {
 }
 
 const PROXIES = [
-  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
   url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
   url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-  url => `https://cors-anywhere.herokuapp.com/${url}`,
+  url => `https://proxy.cors.sh/${url}`,
+  url => `https://cors.eu.org/${url}`,
+  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  url => `https://thingproxy.freeboard.io/fetch/${url}`,
 ];
 
 async function tryFetch(url) {
@@ -1298,9 +1300,12 @@ async function fetchVNStock(symbol) {
   const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`;
 
   const proxies = [
-    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
     u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
     u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+    u => `https://proxy.cors.sh/${u}`,
+    u => `https://cors.eu.org/${u}`,
+    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+    u => `https://thingproxy.freeboard.io/fetch/${u}`,
   ];
 
   const attempts = [

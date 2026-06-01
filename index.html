@@ -128,6 +128,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
 .lang-opt{padding:7px 12px;border-radius:7px;font-size:12px;cursor:pointer;color:var(--mu);transition:all .15s;white-space:nowrap;}
 .lang-opt:hover{background:var(--sur2);color:var(--tx);}
 .lang-opt.active{color:var(--tx);font-weight:600;background:var(--sur2);}
+/* Hide number input spinners */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+input[type=number]{-moz-appearance:textfield;}
 .mbtn-primary:hover{opacity:.88;}
 .modal-err{font-size:11px;color:var(--re);margin-bottom:10px;display:none;}
 
@@ -2268,10 +2272,10 @@ function renderHoldings() {
       valBlock = `<div class="hval-price" id="price-${i}" style="color:var(--mu)">${t('noPrice')}</div>
                   <div class="manual-price-row">
                     <div class="hinput-wrap" style="flex:1">
-                      <input class="hinput" id="mprice-${i}" type="text" inputmode="decimal"
+                      <input class="hinput" id="mprice-${i}" type="number" inputmode="decimal" step="any" min="0"
                         placeholder="${t('manualPrice')}"
-                        value="${a.manualPrice ? fmtNum(a.manualPrice, 2) : ''}"
-                        oninput="fmtQtyInput(this);setManualPrice(${i},this.value)"
+                        value="${a.manualPrice || ''}"
+                        oninput="setManualPrice(${i},this.value)"
                         style="font-size:12px;padding:6px 10px;">
                       <span class="hunit" style="font-size:9px">USD</span>
                     </div>
@@ -2303,10 +2307,10 @@ function renderHoldings() {
       <div style="margin-top:10px;padding:10px 10px 8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;">
         <div style="font-size:10px;letter-spacing:1px;color:var(--mu);margin-bottom:8px;font-family:var(--mono);">✏ ${isCash ? t('balanceLabel') : isRE ? t('propertyLabel') : isOther ? t('assetValLabel') : t('qtyLabel')}</div>
         <div class="hinput-wrap">
-          <input class="hinput" id="qty-${i}" type="text" inputmode="decimal"
+          <input class="hinput" id="qty-${i}" type="number" inputmode="decimal" step="any" min="0"
             placeholder="${qtyPlaceholder}"
-            value="${a.qty ? fmtNum(a.qty) : ''}"
-            oninput="fmtQtyInput(this);onQtyChange(${i})">
+            value="${a.qty || ''}"
+            oninput="onQtyChange(${i})">
           <span class="hunit">${qtyLabel}</span>
         </div>
         ${extraField}

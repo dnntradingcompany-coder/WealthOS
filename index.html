@@ -2347,7 +2347,7 @@ function renderFcAssetScenarios() {
       const isActive = cur === k;
       return `<span
         onclick="fcSetScenario(${i},'${k}')"
-        style="flex:1;min-width:0;text-align:center;padding:4px 6px;border-radius:6px;font-size:9.5px;font-weight:${isActive?'800':'600'};font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+        style="flex:1 1 calc(50% - 2px);min-width:0;text-align:center;padding:5px 4px;border-radius:6px;font-size:10px;font-weight:${isActive?'800':'600'};font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
           color:${cc};cursor:pointer;transition:all .15s;
           background:${isActive?cc+'30':'rgba(255,255,255,0.04)'};
           border:${isActive?'2px':'1px'} solid ${isActive?cc:cc+'40'};
@@ -2366,7 +2366,7 @@ function renderFcAssetScenarios() {
           <div style="font-size:9px;color:var(--mu);font-family:var(--mono);">${a.ticker}</div>
         </div>
       </div>
-      <div style="display:flex;gap:4px;align-items:stretch;">${chips}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;">${chips}</div>
     </div>`;
   }).join('');
 }

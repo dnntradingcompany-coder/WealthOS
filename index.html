@@ -547,10 +547,22 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
       <input class="modal-input" id="ci-ticker" placeholder="Ví dụ: BTC hoặc bitcoin (CoinGecko ID)" maxlength="30">
       <div class="modal-hint">Crypto: nhập CoinGecko ID (vd: bitcoin, ethereum). Cổ phiếu/ETF: Yahoo ticker (vd: AAPL, VUAA.L)</div>
       <div class="modal-label">LOẠI</div>
-      <select class="modal-input" id="ci-type" style="cursor:pointer">
+      <select class="modal-input" id="ci-type" style="cursor:pointer" onchange="onCiTypeChange()">
         <option value="crypto">Crypto (CoinGecko)</option>
         <option value="stock">Cổ phiếu / ETF (Yahoo Finance)</option>
+        <option value="other">🗂️ Khác / Other</option>
       </select>
+      <!-- Hiện khi chọn "Khác" -->
+      <div id="ci-other-fields" style="display:none;">
+        <div class="modal-label" style="margin-top:8px;">MÔ TẢ LOẠI TÀI SẢN <span style="color:var(--mu);font-weight:400;">(tuỳ chọn)</span></div>
+        <input class="modal-input" id="ci-other-desc" placeholder="Vd: Quỹ tư nhân, NFT, Watch..." maxlength="40">
+        <div class="modal-label">LÃI SUẤT / TĂNG TRƯỞNG DỰ KIẾN (%/năm)</div>
+        <div style="position:relative;">
+          <input class="modal-input" id="ci-other-rate" type="number" min="-100" max="1000" step="0.1" placeholder="Vd: 8" style="padding-right:64px;">
+          <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--mu);font-family:var(--mono);pointer-events:none;">% /năm</span>
+        </div>
+        <div class="modal-hint">Dùng để tính dự báo tăng trưởng. Để trống = dùng 8%/năm mặc định.</div>
+      </div>
       <div class="modal-label">ICON (emoji)</div>
       <input class="modal-input" id="ci-icon" placeholder="🪙" maxlength="4" style="font-size:20px;width:60px;text-align:center;">
       <div class="modal-label">MÀU</div>
@@ -1540,17 +1552,19 @@ function getAssetValue(a,i) {
 }
 function updateCashRate(i,val) { assets[i].cashRate=parseFloat(val)||5.5; renderFcAssetScenarios(); fcUpdate(); saveAll(); }
 function updateReRate(i,val)   { assets[i].reGrowthRate=(parseFloat(val)||8)/100; renderFcAssetScenarios(); fcUpdate(); saveAll(); }
+function updateOtherRate(i,val){ assets[i].customGrowthRate=(parseFloat(val)||8)/100; renderFcAssetScenarios(); fcUpdate(); saveAll(); }
 
 // ─────────────────────────────────────────────────────────────
 function renderHoldings() {
   const row = $('holdings-row');
   row.innerHTML = assets.map((a, i) => {
     const isCash = a.type==='cash', isRE = a.type==='realestate';
+    const isOther = a.type==='custom' && a.customGrowthRate != null;
     const qtyLabel = isCash ? (a.currency||'USD') : isRE ? 'USD' : a.ticker.split('.')[0];
     const qtyPlaceholder = isCash ? 'Số dư tiết kiệm' : isRE ? 'Giá trị BĐS (USD)' : '0';
     const effectivePrice = a.price ?? a.manualPrice ?? null;
 
-    // Extra info field (lãi suất hoặc % tăng trưởng BĐS)
+    // Extra info field (lãi suất hoặc % tăng trưởng BĐS hoặc custom)
     const extraField = isCash ? `
       <div class="extra-field" style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;">
         <span class="extra-field-label">💰 ${t('savingsRate')}</span>
@@ -1565,6 +1579,14 @@ function renderHoldings() {
         <span style="display:flex;align-items:center;gap:4px;">
           <input class="einput" id="rerate-${i}" type="number" min="0" max="50" step="0.5"
             value="${((a.reGrowthRate||0.08)*100).toFixed(1)}" oninput="updateReRate(${i},this.value)">
+          <span style="font-size:11px;color:var(--mu);font-family:var(--mono);">% ${t('perYear')}</span>
+        </span>
+      </div>` : isOther ? `
+      <div class="extra-field" style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;">
+        <span class="extra-field-label">📊 ${currentLang==='vi'?'Tăng trưởng dự kiến':'Expected return'}</span>
+        <span style="display:flex;align-items:center;gap:4px;">
+          <input class="einput" id="otherrate-${i}" type="number" min="-100" max="1000" step="0.1"
+            value="${((a.customGrowthRate||0.08)*100).toFixed(1)}" oninput="updateOtherRate(${i},this.value)">
           <span style="font-size:11px;color:var(--mu);font-family:var(--mono);">% ${t('perYear')}</span>
         </span>
       </div>` : '';
@@ -1817,6 +1839,7 @@ async function retryFetch(i) {
 
 function updateCashRate(i,val) { assets[i].cashRate=parseFloat(val)||5.5; renderFcAssetScenarios(); fcUpdate(); saveAll(); }
 function updateReRate(i,val)   { assets[i].reGrowthRate=(parseFloat(val)||8)/100; renderFcAssetScenarios(); fcUpdate(); saveAll(); }
+function updateOtherRate(i,val){ assets[i].customGrowthRate=(parseFloat(val)||8)/100; renderFcAssetScenarios(); fcUpdate(); saveAll(); }
 function changeAssetColor(i, color) {
   assets[i].color = color;
   // Update icon background ngay không cần re-render toàn bộ
@@ -2053,7 +2076,14 @@ function addSelectedAsset() {
     const icon   = $('ci-icon').value.trim() || '💰';
     const color  = $('ci-color').value;
     if (!name || !ticker) { showModalErr(t('errMissingFields')); return; }
-    asset = { id: type==='crypto' ? ticker.toLowerCase() : ticker, name, ticker, icon, color, type };
+    if (type === 'other') {
+      const rateRaw = parseFloat($('ci-other-rate').value);
+      const customGrowthRate = (!isNaN(rateRaw) ? rateRaw : 8) / 100;
+      const desc = $('ci-other-desc').value.trim();
+      asset = { id: ticker.toLowerCase(), name, ticker, icon, color, type: 'custom', customGrowthRate, desc };
+    } else {
+      asset = { id: type==='crypto' ? ticker.toLowerCase() : ticker, name, ticker, icon, color, type };
+    }
   } else {
     if (!selectedAsset) { showModalErr(t('errNoAsset')); return; }
     asset = { ...selectedAsset };
@@ -2074,7 +2104,12 @@ function addSelectedAsset() {
   fetchSingleAsset(assets.length-1);
 }
 
-function showModalErr(msg) {
+function onCiTypeChange() {
+  const val = document.getElementById('ci-type').value;
+  document.getElementById('ci-other-fields').style.display = val === 'other' ? 'block' : 'none';
+}
+
+
   const el=$('modal-err'); el.textContent=msg; el.style.display='block';
 }
 
@@ -2168,11 +2203,16 @@ const FC_ASSET_DATA = {
   custom:     { histRate:0.08,  histPeriod:'5yr',  bull:0.15,  real:0.08,  bear:0.02  },
 };
 
-function fcGetScenarios(type) {
-  const d = FC_ASSET_DATA[type] || FC_ASSET_DATA.stock;
+function fcGetScenarios(type, asset) {
+  let d = FC_ASSET_DATA[type] || FC_ASSET_DATA.stock;
+  // If asset has a custom growth rate (from "Khác / Other"), override rates
+  if (asset && asset.customGrowthRate != null) {
+    const r = asset.customGrowthRate;
+    d = { histRate: r, histPeriod: 'custom', bull: r * 1.5, real: r, bear: Math.max(r * 0.3, -0.2) };
+  }
   const lang = currentLang || 'vi';
   const vi = lang === 'vi';
-  const pMap = { '10yr':vi?'10 năm':'10yr','5yr':vi?'5 năm':'5yr','3yr':vi?'3 năm':'3yr','1yr':vi?'1 năm':'1yr','since launch':vi?'từ ra mắt':'since launch' };
+  const pMap = { '10yr':vi?'10 năm':'10yr','5yr':vi?'5 năm':'5yr','3yr':vi?'3 năm':'3yr','1yr':vi?'1 năm':'1yr','since launch':vi?'từ ra mắt':'since launch','custom':vi?'tùy chỉnh':'custom' };
   const p = pMap[d.histPeriod] || d.histPeriod;
   const fmt = r => (r>=0?'+':'') + (r*100).toFixed(1)+'%';
   return {
@@ -2239,7 +2279,7 @@ function renderFcAssetScenarios() {
       </div>`;
 
     // Standard asset card with colored chips
-    const scens = fcGetScenarios(a.type);
+    const scens = fcGetScenarios(a.type, a);
     const cur = fcScenarios[i] || fcDefaultScenario(a.type);
     const chipColors = { hist:'#e8eaf0', real:'#34d399', bull:'#4f8ef7', bear:'#f87171' };
     const chips = Object.entries(scens).map(([k,v]) => {
@@ -2318,7 +2358,7 @@ function fcUpdate() {
     if (a.type==='cash')        rate = (a.cashRate||5.5)/100;
     else if (a.type==='realestate') rate = a.reGrowthRate||0.08;
     else {
-      const scens = fcGetScenarios(a.type);
+      const scens = fcGetScenarios(a.type, a);
       const key   = fcScenarios[i]||fcDefaultScenario(a.type);
       rate = scens[key]?.r??0.10;
     }

@@ -1223,10 +1223,7 @@ function fetchWithTimeout(url, opts={}) {
 const PROXIES = [
   url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
   url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-  url => `https://proxy.cors.sh/${url}`,
-  url => `https://cors.eu.org/${url}`,
   url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-  url => `https://thingproxy.freeboard.io/fetch/${url}`,
 ];
 
 async function tryFetch(url) {
@@ -1259,19 +1256,37 @@ async function fetchTwelveData(symbol) {
 const VND_SUFFIXES = ['.VN'];
 const isVNStock = sym => VND_SUFFIXES.some(s => sym.toUpperCase().endsWith(s));
 
+// JSONP loader — bypasses CORS entirely using script tag
+function jsonpFetch(url, callbackParam = 'callback') {
+  return new Promise((resolve, reject) => {
+    const cbName = '_cb_' + Math.random().toString(36).slice(2);
+    const script = document.createElement('script');
+    const timer = setTimeout(() => {
+      delete window[cbName];
+      script.remove();
+      reject(new Error('jsonp timeout'));
+    }, 5000);
+    window[cbName] = data => {
+      clearTimeout(timer);
+      delete window[cbName];
+      script.remove();
+      resolve(data);
+    };
+    script.src = `${url}${url.includes('?')?'&':'?'}${callbackParam}=${cbName}`;
+    script.onerror = () => { clearTimeout(timer); delete window[cbName]; script.remove(); reject(new Error('jsonp error')); };
+    document.head.appendChild(script);
+  });
+}
+
 async function fetchVNStock(symbol) {
   const ticker = symbol.replace(/\.VN$/i, '').toUpperCase();
   const stooqSym = ticker.toLowerCase() + '.vn';
 
-  // Short-timeout fetch for VN sources
   const ftVN = async (url, opts={}) => {
     const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 4000); // 4s per attempt
-    try {
-      const r = await fetch(url, { ...opts, signal: ctrl.signal });
-      clearTimeout(t);
-      return r;
-    } catch(e) { clearTimeout(t); throw e; }
+    const t = setTimeout(() => ctrl.abort(), 5000);
+    try { const r = await fetch(url, { ...opts, signal: ctrl.signal }); clearTimeout(t); return r; }
+    catch(e) { clearTimeout(t); throw e; }
   };
 
   const parseStooq = async (r) => {
@@ -1286,7 +1301,7 @@ async function fetchVNStock(symbol) {
     return { price: close, pct: open && !isNaN(open) ? (close-open)/open*100 : null, history:[close] };
   };
 
-  const parseYahooChart = async (r) => {
+  const parseYahoo = async (r) => {
     if (!r.ok) throw new Error('not ok');
     const d = await r.json();
     const res = d?.chart?.result?.[0];
@@ -1296,29 +1311,24 @@ async function fetchVNStock(symbol) {
     return { price, pct: prev ? (price-prev)/prev*100 : null, history: res?.indicators?.quote?.[0]?.close?.filter(Boolean)||[] };
   };
 
-  const stooqUrl = `https://stooq.com/q/l/?s=${stooqSym}&f=sd2t2ohlcv&h&e=csv`;
-  const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`;
-
-  const proxies = [
-    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-    u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-    u => `https://proxy.cors.sh/${u}`,
-    u => `https://cors.eu.org/${u}`,
-    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-    u => `https://thingproxy.freeboard.io/fetch/${u}`,
-  ];
+  const stooqUrl  = `https://stooq.com/q/l/?s=${stooqSym}&f=sd2t2ohlcv&h&e=csv`;
+  const yahooUrl  = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`;
+  const yahoo2Url = `https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`;
 
   const attempts = [
-    // Stooq via all proxies
-    ...proxies.map(pk => parseStooq(ftVN(pk(stooqUrl))).catch(()=>Promise.reject())),
-    // Yahoo via all proxies
-    ...proxies.map(pk => parseYahooChart(ftVN(pk(yahooUrl))).catch(()=>Promise.reject())),
-    // Yahoo direct (sometimes works)
-    parseYahooChart(ftVN(yahooUrl, { headers:{'Accept':'application/json'} })).catch(()=>Promise.reject()),
+    // Stooq via each proxy
+    parseStooq(ftVN(`https://api.allorigins.win/raw?url=${encodeURIComponent(stooqUrl)}`)).catch(()=>Promise.reject('s1')),
+    parseStooq(ftVN(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(stooqUrl)}`)).catch(()=>Promise.reject('s2')),
+    parseStooq(ftVN(`https://corsproxy.io/?${encodeURIComponent(stooqUrl)}`)).catch(()=>Promise.reject('s3')),
+    parseStooq(ftVN(stooqUrl)).catch(()=>Promise.reject('s4')),
+    // Yahoo via each proxy
+    parseYahoo(ftVN(`https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`)).catch(()=>Promise.reject('y1')),
+    parseYahoo(ftVN(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(yahooUrl)}`)).catch(()=>Promise.reject('y2')),
+    parseYahoo(ftVN(`https://corsproxy.io/?${encodeURIComponent(yahoo2Url)}`)).catch(()=>Promise.reject('y3')),
+    parseYahoo(ftVN(yahooUrl)).catch(()=>Promise.reject('y4')),
   ];
 
-  const result = await Promise.any(attempts);
-  return result;
+  return Promise.any(attempts);
 }
 
 async function fetchYahoo(symbol) {

@@ -6,6 +6,7 @@
 <title>WealthOS – AI Net Worth & Portfolio Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 :root{
   --bg:#0d0f14;--sur:#151820;--sur2:#1c2030;
@@ -124,6 +125,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
 .mbtn{padding:8px 18px;border-radius:8px;border:1px solid var(--b2);background:var(--sur2);color:var(--mu);font-size:12px;cursor:pointer;font-family:var(--sans);transition:all .2s;}
 .mbtn:hover{color:var(--tx);}
 .mbtn-primary{background:var(--blue);border-color:var(--blue);color:#fff;}
+.lang-opt{padding:7px 12px;border-radius:7px;font-size:12px;cursor:pointer;color:var(--mu);transition:all .15s;white-space:nowrap;}
+.lang-opt:hover{background:var(--sur2);color:var(--tx);}
+.lang-opt.active{color:var(--tx);font-weight:600;background:var(--sur2);}
 .mbtn-primary:hover{opacity:.88;}
 .modal-err{font-size:11px;color:var(--re);margin-bottom:10px;display:none;}
 
@@ -318,7 +322,25 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
       <button class="btn" id="ai-btn" onclick="openAIAdvisor()" style="font-size:12px;padding:5px 12px;color:#a78bfa;border-color:rgba(167,139,250,0.35);background:rgba(167,139,250,0.06);">
         ✦ <span>AI Tư vấn</span>
       </button>
-      <button class="btn" id="lang-btn" onclick="toggleLang()" style="font-size:13px;padding:5px 10px;letter-spacing:.5px;">🇬🇧 EN</button>
+      <button class="btn" onclick="openShareModal()" style="font-size:12px;padding:5px 12px;color:#34d399;border-color:rgba(52,211,153,0.35);background:rgba(52,211,153,0.06);" data-i18n-btn="share">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        <span data-i18n="shareBtn">Chia sẻ</span>
+      </button>
+      <div style="position:relative;display:inline-block;" id="lang-dropdown-wrap">
+        <button class="btn" id="lang-btn" onclick="toggleLangDropdown()" style="font-size:12px;padding:5px 10px;letter-spacing:.5px;gap:4px;">
+          <span id="lang-flag">🇻🇳</span><span id="lang-code" style="font-size:11px;">VI</span>
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div id="lang-menu" style="display:none;position:absolute;right:0;top:calc(100% + 6px);background:var(--sur);border:1px solid var(--b2);border-radius:10px;padding:5px;min-width:150px;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,0.45);">
+          <div class="lang-opt active" data-lang="vi"  onclick="setLang('vi')">🇻🇳 Tiếng Việt</div>
+          <div class="lang-opt" data-lang="en"  onclick="setLang('en')">🇬🇧 English</div>
+          <div class="lang-opt" data-lang="zh"  onclick="setLang('zh')">🇨🇳 中文</div>
+          <div class="lang-opt" data-lang="ja"  onclick="setLang('ja')">🇯🇵 日本語</div>
+          <div class="lang-opt" data-lang="ko"  onclick="setLang('ko')">🇰🇷 한국어</div>
+          <div class="lang-opt" data-lang="fr"  onclick="setLang('fr')">🇫🇷 Français</div>
+          <div class="lang-opt" data-lang="ru"  onclick="setLang('ru')">🇷🇺 Русский</div>
+        </div>
+      </div>
       <button class="btn" id="rbtn" onclick="loadAll()" style="gap:6px;">
         <svg id="rico" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
         <span data-i18n="refresh">Làm mới</span>
@@ -769,7 +791,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
 const LANG = {
   vi: {
     logo:'WEALTHOS', title:'Nền tảng quản trị tài sản thông minh.',
-    refresh:'Làm mới', addAsset:'Thêm tài sản', holdingsTitle:'GIÁ TRỊ CÁC LOẠI TÀI SẢN', assetValTitle:'GIÁ TRỊ TỪNG LOẠI TÀI SẢN',
+    refresh:'Làm mới', addAsset:'Thêm tài sản', holdingsTitle:'GIÁ TRỊ CÁC LOẠI TÀI SẢN', assetValTitle:'GIÁ TRỊ TỪNG LOẠI TÀI SẢN', shareBtn:'Chia sẻ',
     totalPortfolio:'TỔNG DANH MỤC (USD)', byQty:'theo khối lượng nhập',
     chart7d:'BIẾN ĐỘNG 7 NGÀY (chỉ số hóa, ngày đầu = 100)',
     source:'Nguồn', loading:'đang tải...', updatedAt:'cập nhật',
@@ -858,11 +880,13 @@ const LANG = {
     aiBack:'← Phân tích lại',
     aiErrNoRisk:'Vui lòng chọn khẩu vị rủi ro trước khi phân tích.',
     aiErrNoKey:'Vui lòng nhập Google Gemini API Key.',
+    shareModalTitle:'Chia sẻ danh mục', shareModalSub:'Lan truyền Wealthos đến bạn bè & cộng đồng',
+    shareDownloadBtn:'Tải ảnh về', shareCopyBtn:'Sao chép link',
     aiErrConn:'Lỗi kết nối. Vui lòng thử lại.',
   },
   en: {
     logo:'WEALTHOS', title:'AI Net Worth & Portfolio Tracker',
-    refresh:'Refresh', addAsset:'Add Asset', holdingsTitle:'ASSET VALUES', assetValTitle:'ASSET VALUES BY TYPE',
+    refresh:'Refresh', addAsset:'Add Asset', holdingsTitle:'ASSET VALUES', assetValTitle:'ASSET VALUES BY TYPE', shareBtn:'Share',
     totalPortfolio:'TOTAL PORTFOLIO (USD)', byQty:'enter quantities below',
     chart7d:'7-DAY PERFORMANCE (indexed, day 1 = 100)',
     source:'Source', loading:'loading...', updatedAt:'updated',
@@ -951,12 +975,465 @@ const LANG = {
     aiBack:'← Analyze again',
     aiErrNoRisk:'Please select a risk profile before analyzing.',
     aiErrNoKey:'Please enter your Google Gemini API Key.',
+    shareModalTitle:'Share Portfolio', shareModalSub:'Spread Wealthos to friends & community',
+    shareDownloadBtn:'Download Image', shareCopyBtn:'Copy Link',
     aiErrConn:'Connection error. Please try again.',
-  }
+  },
+  zh: {
+    logo:'WEALTHOS', title:'AI 净资产与投资组合追踪器',
+    refresh:'刷新', addAsset:'添加资产', holdingsTitle:'资产价值', assetValTitle:'各类资产价值', shareBtn:'分享',
+    totalPortfolio:'投资组合总值 (USD)', byQty:'请输入持仓数量',
+    chart7d:'7天表现（指数化，第1天=100）',
+    source:'数据来源', loading:'加载中...', updatedAt:'更新于',
+    forecastTitle:'3年增长预测',
+    syncPortfolio:'从投资组合同步',
+    initCapital:'初始资本 (USD)', dcaMonth:'定投/月 (USD)',
+    disclaimer:'⚠ 此为基于假设利率的模拟 — 非真实预测。',
+    modalTitle:'添加资产', modalSub:'选择要追踪的类型和资产',
+    tabCrypto:'🪙 加密货币', tabStock:'📈 股票', tabCommodity:'🏅 大宗商品',
+    tabCash:'💵 现金', tabRE:'🏠 房地产', tabCustom:'✏️ 自定义',
+    cashLabel:'名称', cashCurrency:'货币', cashRate:'储蓄利率 (%/年)',
+    cashHint:'输入银行/储蓄利率，用于预测增长计算。',
+    cashPlaceholder:'例：招行定存', cashDefault:'现金 / 储蓄',
+    reName:'资产名称', reLocation:'地区', reCustomRate:'或手动输入增长率%',
+    reHintPrefix:'📊 预计增长:', reHintSuffix:'胡志明市历史数据',
+    reHint:'手动输入房产价值 (USD)，地区增长率用于预测。',
+    rePlaceholder:'例：市中心公寓', reDefault:'房地产',
+    reCustomPlaceholder:'留空 = 使用地区估算',
+    customName:'显示名称', customTicker:'代码 / ID', customTickerPlaceholder:'例：BTC 或 bitcoin',
+    customHint:'加密货币：CoinGecko ID（如bitcoin）。股票/ETF：Yahoo代码（如AAPL）',
+    customType:'类型', customIcon:'图标 (emoji)', customColor:'颜色',
+    otherDesc:'资产类型描述', otherDescOpt:'(可选)', otherDescPlaceholder:'例：私募基金、NFT...',
+    otherRate:'预期增长率 (%/年)', otherRatePlaceholder:'例：8',
+    otherHint:'用于增长预测计算，留空 = 默认8%/年。',
+    otherTypeLabel:'🗂️ 其他',
+    optCrypto:'加密货币 (CoinGecko)', optStock:'股票 / ETF (Yahoo Finance)',
+    btnCancel:'取消', btnAdd:'加入投资组合',
+    enterQty:'输入数量', enterValue:'输入价值', loading2:'加载中...',
+    noPrice:'无法自动获取价格', manualPrice:'手动输入价格', retry:'↻', price:'价格',
+    perYear:'/年', savingsRate:'利率/年', growthRate:'增长率/年', perYearShort:'%/年',
+    currUSD:'USD – 美元', currVND:'VND – 越南盾', currEUR:'EUR – 欧元',
+    currSGD:'SGD – 新加坡元', currJPY:'JPY – 日元',
+    reHintText:'预计增长:', portAlloc:'% 投资组合',
+    fcYearLabel:'年', fcCapAccum:'累计投资', fcTotal:'总计', fcProfit:'利润', fcMultiple:'×倍',
+    fcTotalAfter:'总计（', fcYears:'年后）', fcNetProfit:'净利润',
+    fcCAGR:'组合CAGR', fcMultipleInv:'×投资本金',
+    fcCashNote:'在下方卡片修改', fcRENote:'在下方卡片修改',
+    fcCashLabel:'复利:', fcRELabel:'增值:',
+    assetValue:'价值',
+    errNoAsset:'请选择一项资产', errDuplicate:'该资产已在投资组合中', errMissingFields:'请输入名称和代码',
+    noAssets:'投资组合暂无资产。',
+    locVnHcm:'胡志明市 (~12%/年)', locVnHn:'河内 (~10%/年)',
+    locVnDn:'岘港 (~8%/年)', locVnOther:'越南其他 (~6%/年)',
+    locSg:'新加坡 (~6%/年)', locUs:'美国平均 (~5%/年)',
+    locAu:'澳大利亚 (~7%/年)', locJp:'日本 (~3%/年)', locUk:'英国 (~5%/年)',
+    locGroupVn:'🇻🇳 越南', locGroupIntl:'🌏 国际', today:'今天',
+    pmLockTitle:'高级功能', pmLockDesc:'AI风险配置 + 3–100年增长模拟',
+    pmUpgradeBtn:'✦ 升级至高级版', pmTitle:'最优配置 & 长期模拟',
+    pmAllocHint:'选择风险偏好查看配置建议...', pmAllocTitle:'配置建议', pmYearsLabel:'模拟年数', pmYearsUnit:'年',
+    pmDisclaimer:'⚠ 基于假设利率的模拟 — 非真实预测。',
+    pmTypeStock:'股票/ETF', pmTypeCrypto:'加密货币', pmTypeCommodity:'大宗商品', pmTypeCash:'现金', pmTypeRE:'房地产',
+    pmAfter:'总计（', pmProfit:'净利润', pmCAGR:'CAGR', pmExportPDF:'导出PDF',
+    pmModalSub:'解锁所有高级功能',
+    pmFeat1:'AI风险偏好资产配置', pmFeat2:'3–100年增长模拟',
+    pmFeat3:'无限AI分析', pmFeat4:'导出PDF报告',
+    pmMonthly:'每月', pmYearly:'节省40%', pmPerMonth:'/月', pmPerYear2:'/月 · $35.9/年',
+    pmStartBtn:'✦ 开始高级版', pmLater:'稍后', pmDemo:'演示：点击"开始"解锁',
+    pmEmailLabel:'注册邮箱', pmKeyLabel:'许可证密钥',
+    pmVerifyBtn:'✦ 激活高级版', pmContactHint:'没有密钥？通过邮件购买:',
+    pmVerifying:'验证中...', pmErrNotFound:'邮箱或密钥不正确，请重新检查。',
+    pmErrExpired:'许可证密钥已过期。', pmErrNetwork:'连接错误，请重试。',
+    aiBtn:'AI顾问', aiTitle:'AI投资组合顾问', aiSub:'分析当前投资组合的优势和劣势',
+    aiRiskLabel:'您的风险偏好',
+    aiRisk0Name:'保守型', aiRisk0Desc:'保全本金，低风险',
+    aiRisk1Name:'平衡型', aiRisk1Desc:'适度增长，中等风险',
+    aiRisk2Name:'增长型', aiRisk2Desc:'优化长期增长',
+    aiRisk3Name:'激进型', aiRisk3Desc:'高收益，接受大波动',
+    aiKeyLabel:'GOOGLE GEMINI API KEY', aiKeyHint:'密钥存储在浏览器中，仅发送至Google。',
+    aiContextLabel:'补充信息（可选）', aiContextPlh:'例：我30岁，长期投资10年，收入稳定...',
+    aiClose:'关闭', aiAnalyze:'✦ 立即分析', aiAnalyzing:'分析中...',
+    aiBack:'← 重新分析',
+    aiErrNoRisk:'请在分析前选择风险偏好。', aiErrNoKey:'请输入Google Gemini API Key。', aiErrConn:'连接错误，请重试。',
+    shareModalTitle:'分享投资组合', shareModalSub:'将Wealthos分享给朋友和社区',
+    shareDownloadBtn:'下载图片', shareCopyBtn:'复制链接',
+    // dynamic inline strings
+    balanceLabel:'余额', propertyLabel:'房产价值 (USD)', assetValLabel:'资产价值 (USD)', qtyLabel:'持仓数量',
+    currentValueLabel:'当前价值 (USD)', expectedReturnLabel:'预期收益',
+    chatSub:'💬 与您的AI理财顾问聊天', freeSub:'分析当前投资组合的优势和劣势',
+    suggest0:'💼 分析当前投资组合', suggest1:'🏖️ 20年后退休需要多少？',
+    suggest2:'📈 如何重新平衡投资组合？', suggest3:'🛡️ 降低投资组合风险',
+    chatPlh:'随便问...例如：如何在15年内退休，目标$500K',
+    welcomeMsg:'您好！我是您的AI理财顾问。💼\n\n当前投资组合：**${{total}}**\n\n我可以帮您：\n• 分析和优化投资组合\n• 规划提前退休\n• 计算财务目标\n• 资产配置建议\n\n您想了解什么？',
+    shareCapture:'📸 正在截图投资组合...', shareError:'⚠ 无法截图', shareError2:'⚠ 无法截图，请使用复制。',
+    imgSaved:'✓ 图片已保存！', imgNotReady:'⏳ 图片未就绪，请稍后。',
+    copied:'✓ 已复制图片 + 链接！', copiedLink:'✓ 已复制链接！', copyLabel:'复制', copiedLabel:'已复制',
+    shareText:'📊 我的Wealthos投资组合：{{total}}\n🚀 智能资产管理：wealthos.world',
+    perYrLabel:'%/年',
+  },
+  ja: {
+    logo:'WEALTHOS', title:'AI 純資産・ポートフォリオ管理',
+    refresh:'更新', addAsset:'資産を追加', holdingsTitle:'資産価値', assetValTitle:'種類別資産価値', shareBtn:'共有',
+    totalPortfolio:'ポートフォリオ合計 (USD)', byQty:'保有数量を入力してください',
+    chart7d:'7日間パフォーマンス（指数化、初日=100）',
+    source:'データソース', loading:'読込中...', updatedAt:'更新',
+    forecastTitle:'3年成長予測', syncPortfolio:'ポートフォリオから同期',
+    initCapital:'初期資本 (USD)', dcaMonth:'積立/月 (USD)',
+    disclaimer:'⚠ 想定利率に基づくシミュレーションです — 実際の予測ではありません。',
+    modalTitle:'資産を追加', modalSub:'追跡する種類と資産を選択してください',
+    tabCrypto:'🪙 仮想通貨', tabStock:'📈 株式', tabCommodity:'🏅 商品',
+    tabCash:'💵 現金', tabRE:'🏠 不動産', tabCustom:'✏️ カスタム',
+    cashLabel:'名前', cashCurrency:'通貨', cashRate:'貯蓄金利 (%/年)',
+    cashHint:'銀行/貯蓄金利を入力。予測計算に使用されます。',
+    cashPlaceholder:'例：定期預金', cashDefault:'現金 / 預金',
+    reName:'資産名', reLocation:'地域', reCustomRate:'または成長率を手動入力 %',
+    reHintPrefix:'📊 推定成長率:', reHintSuffix:'ホーチミン市実績',
+    reHint:'不動産価値を手動入力 (USD)。地域成長率は予測に使用されます。',
+    rePlaceholder:'例：都心マンション', reDefault:'不動産',
+    reCustomPlaceholder:'空白 = 地域推定値を使用',
+    customName:'表示名', customTicker:'ティッカー / ID', customTickerPlaceholder:'例：BTC または bitcoin',
+    customHint:'仮想通貨：CoinGecko ID（例：bitcoin）。株式/ETF：Yahooティッカー（例：AAPL）',
+    customType:'種類', customIcon:'アイコン (絵文字)', customColor:'色',
+    otherDesc:'資産タイプの説明', otherDescOpt:'（任意）', otherDescPlaceholder:'例：プライベートファンド、NFT...',
+    otherRate:'予想成長率 (%/年)', otherRatePlaceholder:'例：8',
+    otherHint:'成長予測計算に使用。空白 = デフォルト8%/年。',
+    otherTypeLabel:'🗂️ その他',
+    optCrypto:'仮想通貨 (CoinGecko)', optStock:'株式 / ETF (Yahoo Finance)',
+    btnCancel:'キャンセル', btnAdd:'ポートフォリオに追加',
+    enterQty:'数量を入力', enterValue:'価値を入力', loading2:'読込中...',
+    noPrice:'価格を自動取得できません', manualPrice:'価格を手動入力', retry:'↻', price:'価格',
+    perYear:'/年', savingsRate:'金利/年', growthRate:'成長率/年', perYearShort:'%/年',
+    currUSD:'USD – 米ドル', currVND:'VND – ベトナムドン', currEUR:'EUR – ユーロ',
+    currSGD:'SGD – シンガポールドル', currJPY:'JPY – 日本円',
+    reHintText:'推定成長率:', portAlloc:'% ポートフォリオ',
+    fcYearLabel:'年', fcCapAccum:'累計投資', fcTotal:'合計', fcProfit:'利益', fcMultiple:'×倍',
+    fcTotalAfter:'合計（', fcYears:'年後）', fcNetProfit:'純利益',
+    fcCAGR:'ポートフォリオCAGR', fcMultipleInv:'×投資元本',
+    fcCashNote:'下のカードで編集', fcRENote:'下のカードで編集',
+    fcCashLabel:'複利:', fcRELabel:'値上がり:',
+    assetValue:'価値',
+    errNoAsset:'資産を選択してください', errDuplicate:'この資産はすでにポートフォリオにあります', errMissingFields:'名前とティッカーを入力してください',
+    noAssets:'ポートフォリオに資産がありません。',
+    locVnHcm:'ホーチミン市 (~12%/年)', locVnHn:'ハノイ (~10%/年)',
+    locVnDn:'ダナン (~8%/年)', locVnOther:'ベトナムその他 (~6%/年)',
+    locSg:'シンガポール (~6%/年)', locUs:'米国平均 (~5%/年)',
+    locAu:'オーストラリア (~7%/年)', locJp:'日本 (~3%/年)', locUk:'英国 (~5%/年)',
+    locGroupVn:'🇻🇳 ベトナム', locGroupIntl:'🌏 インターナショナル', today:'今日',
+    pmLockTitle:'プレミアム機能', pmLockDesc:'AIリスク別資産配分 + 3〜100年成長シミュレーション',
+    pmUpgradeBtn:'✦ プレミアムにアップグレード', pmTitle:'最適配分 & 長期シミュレーション',
+    pmAllocHint:'リスク志向を選択して配分提案を確認...', pmAllocTitle:'配分提案', pmYearsLabel:'シミュレーション年数', pmYearsUnit:'年',
+    pmDisclaimer:'⚠ 想定利率に基づくシミュレーションです — 実際の予測ではありません。',
+    pmTypeStock:'株式/ETF', pmTypeCrypto:'仮想通貨', pmTypeCommodity:'商品', pmTypeCash:'現金', pmTypeRE:'不動産',
+    pmAfter:'合計（', pmProfit:'純利益', pmCAGR:'CAGR', pmExportPDF:'PDFエクスポート',
+    pmModalSub:'すべての高度な機能を解放',
+    pmFeat1:'AIリスク別ポートフォリオ配分', pmFeat2:'3〜100年成長シミュレーション',
+    pmFeat3:'無制限AI分析', pmFeat4:'PDFレポートエクスポート',
+    pmMonthly:'月額', pmYearly:'40%節約', pmPerMonth:'/月', pmPerYear2:'/月 · $35.9/年',
+    pmStartBtn:'✦ プレミアムを開始', pmLater:'後で', pmDemo:'デモ：「開始」をクリックして解除',
+    pmEmailLabel:'登録メールアドレス', pmKeyLabel:'ライセンスキー',
+    pmVerifyBtn:'✦ プレミアムを有効化', pmContactHint:'キーなし？メールでライセンス購入:',
+    pmVerifying:'確認中...', pmErrNotFound:'メールアドレスまたはキーが正しくありません。',
+    pmErrExpired:'ライセンスキーの有効期限が切れています。', pmErrNetwork:'接続エラー。再試行してください。',
+    aiBtn:'AIアドバイザー', aiTitle:'AIポートフォリオアドバイザー', aiSub:'現在のポートフォリオの強みと弱みを分析',
+    aiRiskLabel:'あなたのリスク志向',
+    aiRisk0Name:'安全型', aiRisk0Desc:'元本保全、低リスク',
+    aiRisk1Name:'バランス型', aiRisk1Desc:'適度な成長、中リスク',
+    aiRisk2Name:'成長型', aiRisk2Desc:'長期成長を最適化',
+    aiRisk3Name:'アグレッシブ型', aiRisk3Desc:'高リターン、大きな変動を受け入れ',
+    aiKeyLabel:'GOOGLE GEMINI API KEY', aiKeyHint:'キーはブラウザに保存され、Googleにのみ送信されます。',
+    aiContextLabel:'追加情報（任意）', aiContextPlh:'例：30歳、10年長期投資、安定収入...',
+    aiClose:'閉じる', aiAnalyze:'✦ 今すぐ分析', aiAnalyzing:'分析中...',
+    aiBack:'← 再分析',
+    aiErrNoRisk:'分析前にリスク志向を選択してください。', aiErrNoKey:'Google Gemini API Keyを入力してください。', aiErrConn:'接続エラー。再試行してください。',
+    shareModalTitle:'ポートフォリオを共有', shareModalSub:'Wealthosを友達やコミュニティに広める',
+    shareDownloadBtn:'画像をダウンロード', shareCopyBtn:'リンクをコピー',
+    balanceLabel:'残高', propertyLabel:'不動産価値 (USD)', assetValLabel:'資産価値 (USD)', qtyLabel:'保有数量',
+    currentValueLabel:'現在価値 (USD)', expectedReturnLabel:'期待収益',
+    chatSub:'💬 AIファイナンシャルアドバイザーとチャット', freeSub:'現在のポートフォリオの強みと弱みを分析',
+    suggest0:'💼 現在のポートフォリオを分析', suggest1:'🏖️ 20年後の退職に必要な金額は？',
+    suggest2:'📈 ポートフォリオのリバランス方法は？', suggest3:'🛡️ ポートフォリオリスクを下げる',
+    chatPlh:'何でも聞いてください... 例：15年で$500Kで引退するには？',
+    welcomeMsg:'こんにちは！あなたのAI財務アドバイザーです。💼\n\n現在のポートフォリオ：**${{total}}**\n\nお手伝いできること：\n• ポートフォリオの分析と最適化\n• 早期退職の計画\n• 財務目標の計算\n• 資産配分のアドバイス\n\n何をお聞きになりますか？',
+    shareCapture:'📸 ポートフォリオをキャプチャ中...', shareError:'⚠ キャプチャできません', shareError2:'⚠ キャプチャ失敗。コピーをお使いください。',
+    imgSaved:'✓ 画像を保存しました！', imgNotReady:'⏳ 画像の準備中です。',
+    copied:'✓ 画像+リンクをコピー！', copiedLink:'✓ リンクをコピー！', copyLabel:'コピー', copiedLabel:'コピー済み',
+    shareText:'📊 WealthosのポートフォリオNo：{{total}}\n🚀 スマートな資産管理：wealthos.world',
+    perYrLabel:'%/年',
+  },
+  ko: {
+    logo:'WEALTHOS', title:'AI 순자산 & 포트폴리오 추적기',
+    refresh:'새로고침', addAsset:'자산 추가', holdingsTitle:'자산 가치', assetValTitle:'유형별 자산 가치', shareBtn:'공유',
+    totalPortfolio:'포트폴리오 합계 (USD)', byQty:'보유 수량을 입력하세요',
+    chart7d:'7일 성과 (지수화, 1일차=100)',
+    source:'데이터 출처', loading:'불러오는 중...', updatedAt:'업데이트',
+    forecastTitle:'3년 성장 예측', syncPortfolio:'포트폴리오에서 동기화',
+    initCapital:'초기 자본 (USD)', dcaMonth:'적립금/월 (USD)',
+    disclaimer:'⚠ 가정 금리 기반 시뮬레이션입니다 — 실제 예측이 아닙니다.',
+    modalTitle:'자산 추가', modalSub:'추적할 유형과 자산을 선택하세요',
+    tabCrypto:'🪙 가상화폐', tabStock:'📈 주식', tabCommodity:'🏅 원자재',
+    tabCash:'💵 현금', tabRE:'🏠 부동산', tabCustom:'✏️ 직접입력',
+    cashLabel:'이름', cashCurrency:'통화', cashRate:'저축 금리 (%/년)',
+    cashHint:'은행/저축 금리를 입력하세요. 예측 계산에 사용됩니다.',
+    cashPlaceholder:'예: 정기예금', cashDefault:'현금 / 예금',
+    reName:'자산 이름', reLocation:'지역', reCustomRate:'또는 성장률 직접 입력 %',
+    reHintPrefix:'📊 예상 성장률:', reHintSuffix:'호치민 역사 데이터',
+    reHint:'부동산 가치를 수동으로 입력하세요 (USD). 지역 성장률은 예측에 사용됩니다.',
+    rePlaceholder:'예: 도심 아파트', reDefault:'부동산',
+    reCustomPlaceholder:'공백 = 지역 추정값 사용',
+    customName:'표시 이름', customTicker:'티커 / ID', customTickerPlaceholder:'예: BTC 또는 bitcoin',
+    customHint:'가상화폐: CoinGecko ID (예: bitcoin). 주식/ETF: Yahoo 티커 (예: AAPL)',
+    customType:'유형', customIcon:'아이콘 (이모지)', customColor:'색상',
+    otherDesc:'자산 유형 설명', otherDescOpt:'(선택)', otherDescPlaceholder:'예: 사모펀드, NFT...',
+    otherRate:'예상 성장률 (%/년)', otherRatePlaceholder:'예: 8',
+    otherHint:'성장 예측 계산에 사용. 공백 = 기본값 8%/년.',
+    otherTypeLabel:'🗂️ 기타',
+    optCrypto:'가상화폐 (CoinGecko)', optStock:'주식 / ETF (Yahoo Finance)',
+    btnCancel:'취소', btnAdd:'포트폴리오에 추가',
+    enterQty:'수량 입력', enterValue:'가치 입력', loading2:'불러오는 중...',
+    noPrice:'가격 자동 조회 실패', manualPrice:'수동으로 가격 입력', retry:'↻', price:'가격',
+    perYear:'/년', savingsRate:'이자율/년', growthRate:'성장률/년', perYearShort:'%/년',
+    currUSD:'USD – 미국 달러', currVND:'VND – 베트남 동', currEUR:'EUR – 유로',
+    currSGD:'SGD – 싱가포르 달러', currJPY:'JPY – 일본 엔',
+    reHintText:'예상 성장률:', portAlloc:'% 포트폴리오',
+    fcYearLabel:'년', fcCapAccum:'누적 투자', fcTotal:'합계', fcProfit:'이익', fcMultiple:'×배',
+    fcTotalAfter:'합계 (', fcYears:'년 후)', fcNetProfit:'순이익',
+    fcCAGR:'포트폴리오 CAGR', fcMultipleInv:'×투자원금',
+    fcCashNote:'아래 카드에서 수정', fcRENote:'아래 카드에서 수정',
+    fcCashLabel:'복리:', fcRELabel:'가치 상승:',
+    assetValue:'가치',
+    errNoAsset:'자산을 선택하세요', errDuplicate:'이 자산은 이미 포트폴리오에 있습니다', errMissingFields:'이름과 티커를 입력하세요',
+    noAssets:'포트폴리오에 자산이 없습니다.',
+    locVnHcm:'호치민시 (~12%/년)', locVnHn:'하노이 (~10%/년)',
+    locVnDn:'다낭 (~8%/년)', locVnOther:'베트남 기타 (~6%/년)',
+    locSg:'싱가포르 (~6%/년)', locUs:'미국 평균 (~5%/년)',
+    locAu:'호주 (~7%/년)', locJp:'일본 (~3%/년)', locUk:'영국 (~5%/년)',
+    locGroupVn:'🇻🇳 베트남', locGroupIntl:'🌏 국제', today:'오늘',
+    pmLockTitle:'프리미엄 기능', pmLockDesc:'AI 위험 성향별 자산 배분 + 3–100년 성장 시뮬레이션',
+    pmUpgradeBtn:'✦ 프리미엄으로 업그레이드', pmTitle:'최적 배분 & 장기 시뮬레이션',
+    pmAllocHint:'위험 성향을 선택하여 배분 제안 확인...', pmAllocTitle:'배분 제안', pmYearsLabel:'시뮬레이션 연수', pmYearsUnit:'년',
+    pmDisclaimer:'⚠ 가정 금리 기반 시뮬레이션 — 실제 예측 아님.',
+    pmTypeStock:'주식/ETF', pmTypeCrypto:'가상화폐', pmTypeCommodity:'원자재', pmTypeCash:'현금', pmTypeRE:'부동산',
+    pmAfter:'합계 (', pmProfit:'순이익', pmCAGR:'CAGR', pmExportPDF:'PDF 내보내기',
+    pmModalSub:'모든 고급 기능 잠금 해제',
+    pmFeat1:'AI 위험 성향별 포트폴리오 배분', pmFeat2:'3–100년 성장 시뮬레이션',
+    pmFeat3:'무제한 AI 분석', pmFeat4:'PDF 보고서 내보내기',
+    pmMonthly:'월간', pmYearly:'40% 절약', pmPerMonth:'/월', pmPerYear2:'/월 · $35.9/년',
+    pmStartBtn:'✦ 프리미엄 시작', pmLater:'나중에', pmDemo:'데모: "시작"을 클릭하여 잠금 해제',
+    pmEmailLabel:'등록된 이메일', pmKeyLabel:'라이선스 키',
+    pmVerifyBtn:'✦ 프리미엄 활성화', pmContactHint:'키가 없으신가요? 이메일로 라이선스 구매:',
+    pmVerifying:'확인 중...', pmErrNotFound:'이메일 또는 키가 올바르지 않습니다.',
+    pmErrExpired:'라이선스 키가 만료되었습니다.', pmErrNetwork:'연결 오류. 다시 시도하세요.',
+    aiBtn:'AI 어드바이저', aiTitle:'AI 포트폴리오 어드바이저', aiSub:'현재 포트폴리오의 강점과 약점 분석',
+    aiRiskLabel:'귀하의 위험 성향',
+    aiRisk0Name:'보수적', aiRisk0Desc:'원금 보전, 낮은 위험',
+    aiRisk1Name:'균형형', aiRisk1Desc:'적절한 성장, 중간 위험',
+    aiRisk2Name:'성장형', aiRisk2Desc:'장기 성장 최적화',
+    aiRisk3Name:'공격형', aiRisk3Desc:'높은 수익, 큰 변동 감수',
+    aiKeyLabel:'GOOGLE GEMINI API KEY', aiKeyHint:'키는 브라우저에 저장되며 Google에만 전송됩니다.',
+    aiContextLabel:'추가 정보 (선택)', aiContextPlh:'예: 30세, 10년 장기 투자, 안정적인 수입...',
+    aiClose:'닫기', aiAnalyze:'✦ 지금 분석', aiAnalyzing:'분석 중...',
+    aiBack:'← 재분석',
+    aiErrNoRisk:'분석 전에 위험 성향을 선택하세요.', aiErrNoKey:'Google Gemini API Key를 입력하세요.', aiErrConn:'연결 오류. 다시 시도하세요.',
+    shareModalTitle:'포트폴리오 공유', shareModalSub:'Wealthos를 친구 및 커뮤니티에 알리세요',
+    shareDownloadBtn:'이미지 다운로드', shareCopyBtn:'링크 복사',
+    balanceLabel:'잔액', propertyLabel:'부동산 가치 (USD)', assetValLabel:'자산 가치 (USD)', qtyLabel:'보유 수량',
+    currentValueLabel:'현재 가치 (USD)', expectedReturnLabel:'기대 수익',
+    chatSub:'💬 AI 재무 어드바이저와 채팅', freeSub:'현재 포트폴리오의 강점과 약점 분석',
+    suggest0:'💼 현재 포트폴리오 분석', suggest1:'🏖️ 20년 후 은퇴에 필요한 금액은?',
+    suggest2:'📈 포트폴리오 리밸런싱 방법은?', suggest3:'🛡️ 포트폴리오 위험 줄이기',
+    chatPlh:'무엇이든 물어보세요... 예: 15년 안에 $500K로 은퇴하려면?',
+    welcomeMsg:'안녕하세요! 저는 당신의 AI 재무 어드바이저입니다. 💼\n\n현재 포트폴리오：**${{total}}**\n\n도움드릴 수 있는 것：\n• 포트폴리오 분석 및 최적화\n• 조기 은퇴 계획\n• 재무 목표 계산\n• 자산 배분 조언\n\n무엇이 궁금하신가요？',
+    shareCapture:'📸 포트폴리오 캡처 중...', shareError:'⚠ 캡처할 수 없습니다', shareError2:'⚠ 캡처 실패. 복사를 사용하세요.',
+    imgSaved:'✓ 이미지 저장됨！', imgNotReady:'⏳ 이미지 준비 중입니다.',
+    copied:'✓ 이미지+링크 복사됨！', copiedLink:'✓ 링크 복사됨！', copyLabel:'복사', copiedLabel:'복사됨',
+    shareText:'📊 Wealthos의 내 포트폴리오：{{total}}\n🚀 스마트 자산 관리：wealthos.world',
+    perYrLabel:'%/년',
+  },
+  fr: {
+    logo:'WEALTHOS', title:'Suivi IA de patrimoine et portefeuille',
+    refresh:'Actualiser', addAsset:'Ajouter un actif', holdingsTitle:'VALEUR DES ACTIFS', assetValTitle:'VALEUR PAR TYPE', shareBtn:'Partager',
+    totalPortfolio:'PORTEFEUILLE TOTAL (USD)', byQty:'entrez les quantités ci-dessous',
+    chart7d:'PERFORMANCE 7 JOURS (indexé, jour 1 = 100)',
+    source:'Source', loading:'chargement...', updatedAt:'mis à jour',
+    forecastTitle:'PRÉVISION DE CROISSANCE 3 ANS', syncPortfolio:'Synchroniser depuis le portefeuille',
+    initCapital:'CAPITAL INITIAL (USD)', dcaMonth:'DCA / MOIS (USD)',
+    disclaimer:"⚠ Simulation basée sur des taux supposés — pas une prévision réelle.",
+    modalTitle:'Ajouter un actif', modalSub:"Sélectionnez le type et l'actif à suivre",
+    tabCrypto:'🪙 Crypto', tabStock:'📈 Actions', tabCommodity:'🏅 Matières premières',
+    tabCash:'💵 Liquidités', tabRE:'🏠 Immobilier', tabCustom:'✏️ Personnalisé',
+    cashLabel:'LIBELLÉ', cashCurrency:'DEVISE', cashRate:"TAUX D'ÉPARGNE (%/AN)",
+    cashHint:"Entrez votre taux d'intérêt bancaire. Utilisé pour calculer la croissance.",
+    cashPlaceholder:'ex. Livret A', cashDefault:'Liquidités / Épargne',
+    reName:"NOM DE L'ACTIF", reLocation:'RÉGION', reCustomRate:'OU TAUX DE CROISSANCE PERSONNALISÉ %',
+    reHintPrefix:'📊 Croissance estimée:', reHintSuffix:'historique HCMC',
+    reHint:'Entrez la valeur immobilière manuellement (USD). Le taux régional est utilisé pour la prévision.',
+    rePlaceholder:'ex. Appartement centre-ville', reDefault:'Immobilier',
+    reCustomPlaceholder:"Laisser vide = utiliser l'estimation régionale",
+    customName:"NOM D'AFFICHAGE", customTicker:'TICKER / ID', customTickerPlaceholder:'ex. BTC ou bitcoin',
+    customHint:'Crypto: ID CoinGecko (ex: bitcoin). Actions/ETF: ticker Yahoo (ex: AAPL)',
+    customType:'TYPE', customIcon:'ICÔNE (emoji)', customColor:'COULEUR',
+    otherDesc:"DESCRIPTION DU TYPE D'ACTIF", otherDescOpt:'(optionnel)', otherDescPlaceholder:'ex. Fonds privé, NFT...',
+    otherRate:'TAUX DE CROISSANCE PRÉVU (%/an)', otherRatePlaceholder:'ex. 8',
+    otherHint:'Utilisé pour la prévision de croissance. Vide = 8%/an par défaut.',
+    otherTypeLabel:'🗂️ Autre',
+    optCrypto:'Crypto (CoinGecko)', optStock:'Actions / ETF (Yahoo Finance)',
+    btnCancel:'Annuler', btnAdd:'Ajouter au portefeuille',
+    enterQty:'entrer la quantité', enterValue:'entrer la valeur', loading2:'chargement...',
+    noPrice:'Impossible de charger le prix', manualPrice:'Entrer le prix manuellement', retry:'↻', price:'Prix',
+    perYear:'/an', savingsRate:"Taux d'intérêt/an", growthRate:'Taux de croissance/an', perYearShort:'%/an',
+    currUSD:'USD – Dollar américain', currVND:'VND – Dong vietnamien', currEUR:'EUR – Euro',
+    currSGD:'SGD – Dollar de Singapour', currJPY:'JPY – Yen japonais',
+    reHintText:'Croissance estimée:', portAlloc:'% du portefeuille',
+    fcYearLabel:'Année', fcCapAccum:'Capital investi', fcTotal:'Total', fcProfit:'Profit', fcMultiple:'×',
+    fcTotalAfter:'Total après', fcYears:'ans', fcNetProfit:'Profit net',
+    fcCAGR:'TCAC du portefeuille', fcMultipleInv:'× capital investi',
+    fcCashNote:'Modifier dans la carte ci-dessous', fcRENote:'Modifier dans la carte ci-dessous',
+    fcCashLabel:'Intérêts composés:', fcRELabel:'Plus-value:',
+    assetValue:'VALEUR',
+    errNoAsset:'Veuillez sélectionner un actif', errDuplicate:'Cet actif est déjà dans votre portefeuille', errMissingFields:'Veuillez entrer un nom et un ticker',
+    noAssets:'Aucun actif dans le portefeuille.',
+    locVnHcm:'Hô-Chi-Minh-Ville (~12%/an)', locVnHn:'Hanoï (~10%/an)',
+    locVnDn:'Đà Nẵng (~8%/an)', locVnOther:'Autres régions Vietnam (~6%/an)',
+    locSg:'Singapour (~6%/an)', locUs:'États-Unis moyenne (~5%/an)',
+    locAu:'Australie (~7%/an)', locJp:'Japon (~3%/an)', locUk:'Royaume-Uni (~5%/an)',
+    locGroupVn:'🇻🇳 Viêt Nam', locGroupIntl:'🌏 International', today:"aujourd'hui",
+    pmLockTitle:'Fonctionnalité Premium', pmLockDesc:'Allocation IA par profil de risque + Simulation 3–100 ans',
+    pmUpgradeBtn:'✦ Passer au Premium', pmTitle:'ALLOCATION OPTIMALE & SIMULATION LONG TERME',
+    pmAllocHint:"Sélectionnez un profil de risque pour voir la suggestion d'allocation...", pmAllocTitle:"SUGGESTION D'ALLOCATION", pmYearsLabel:'ANNÉES DE SIMULATION', pmYearsUnit:'ans',
+    pmDisclaimer:'⚠ Simulation basée sur des taux supposés — pas une prévision réelle.',
+    pmTypeStock:'Actions/ETF', pmTypeCrypto:'Crypto', pmTypeCommodity:'Matières premières', pmTypeCash:'Liquidités', pmTypeRE:'Immobilier',
+    pmAfter:'Total après', pmProfit:'Profit net', pmCAGR:'TCAC', pmExportPDF:'Exporter PDF',
+    pmModalSub:'Déverrouillez toutes les fonctionnalités avancées',
+    pmFeat1:'Allocation IA par profil de risque', pmFeat2:'Simulation de croissance 3–100 ans',
+    pmFeat3:'Analyses IA illimitées', pmFeat4:'Export de rapport PDF',
+    pmMonthly:'MENSUEL', pmYearly:'ÉCONOMISEZ 40%', pmPerMonth:'/mois', pmPerYear2:'/mois · $35.9/an',
+    pmStartBtn:'✦ Commencer Premium', pmLater:'Plus tard', pmDemo:'Démo: cliquez sur "Commencer"',
+    pmEmailLabel:'EMAIL ENREGISTRÉ', pmKeyLabel:'CLÉ DE LICENCE',
+    pmVerifyBtn:'✦ Activer Premium', pmContactHint:'Pas de clé ? Achetez une licence par email:',
+    pmVerifying:'Vérification...', pmErrNotFound:'Email ou clé incorrect. Veuillez vérifier.',
+    pmErrExpired:'La clé de licence a expiré.', pmErrNetwork:'Erreur de connexion. Veuillez réessayer.',
+    aiBtn:'Conseiller IA', aiTitle:'Conseiller IA de Portefeuille', aiSub:'Analyser les forces et faiblesses du portefeuille',
+    aiRiskLabel:'VOTRE PROFIL DE RISQUE',
+    aiRisk0Name:'Conservateur', aiRisk0Desc:'Préservation du capital, faible risque',
+    aiRisk1Name:'Équilibré', aiRisk1Desc:'Croissance modérée, risque moyen',
+    aiRisk2Name:'Croissance', aiRisk2Desc:'Optimisé pour la croissance à long terme',
+    aiRisk3Name:'Agressif', aiRisk3Desc:'Rendements élevés, forte volatilité',
+    aiKeyLabel:'GOOGLE GEMINI API KEY', aiKeyHint:'La clé est stockée dans votre navigateur, envoyée uniquement à Google.',
+    aiContextLabel:'CONTEXTE SUPPLÉMENTAIRE (optionnel)', aiContextPlh:"ex. J'ai 30 ans, investissement long terme 10 ans, revenus stables...",
+    aiClose:'Fermer', aiAnalyze:'✦ Analyser maintenant', aiAnalyzing:'Analyse en cours...',
+    aiBack:'← Réanalyser',
+    aiErrNoRisk:"Veuillez sélectionner un profil de risque avant d'analyser.", aiErrNoKey:'Veuillez entrer votre clé Google Gemini API.', aiErrConn:'Erreur de connexion. Veuillez réessayer.',
+    shareModalTitle:'Partager le portefeuille', shareModalSub:"Faites connaître Wealthos à vos amis",
+    shareDownloadBtn:"Télécharger l'image", shareCopyBtn:'Copier le lien',
+    balanceLabel:'Solde', propertyLabel:'Valeur immobilière (USD)', assetValLabel:"Valeur de l'actif (USD)", qtyLabel:'Quantité détenue',
+    currentValueLabel:'Valeur actuelle (USD)', expectedReturnLabel:'Rendement attendu',
+    chatSub:'💬 Chattez avec votre conseiller IA', freeSub:'Analyser les forces et faiblesses du portefeuille',
+    suggest0:'💼 Analyser mon portefeuille actuel', suggest1:'🏖️ Combien pour la retraite dans 20 ans?',
+    suggest2:'📈 Comment rééquilibrer mon portefeuille?', suggest3:'🛡️ Réduire le risque du portefeuille',
+    chatPlh:'Posez votre question... ex. Comment prendre sa retraite dans 15 ans avec 500K$?',
+    welcomeMsg:"Bonjour ! Je suis votre conseiller IA. 💼\n\nVotre portefeuille actuel : **${{total}}**\n\nJe peux vous aider à :\n• Analyser et optimiser votre portefeuille\n• Planifier la retraite anticipée\n• Calculer vos objectifs financiers\n• Conseiller sur l'allocation d'actifs\n\nQue souhaitez-vous savoir ?",
+    shareCapture:'📸 Capture du portefeuille...', shareError:'⚠ Impossible de capturer', shareError2:'⚠ Capture impossible. Utilisez Copier.',
+    imgSaved:'✓ Image sauvegardée !', imgNotReady:'⏳ Image pas encore prête.',
+    copied:'✓ Image + lien copié !', copiedLink:'✓ Lien copié !', copyLabel:'Copier', copiedLabel:'Copié',
+    shareText:'📊 Mon portefeuille sur Wealthos : {{total}}\n🚀 Gestion intelligente : wealthos.world',
+    perYrLabel:'%/an',
+  },
+  ru: {
+    logo:'WEALTHOS', title:'ИИ-трекер активов и портфеля',
+    refresh:'Обновить', addAsset:'Добавить актив', holdingsTitle:'СТОИМОСТЬ АКТИВОВ', assetValTitle:'СТОИМОСТЬ ПО ТИПАМ', shareBtn:'Поделиться',
+    totalPortfolio:'ИТОГО ПОРТФЕЛЬ (USD)', byQty:'введите количество активов',
+    chart7d:'ДИНАМИКА ЗА 7 ДНЕЙ (индексировано, день 1 = 100)',
+    source:'Источник', loading:'загрузка...', updatedAt:'обновлено',
+    forecastTitle:'ПРОГНОЗ РОСТА НА 3 ГОДА', syncPortfolio:'Синхронизировать из портфеля',
+    initCapital:'НАЧАЛЬНЫЙ КАПИТАЛ (USD)', dcaMonth:'DCA / МЕСЯЦ (USD)',
+    disclaimer:'⚠ Симуляция на основе предполагаемых ставок — не реальный прогноз.',
+    modalTitle:'Добавить актив', modalSub:'Выберите тип и актив для отслеживания',
+    tabCrypto:'🪙 Крипто', tabStock:'📈 Акции', tabCommodity:'🏅 Сырьё',
+    tabCash:'💵 Наличные', tabRE:'🏠 Недвижимость', tabCustom:'✏️ Своё',
+    cashLabel:'НАЗВАНИЕ', cashCurrency:'ВАЛЮТА', cashRate:'СТАВКА ДЕПОЗИТА (%/ГОД)',
+    cashHint:'Введите процентную ставку банка/вклада. Используется для расчёта роста.',
+    cashPlaceholder:'напр. Вклад Сбербанк', cashDefault:'Наличные / Вклад',
+    reName:'НАЗВАНИЕ АКТИВА', reLocation:'РЕГИОН', reCustomRate:'ИЛИ ВВЕСТИ СВОЙ % РОСТА',
+    reHintPrefix:'📊 Ожидаемый рост:', reHintSuffix:'историч. Хошимин',
+    reHint:'Введите стоимость недвижимости вручную (USD). Региональный рост используется для прогноза.',
+    rePlaceholder:'напр. Квартира в центре', reDefault:'Недвижимость',
+    reCustomPlaceholder:'Пусто = использовать оценку региона',
+    customName:'ОТОБРАЖАЕМОЕ ИМЯ', customTicker:'ТИКЕР / ID', customTickerPlaceholder:'напр. BTC или bitcoin',
+    customHint:'Крипто: CoinGecko ID (напр. bitcoin). Акции/ETF: тикер Yahoo (напр. AAPL)',
+    customType:'ТИП', customIcon:'ИКОНКА (эмодзи)', customColor:'ЦВЕТ',
+    otherDesc:'ОПИСАНИЕ ТИПА АКТИВА', otherDescOpt:'(необязательно)', otherDescPlaceholder:'напр. Частный фонд, NFT...',
+    otherRate:'ОЖИДАЕМЫЙ РОСТ (%/год)', otherRatePlaceholder:'напр. 8',
+    otherHint:'Используется для расчёта прогноза роста. Пусто = 8%/год по умолчанию.',
+    otherTypeLabel:'🗂️ Другое',
+    optCrypto:'Крипто (CoinGecko)', optStock:'Акции / ETF (Yahoo Finance)',
+    btnCancel:'Отмена', btnAdd:'Добавить в портфель',
+    enterQty:'введите количество', enterValue:'введите стоимость', loading2:'загрузка...',
+    noPrice:'Не удалось загрузить цену', manualPrice:'Ввести цену вручную', retry:'↻', price:'Цена',
+    perYear:'/год', savingsRate:'Процентная ставка/год', growthRate:'Темп роста/год', perYearShort:'%/год',
+    currUSD:'USD – Доллар США', currVND:'VND – Вьетнамский донг', currEUR:'EUR – Евро',
+    currSGD:'SGD – Сингапурский доллар', currJPY:'JPY – Японская иена',
+    reHintText:'Ожидаемый рост:', portAlloc:'% портфеля',
+    fcYearLabel:'Год', fcCapAccum:'Вложено', fcTotal:'Итого', fcProfit:'Прибыль', fcMultiple:'×',
+    fcTotalAfter:'Итого через', fcYears:'лет', fcNetProfit:'Чистая прибыль',
+    fcCAGR:'CAGR портфеля', fcMultipleInv:'× вложенный капитал',
+    fcCashNote:'Редактируйте в карточке ниже', fcRENote:'Редактируйте в карточке ниже',
+    fcCashLabel:'Сложный %:', fcRELabel:'Прирост стоимости:',
+    assetValue:'СТОИМОСТЬ',
+    errNoAsset:'Пожалуйста, выберите актив', errDuplicate:'Этот актив уже есть в портфеле', errMissingFields:'Пожалуйста, введите имя и тикер',
+    noAssets:'В портфеле пока нет активов.',
+    locVnHcm:'Хошимин (~12%/год)', locVnHn:'Ханой (~10%/год)',
+    locVnDn:'Дананг (~8%/год)', locVnOther:'Другие регионы Вьетнама (~6%/год)',
+    locSg:'Сингапур (~6%/год)', locUs:'США в среднем (~5%/год)',
+    locAu:'Австралия (~7%/год)', locJp:'Япония (~3%/год)', locUk:'Великобритания (~5%/год)',
+    locGroupVn:'🇻🇳 Вьетнам', locGroupIntl:'🌏 Международные', today:'сегодня',
+    pmLockTitle:'Премиум-функция', pmLockDesc:'Распределение активов ИИ по риску + Симуляция роста 3–100 лет',
+    pmUpgradeBtn:'✦ Перейти на Премиум', pmTitle:'ОПТИМАЛЬНОЕ РАСПРЕДЕЛЕНИЕ & ДОЛГОСРОЧНАЯ СИМУЛЯЦИЯ',
+    pmAllocHint:'Выберите риск-профиль для просмотра предложения...', pmAllocTitle:'ПРЕДЛОЖЕНИЕ ПО РАСПРЕДЕЛЕНИЮ', pmYearsLabel:'ЛЕТ СИМУЛЯЦИИ', pmYearsUnit:'лет',
+    pmDisclaimer:'⚠ Симуляция на основе предполагаемых ставок — не реальный прогноз.',
+    pmTypeStock:'Акции/ETF', pmTypeCrypto:'Крипто', pmTypeCommodity:'Сырьё', pmTypeCash:'Наличные', pmTypeRE:'Недвижимость',
+    pmAfter:'Итого через', pmProfit:'Чистая прибыль', pmCAGR:'CAGR', pmExportPDF:'Экспорт PDF',
+    pmModalSub:'Разблокировать все расширенные функции',
+    pmFeat1:'ИИ-распределение активов по риск-профилю', pmFeat2:'Симуляция роста 3–100 лет',
+    pmFeat3:'Неограниченный ИИ-анализ', pmFeat4:'Экспорт PDF-отчёта',
+    pmMonthly:'ЕЖЕМЕСЯЧНО', pmYearly:'ЭКОНОМИЯ 40%', pmPerMonth:'/мес', pmPerYear2:'/мес · $35.9/год',
+    pmStartBtn:'✦ Начать Премиум', pmLater:'Позже', pmDemo:'Демо: нажмите «Начать», чтобы разблокировать',
+    pmEmailLabel:'ЗАРЕГИСТРИРОВАННЫЙ EMAIL', pmKeyLabel:'ЛИЦЕНЗИОННЫЙ КЛЮЧ',
+    pmVerifyBtn:'✦ Активировать Премиум', pmContactHint:'Нет ключа? Купите лицензию по email:',
+    pmVerifying:'Проверка...', pmErrNotFound:'Неверный email или ключ. Проверьте ещё раз.',
+    pmErrExpired:'Срок действия лицензионного ключа истёк.', pmErrNetwork:'Ошибка подключения. Повторите попытку.',
+    aiBtn:'ИИ-советник', aiTitle:'ИИ-советник по портфелю', aiSub:'Анализ сильных и слабых сторон портфеля',
+    aiRiskLabel:'ВАШ РИСК-ПРОФИЛЬ',
+    aiRisk0Name:'Консервативный', aiRisk0Desc:'Сохранение капитала, низкий риск',
+    aiRisk1Name:'Сбалансированный', aiRisk1Desc:'Умеренный рост, средний риск',
+    aiRisk2Name:'Рост', aiRisk2Desc:'Оптимизация для долгосрочного роста',
+    aiRisk3Name:'Агрессивный', aiRisk3Desc:'Высокая доходность, большая волатильность',
+    aiKeyLabel:'GOOGLE GEMINI API KEY', aiKeyHint:'Ключ хранится в браузере, отправляется только в Google.',
+    aiContextLabel:'ДОПОЛНИТЕЛЬНЫЙ КОНТЕКСТ (необязательно)', aiContextPlh:'напр. Мне 30 лет, долгосрочные инвестиции 10 лет, стабильный доход...',
+    aiClose:'Закрыть', aiAnalyze:'✦ Анализировать', aiAnalyzing:'Анализ...',
+    aiBack:'← Повторить анализ',
+    aiErrNoRisk:'Пожалуйста, выберите риск-профиль перед анализом.', aiErrNoKey:'Пожалуйста, введите ключ Google Gemini API.', aiErrConn:'Ошибка подключения. Повторите попытку.',
+    shareModalTitle:'Поделиться портфелем', shareModalSub:'Расскажите о Wealthos друзьям и сообществу',
+    shareDownloadBtn:'Скачать изображение', shareCopyBtn:'Копировать ссылку',
+    balanceLabel:'Баланс', propertyLabel:'Стоимость недвижимости (USD)', assetValLabel:'Стоимость актива (USD)', qtyLabel:'Количество',
+    currentValueLabel:'Текущая стоимость (USD)', expectedReturnLabel:'Ожидаемая доходность',
+    chatSub:'💬 Чат с вашим ИИ-финансовым советником', freeSub:'Анализ сильных и слабых сторон портфеля',
+    suggest0:'💼 Анализировать текущий портфель', suggest1:'🏖️ Сколько нужно для пенсии через 20 лет?',
+    suggest2:'📈 Как ребалансировать портфель?', suggest3:'🛡️ Снизить риск портфеля',
+    chatPlh:'Спросите что угодно... напр. Как выйти на пенсию через 15 лет с $500K?',
+    welcomeMsg:'Здравствуйте! Я ваш ИИ-финансовый советник. 💼\n\nВаш текущий портфель: **${{total}}**\n\nЯ могу помочь:\n• Анализировать и оптимизировать портфель\n• Планировать досрочную пенсию\n• Рассчитывать финансовые цели\n• Советовать по распределению активов\n\nО чём хотите узнать?',
+    shareCapture:'📸 Захват экрана портфеля...', shareError:'⚠ Не удалось захватить экран', shareError2:'⚠ Ошибка захвата. Используйте Копировать.',
+    imgSaved:'✓ Изображение сохранено!', imgNotReady:'⏳ Изображение ещё не готово.',
+    copied:'✓ Изображение + ссылка скопированы!', copiedLink:'✓ Ссылка скопирована!', copyLabel:'Копировать', copiedLabel:'Скопировано',
+    shareText:'📊 Мой портфель на Wealthos: {{total}}\n🚀 Умное управление активами: wealthos.world',
+    perYrLabel:'%/год',
+  },
 };
 
-let currentLang = localStorage.getItem('lang') || 'vi';
-const t = key => LANG[currentLang][key] || LANG.vi[key] || key;
+let currentLang = (['vi','en','zh','ja','ko','fr','ru'].includes(localStorage.getItem('lang'))) ? localStorage.getItem('lang') : 'vi';
+const t = key => {
+  try {
+    return (LANG[currentLang] && LANG[currentLang][key] !== undefined ? LANG[currentLang][key] : null) || (LANG.en && LANG.en[key]) || (LANG.vi && LANG.vi[key]) || key;
+  } catch(e) { return key; }
+};
 
 function applyLang() {
   // Static elements với data-i18n
@@ -1016,32 +1493,19 @@ function applyLang() {
         <option value="uk">${t('locUk')}</option>
       </optgroup>`;
   }
-  // Modal labels (dynamic)
+  // Modal labels (dynamic) — reverse-lookup across all languages
+  const _lkeys = ['cashLabel','cashCurrency','cashRate','reName','reLocation','reCustomRate','customName','customTicker','customType','customIcon','customColor','otherDesc','otherRate'];
+  const _lrmap = {};
+  _lkeys.forEach(k => { Object.values(LANG).forEach(l => { if(l[k]) _lrmap[l[k]] = k; }); });
   document.querySelectorAll('.modal-label').forEach(el => {
-    const txt = el.textContent.trim();
-    const map = {
-      'TÊN GỌI':t('cashLabel'),'LABEL':t('cashLabel'),
-      'TIỀN TỆ':t('cashCurrency'),'CURRENCY':t('cashCurrency'),
-      'LÃI SUẤT TIẾT KIỆM (%/NĂM)':t('cashRate'),'SAVINGS RATE (%/YEAR)':t('cashRate'),
-      'TÊN TÀI SẢN':t('reName'),'ASSET NAME':t('reName'),
-      'KHU VỰC':t('reLocation'),'REGION':t('reLocation'),
-      'HOẶC TỰ NHẬP % TĂNG TRƯỞNG':t('reCustomRate'),'OR ENTER CUSTOM GROWTH %':t('reCustomRate'),
-      'TÊN HIỂN THỊ':t('customName'),'DISPLAY NAME':t('customName'),
-      'MÃ TICKER / ID':t('customTicker'),'TICKER / ID':t('customTicker'),
-      'LOẠI':t('customType'),'TYPE':t('customType'),
-      'ICON (emoji)':t('customIcon'), 'MÀU':t('customColor'),'COLOR':t('customColor'),
-      'MÔ TẢ LOẠI TÀI SẢN':t('otherDesc'),'ASSET TYPE DESCRIPTION':t('otherDesc'),
-      'LÃI SUẤT / TĂNG TRƯỞNG DỰ KIẾN (%/năm)':t('otherRate'),'EXPECTED GROWTH RATE (%/yr)':t('otherRate'),
-    };
-    if (map[txt]) el.textContent = map[txt];
+    const txt = el.textContent.trim(); const key = _lrmap[txt]; if (key) el.textContent = t(key);
   });
-  // Modal hints
+  // Modal hints — detect by prefix across all langs
+  const _hkeys = ['cashHint','reHint','customHint','otherHint'];
+  const _hpfx = {}; _hkeys.forEach(k=>{ _hpfx[k]=Object.values(LANG).map(l=>l[k]&&l[k].slice(0,14)).filter(Boolean); });
   document.querySelectorAll('.modal-hint').forEach(el => {
     const txt = el.textContent.trim();
-    if (txt.startsWith('Nhập lãi suất') || txt.startsWith('Enter your bank')) el.textContent = t('cashHint');
-    if (txt.startsWith('Nhập giá trị BĐS') || txt.startsWith('Enter the property')) el.textContent = t('reHint');
-    if (txt.startsWith('Crypto: nhập') || txt.startsWith('Crypto: enter')) el.textContent = t('customHint');
-    if (txt.startsWith('Dùng để tính') || txt.startsWith('Used to calculate')) el.textContent = t('otherHint');
+    for (const [k,pfxs] of Object.entries(_hpfx)) { if (pfxs.some(p=>txt.startsWith(p))) { el.textContent=t(k); break; } }
   });
   // Update ci-type other option label
   document.querySelectorAll('option[data-i18n-opt]').forEach(el => {
@@ -1058,11 +1522,13 @@ function applyLang() {
 
   // Default values cho cash/RE name inputs (chỉ set nếu chưa user sửa)
   const cashNameEl = document.getElementById('cash-name');
-  if (cashNameEl && (cashNameEl.value === t('cashDefault') || cashNameEl.value === LANG[currentLang==='vi'?'en':'vi'].cashDefault || cashNameEl.value === '')) {
+  const _allCashDefs = Object.values(LANG).map(l=>l.cashDefault).filter(Boolean);
+  if (cashNameEl && (_allCashDefs.includes(cashNameEl.value) || cashNameEl.value === '')) {
     cashNameEl.value = t('cashDefault');
   }
   const reNameEl = document.getElementById('re-name');
-  if (reNameEl && (reNameEl.value === t('reDefault') || reNameEl.value === LANG[currentLang==='vi'?'en':'vi'].reDefault || reNameEl.value === '')) {
+  const _allReDefs = Object.values(LANG).map(l=>l.reDefault).filter(Boolean);
+  if (reNameEl && (_allReDefs.includes(reNameEl.value) || reNameEl.value === '')) {
     reNameEl.value = t('reDefault');
   }
 
@@ -1084,8 +1550,11 @@ function applyLang() {
     ciType.options[0].text = t('optCrypto');
     ciType.options[1].text = t('optStock');
   }
-  const lb = document.getElementById('lang-btn');
-  if (lb) lb.textContent = currentLang==='vi' ? '🇬🇧 EN' : '🇻🇳 VI';
+  const _LMETA = {vi:{f:'🇻🇳',c:'VI'},en:{f:'🇬🇧',c:'EN'},zh:{f:'🇨🇳',c:'ZH'},ja:{f:'🇯🇵',c:'JA'},ko:{f:'🇰🇷',c:'KO'},fr:{f:'🇫🇷',c:'FR'},ru:{f:'🇷🇺',c:'RU'}};
+  const _lm = _LMETA[currentLang]||_LMETA.vi;
+  const _lf=document.getElementById('lang-flag'); if(_lf) _lf.textContent=_lm.f;
+  const _lc=document.getElementById('lang-code'); if(_lc) _lc.textContent=_lm.c;
+  document.querySelectorAll('#lang-menu .lang-opt').forEach(el=>el.classList.toggle('active',el.dataset.lang===currentLang));
   // Update s0c nếu đang hiển thị "byQty"
   const s0c = $('s0c');
   if (s0c && !s0c.className.includes('pos') && !s0c.className.includes('neg')) {
@@ -1098,11 +1567,28 @@ function applyLang() {
   if (isPremium && typeof pmRenderAlloc === 'function') { pmRenderAlloc(); pmUpdate(); }
 }
 
-function toggleLang() {
-  currentLang = currentLang==='vi' ? 'en' : 'vi';
+function toggleLangDropdown() {
+  const menu = document.getElementById('lang-menu');
+  if (!menu) return;
+  const isOpen = menu.style.display === 'block';
+  menu.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) {
+    menu.querySelectorAll('.lang-opt').forEach(el => el.classList.toggle('active', el.dataset.lang === currentLang));
+    setTimeout(() => document.addEventListener('click', _closeLangMenu, {once:true}), 0);
+  }
+}
+function _closeLangMenu(e) {
+  const wrap = document.getElementById('lang-dropdown-wrap');
+  if (wrap && !wrap.contains(e.target)) { const m = document.getElementById('lang-menu'); if(m) m.style.display='none'; }
+}
+function setLang(code) {
+  if (!LANG[code]) return;
+  currentLang = code;
   localStorage.setItem('lang', currentLang);
+  const menu = document.getElementById('lang-menu'); if (menu) menu.style.display = 'none';
   applyLang();
 }
+function toggleLang() { setLang(currentLang==='vi'?'en':'vi'); }
 
 // ─────────────────────────────────────────────────────────────
 //  ASSET CATALOG
@@ -1720,7 +2206,7 @@ function renderHoldings() {
     const isCash = a.type==='cash', isRE = a.type==='realestate';
     const isOther = a.type==='custom' && a.customGrowthRate != null;
     const qtyLabel = isCash ? (a.currency||'USD') : isRE ? 'USD' : isOther ? 'USD' : a.ticker.split('.')[0];
-    const qtyPlaceholder = isCash ? 'Số dư tiết kiệm' : isRE ? 'Giá trị BĐS (USD)' : isOther ? (currentLang==='vi'?'Giá trị tài sản (USD)':'Asset value (USD)') : '0';
+    const qtyPlaceholder = isCash ? 'Số dư tiết kiệm' : isRE ? 'Giá trị BĐS (USD)' : isOther ? t('assetValLabel')||'Asset value (USD)' : '0';
     const effectivePrice = a.price ?? a.manualPrice ?? null;
 
     // Extra info field (lãi suất hoặc % tăng trưởng BĐS hoặc custom)
@@ -1742,7 +2228,7 @@ function renderHoldings() {
         </span>
       </div>` : isOther ? `
       <div class="extra-field" style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;">
-        <span class="extra-field-label">📊 ${currentLang==='vi'?'Tăng trưởng dự kiến':'Expected return'}</span>
+        <span class="extra-field-label">📊 ${t('expectedReturnLabel')||'Expected return'}</span>
         <span style="display:flex;align-items:center;gap:4px;">
           <input class="einput" id="otherrate-${i}" type="number" min="-100" max="1000" step="0.1"
             value="${((a.customGrowthRate||0.08)*100).toFixed(1)}" oninput="updateOtherRate(${i},this.value)">
@@ -1813,7 +2299,7 @@ function renderHoldings() {
 
       <!-- INPUT SECTION -->
       <div style="margin-top:10px;padding:10px 10px 8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;">
-        <div style="font-size:10px;letter-spacing:1px;color:var(--mu);margin-bottom:8px;font-family:var(--mono);">✏ ${isCash ? (currentLang==='vi'?'SỐ DƯ':'BALANCE') : isRE ? (currentLang==='vi'?'GIÁ TRỊ BĐS':'PROPERTY VALUE') : isOther ? (currentLang==='vi'?'GIÁ TRỊ TÀI SẢN (USD)':'ASSET VALUE (USD)') : (currentLang==='vi'?'KHỐI LƯỢNG NẮM GIỮ':'QUANTITY HELD')}</div>
+        <div style="font-size:10px;letter-spacing:1px;color:var(--mu);margin-bottom:8px;font-family:var(--mono);">✏ ${isCash ? t('balanceLabel') : isRE ? t('propertyLabel') : isOther ? t('assetValLabel') : t('qtyLabel')}</div>
         <div class="hinput-wrap">
           <input class="hinput" id="qty-${i}" type="text" inputmode="decimal"
             placeholder="${qtyPlaceholder}"
@@ -1827,7 +2313,7 @@ function renderHoldings() {
 
       <!-- VALUE SECTION -->
       <div style="margin-top:6px;padding:10px;background:var(--sur2);border:1px solid var(--b);border-radius:8px;text-align:center;">
-        <div style="font-size:10px;letter-spacing:1px;color:var(--mu);margin-bottom:8px;font-family:var(--mono);">💰 ${currentLang==='vi'?'GIÁ TRỊ QUY ĐỔI (USD)':'CURRENT VALUE (USD)'}</div>
+        <div style="font-size:10px;letter-spacing:1px;color:var(--mu);margin-bottom:8px;font-family:var(--mono);">💰 ${t('currentValueLabel')}</div>
         ${valBlock}
       </div>
     </div>`;
@@ -2735,7 +3221,7 @@ function openAIAdvisor() {
 
   if (isPremium) {
     if (badge) badge.style.display = 'inline-block';
-    if (sub)   { sub.removeAttribute('data-i18n'); sub.textContent = vi ? '💬 Chat với AI tư vấn tài chính cá nhân' : '💬 Chat with your personal AI financial advisor'; }
+    if (sub)   { sub.removeAttribute('data-i18n'); sub.textContent = t('chatSub'); }
     if (freePanel) freePanel.style.display = 'none';
     if (chatPanel) chatPanel.style.display = 'flex';
     updateSuggestions();
@@ -2748,7 +3234,7 @@ function openAIAdvisor() {
     }
   } else {
     if (badge)     badge.style.display = 'none';
-    if (sub)       { sub.removeAttribute('data-i18n'); sub.textContent = vi ? 'Phân tích điểm mạnh và điểm yếu danh mục hiện tại' : 'Analyze portfolio strengths and weaknesses'; }
+    if (sub)       { sub.removeAttribute('data-i18n'); sub.textContent = t('freeSub'); }
     if (freePanel) freePanel.style.display = '';
     if (chatPanel) chatPanel.style.display = 'none';
   }
@@ -2759,20 +3245,21 @@ function updateSuggestions() {
   const btns = document.querySelectorAll('.ai-suggest-btn');
   const suggestions = vi
     ? ['💼 Phân tích danh mục hiện tại', '🏖️ Nghỉ hưu sau 20 năm cần bao nhiêu?', '📈 Tái cơ cấu danh mục như thế nào?', '🛡️ Giảm rủi ro danh mục']
-    : ['💼 Analyze my current portfolio', '🏖️ How much to retire in 20 years?', '📈 How to rebalance my portfolio?', '🛡️ Reduce portfolio risk'];
+    : [t('suggest0'), t('suggest1'), t('suggest2'), t('suggest3')];
   btns.forEach((b, i) => { if (suggestions[i]) b.textContent = suggestions[i]; });
   const input = document.getElementById('ai-chat-input');
-  if (input) input.placeholder = vi
-    ? 'Hỏi gì đó... VD: Tôi muốn nghỉ hưu sau 15 năm với $500K'
-    : 'Ask anything... e.g. How to retire in 15 years with $500K?';
+  if (input) input.placeholder = t('chatPlh')||'Ask anything...';
 }
 
 function initChatWelcome() {
   const vi = currentLang === 'vi';
   const total = assets.reduce((s,a,i)=>s+getAssetValue(a,i),0);
-  const welcome = vi
-    ? `Xin chào! Tôi là AI tư vấn tài chính cá nhân của bạn. 💼\n\nDanh mục hiện tại của bạn: **$${Math.round(total).toLocaleString()}**\n\nTôi có thể giúp bạn:\n• Phân tích và tối ưu danh mục\n• Lên kế hoạch nghỉ hưu sớm\n• Tính toán mục tiêu tài chính\n• Tư vấn phân bổ tài sản\n\nBạn muốn hỏi gì?`
-    : `Hello! I'm your personal AI financial advisor. 💼\n\nYour current portfolio: **$${Math.round(total).toLocaleString()}**\n\nI can help you:\n• Analyze and optimize your portfolio\n• Plan for early retirement\n• Calculate financial goals\n• Advise on asset allocation\n\nWhat would you like to know?`;
+  const _wt = t('welcomeMsg');
+  const welcome = _wt && _wt !== 'welcomeMsg'
+    ? _wt.replace('{{total}}', Math.round(total).toLocaleString())
+    : (vi
+        ? `Xin chào! Tôi là AI tư vấn tài chính cá nhân của bạn. 💼\n\nDanh mục hiện tại của bạn: **$${Math.round(total).toLocaleString()}**\n\nTôi có thể giúp bạn:\n• Phân tích và tối ưu danh mục\n• Lên kế hoạch nghỉ hưu sớm\n• Tính toán mục tiêu tài chính\n• Tư vấn phân bổ tài sản\n\nBạn muốn hỏi gì?`
+        : `Hello! I'm your personal AI financial advisor. 💼\n\nYour current portfolio: **$${Math.round(total).toLocaleString()}**\n\nI can help you:\n• Analyze and optimize your portfolio\n• Plan for early retirement\n• Calculate financial goals\n• Advise on asset allocation\n\nWhat would you like to know?`);
   appendChatMessage('ai', welcome);
 }
 
@@ -2841,7 +3328,7 @@ async function sendChatMessage() {
   const systemContext = `You are a personal financial advisor for a WealthOS user.
 User's portfolio (total $${Math.round(total).toLocaleString()}): ${portfolioSummary}
 Current date: ${new Date().toLocaleDateString()}.
-Answer in ${currentLang==='vi'?'Vietnamese':'English'}, concise but thorough. Use bullet points when helpful. Format numbers with $ signs.`;
+Answer in ${currentLang==='vi'?'Vietnamese':currentLang==='zh'?'Chinese':currentLang==='ja'?'Japanese':currentLang==='ko'?'Korean':currentLang==='fr'?'French':currentLang==='ru'?'Russian':'English'}, concise but thorough. Use bullet points when helpful. Format numbers with $ signs.`;
 
   // Add to history
   chatHistory.push({ role: 'user', content: text });
@@ -2863,14 +3350,14 @@ Answer in ${currentLang==='vi'?'Vietnamese':'English'}, concise but thorough. Us
       body: JSON.stringify({ messages }),
     });
     const data = await res.json();
-    const reply = data.content?.map(b=>b.text||'').join('') || (currentLang==='vi'?'Xin lỗi, không thể kết nối.':'Sorry, could not connect.');
+    const reply = data.content?.map(b=>b.text||'').join('') || (t('aiErrConn')||'Connection error.');
 
     thinking.remove();
     chatHistory.push({ role: 'assistant', content: reply });
     appendChatMessage('ai', reply);
   } catch {
     thinking.remove();
-    appendChatMessage('ai', currentLang==='vi'?'⚠ Lỗi kết nối. Vui lòng thử lại.':'⚠ Connection error. Please try again.');
+    appendChatMessage('ai', '⚠ ' + (t('aiErrConn')||'Connection error. Please try again.'));
   } finally {
     if (sendBtn) sendBtn.disabled = false;
   }
@@ -2932,7 +3419,7 @@ async function runAIAnalysis() {
   btn.innerHTML = `<span class="ai-typing"></span> ${t('aiAnalyzing')}`;
 
   const portfolioText = buildPortfolioSummary();
-  const lang = currentLang === 'vi' ? 'Vietnamese' : 'English';
+  const lang = currentLang==='vi'?'Vietnamese':currentLang==='zh'?'Chinese':currentLang==='ja'?'Japanese':currentLang==='ko'?'Korean':currentLang==='fr'?'French':currentLang==='ru'?'Russian':'English';
   const vi = currentLang === 'vi';
 
   // Premium prompt: deep analysis with allocation suggestions
@@ -3449,7 +3936,7 @@ function pmUpdate() {
   const pmMetricsData = [
     { l:`${t('pmAfter')} ${pmYears} ${t('pmYearsUnit')}`, v:'$'+Math.round(final).toLocaleString(), c:'var(--blue)', cls:'' },
     { l:t('pmProfit'), v:(profit>=0?'+':'')+'$'+Math.round(profit).toLocaleString(), c:profit>=0?'var(--gr)':'var(--re)', cls:'profit' },
-    { l:t('pmCAGR'), v:cagr+'%/'+( currentLang==='vi' ? 'năm' : 'yr'), c:'var(--tx)', cls:'neutral' },
+    { l:t('pmCAGR'), v:cagr+(t('perYrLabel')||'%/yr'), c:'var(--tx)', cls:'neutral' },
     { l:t('fcMultipleInv'), v:multi+'x', c:'var(--tx)', cls:'neutral' },
   ];
   const pmHeroEl = document.getElementById('pm-metrics-hero');
@@ -3679,6 +4166,272 @@ ${aiSection}
   win.document.close();
   setTimeout(() => { win.print(); }, 600);
 }
+</script>
+<!-- SHARE MODAL -->
+<div id="share-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:#0f1117;border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:28px 24px;max-width:420px;width:90%;position:relative;box-shadow:0 24px 80px rgba(0,0,0,0.6);">
+    <button onclick="closeShareModal()" style="position:absolute;top:14px;right:14px;background:transparent;border:none;color:var(--mu);font-size:20px;cursor:pointer;line-height:1;padding:4px 8px;">×</button>
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="font-size:28px;margin-bottom:8px;">🚀</div>
+      <div id="share-title" style="font-size:16px;font-weight:700;color:var(--tx);" data-i18n="shareModalTitle">Chia sẻ danh mục</div>
+      <div id="share-sub" style="font-size:11px;color:var(--mu);margin-top:4px;" data-i18n="shareModalSub">Lan truyền Wealthos đến bạn bè & cộng đồng</div>
+    </div>
+    <!-- Captured image preview -->
+    <div id="sc-capture-preview" style="margin-bottom:18px;min-height:80px;"></div>
+    <!-- Actions -->
+    <button onclick="shareTo('download')" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border-radius:10px;border:1px solid rgba(79,142,247,0.3);background:rgba(79,142,247,0.1);color:#4f8ef7;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans);">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span id="share-download-label" data-i18n="shareDownloadBtn">Tải ảnh về</span>
+    </button>
+
+<script>
+let _shareBlob = null;
+let _shareDataUrl = null;
+
+async function openShareModal() {
+  const modal = document.getElementById('share-modal');
+  modal.style.display = 'flex';
+  if (navigator.share) document.getElementById('native-share-btn')?.style && (document.getElementById('native-share-btn').style.display = 'block');
+
+  const preview = document.getElementById('sc-capture-preview');
+  preview.innerHTML = `<div style="text-align:center;padding:24px;color:#6b7280;font-size:11px;font-family:monospace;">${t('shareCapture')||'📸 Generating...'}</div>`;
+  _shareBlob = null; _shareDataUrl = null;
+
+  try {
+    const canvas = buildPortfolioCanvasEl();
+    _shareDataUrl = canvas.toDataURL('image/png');
+    if (!_shareDataUrl || _shareDataUrl === 'data:,') throw new Error('empty canvas');
+    preview.innerHTML = `<div style="border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,0.1);">
+      <img src="${_shareDataUrl}" style="width:100%;display:block;" />
+    </div>`;
+    canvas.toBlob(b => { _shareBlob = b; }, 'image/png');
+  } catch(e) {
+    preview.innerHTML = `<div style="color:#f87171;text-align:center;padding:16px;font-size:11px;">⚠ ${t('shareError2')||'Error'}: ${e.message}</div>`;
+    console.error('Share canvas error:', e);
+  }
+}
+
+function buildPortfolioCanvasEl() {
+  try {
+    const W = 900, H = 340, DPR = 2;
+    const canvas = document.createElement('canvas');
+    canvas.width = W * DPR; canvas.height = H * DPR;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('no 2d context');
+    ctx.scale(DPR, DPR);
+
+    const rr = (x, y, w, h, r) => {
+      r = Math.min(r, w/2, h/2);
+      ctx.beginPath();
+      ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r);
+      ctx.lineTo(x+w,y+h-r); ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+      ctx.lineTo(x+r,y+h); ctx.arcTo(x,y+h,x,y+h-r,r);
+      ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r);
+      ctx.closePath();
+    };
+
+    // Background
+    ctx.fillStyle = '#0d0f14';
+    ctx.fillRect(0, 0, W, H);
+
+    // ─── HEADER ───────────────────────────────────────────
+    const hY = 18;
+    // Logo
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 22px Arial, sans-serif';
+    ctx.fillText('WEALTHOS', 24, hY + 22);
+    // Subtitle
+    ctx.fillStyle = '#6b7280';
+    ctx.font = '12px Arial, sans-serif';
+    ctx.fillText('AI Net Worth & Portfolio Tracker', 24, hY + 40);
+
+    // LIVE badge
+    const liveX = W - 316;
+    rr(liveX, hY+4, 64, 26, 13);
+    ctx.fillStyle='rgba(52,211,153,0.12)'; ctx.fill();
+    ctx.strokeStyle='rgba(52,211,153,0.4)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.beginPath(); ctx.arc(liveX+16, hY+17, 4, 0, Math.PI*2);
+    ctx.fillStyle='#34d399'; ctx.fill();
+    ctx.fillStyle='#34d399'; ctx.font='bold 11px Arial,sans-serif';
+    ctx.fillText('LIVE', liveX+26, hY+21);
+
+    // AI badge
+    const aiX = liveX + 74;
+    const aiBadgeText = '✦ ' + (t('aiBtn') || 'AI Advisor');
+    ctx.font='bold 11px Arial,sans-serif';
+    const aiBadgeW = Math.max(96, ctx.measureText(aiBadgeText).width + 24);
+    rr(aiX, hY+4, aiBadgeW, 26, 13);
+    ctx.fillStyle='rgba(139,108,247,0.12)'; ctx.fill();
+    ctx.strokeStyle='rgba(139,108,247,0.4)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle='#a78bfa'; ctx.font='bold 11px Arial,sans-serif';
+    ctx.fillText(aiBadgeText, aiX+12, hY+21);
+
+    // wealthos.world badge
+    const wwX = aiX + aiBadgeW + 10;
+    rr(wwX, hY+4, 120, 26, 13);
+    ctx.fillStyle='rgba(255,255,255,0.05)'; ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.12)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle='#9ca3af'; ctx.font='11px monospace';
+    ctx.fillText('wealthos.world', wwX+12, hY+21);
+
+    // Divider
+    ctx.fillStyle='rgba(255,255,255,0.07)';
+    ctx.fillRect(16, hY+56, W-32, 1);
+
+    // ─── PORTFOLIO CARD ───────────────────────────────────
+    const cx=16, cy=hY+66, cw=W-32, ch=H-cy-16;
+    rr(cx, cy, cw, ch, 14);
+    const g=ctx.createLinearGradient(cx,cy,cx+cw,cy+ch);
+    g.addColorStop(0,'#141928'); g.addColorStop(1,'#0d1222');
+    ctx.fillStyle=g; ctx.fill();
+    ctx.strokeStyle='rgba(79,142,247,0.3)'; ctx.lineWidth=1.5; ctx.stroke();
+
+    // Total
+    const total = document.getElementById('s0')?.textContent?.trim() || '$0.00';
+    ctx.fillStyle='#ffffff'; ctx.font='bold 40px Arial,sans-serif';
+    ctx.fillText(total, cx+20, cy+50);
+
+    // Change
+    const chgTxt = document.getElementById('s0c')?.textContent?.trim() || '';
+    if (chgTxt) {
+      ctx.fillStyle = (chgTxt.includes('+') || chgTxt.includes('\u25b2')) ? '#34d399' : '#f87171';
+      ctx.font='500 13px Arial,sans-serif';
+      ctx.fillText(chgTxt, cx+22, cy+70);
+    }
+
+    // Alloc bar
+    const bY=cy+85, bH=7, bX=cx+20, bW=cw-40;
+    const assetList = typeof assets !== 'undefined' ? assets : [];
+    const getVal = (a,i) => typeof getAssetValue === 'function' ? (getAssetValue(a,i)||0) : 0;
+    const tot = assetList.reduce((s,a,i) => s+getVal(a,i), 0);
+    let bx=bX;
+    assetList.forEach((a,i) => {
+      const pct = tot>0 ? getVal(a,i)/tot : 0;
+      if (pct<0.005) return;
+      const w=Math.max(Math.round(pct*bW)-2,2);
+      rr(bx,bY,w,bH,3); ctx.fillStyle=a.color||'#4f8ef7'; ctx.fill();
+      bx+=w+2;
+    });
+
+    // Chips
+    let cx2=cx+20, cy2=cy+106;
+    ctx.font='bold 11px monospace';
+    assetList.forEach((a,i) => {
+      const pct = tot>0 ? (getVal(a,i)/tot*100).toFixed(1) : '0';
+      const lbl = a.ticker+'  '+pct+'%';
+      const tw = ctx.measureText(lbl).width+20;
+      if (cx2+tw>cx+cw-18) { cx2=cx+20; cy2+=30; }
+      if (cy2+24>cy+ch-14) return;
+      rr(cx2,cy2,tw,24,5);
+      ctx.fillStyle=(a.color||'#4f8ef7')+'28'; ctx.fill();
+      ctx.strokeStyle=(a.color||'#4f8ef7')+'70'; ctx.lineWidth=1; ctx.stroke();
+      ctx.fillStyle=a.color||'#4f8ef7';
+      ctx.fillText(lbl, cx2+10, cy2+16);
+      cx2+=tw+7;
+    });
+
+    // Date
+    ctx.fillStyle='#4b5563'; ctx.font='10px monospace';
+    ctx.textAlign='right';
+    ctx.fillText(new Date().toLocaleDateString('vi-VN'), cx+cw-16, cy+ch-10);
+    ctx.textAlign='left';
+
+    return canvas;
+  } catch(e) {
+    console.error('buildPortfolioCanvas error:', e);
+    throw e;
+  }
+}
+
+function closeShareModal() {
+  document.getElementById('share-modal').style.display = 'none';
+}
+
+function buildShareText() {
+  const total = document.getElementById('s0')?.textContent?.trim() || '';
+  const vi = currentLang === 'vi';
+  const _st = t('shareText');
+  if (_st && _st !== 'shareText') return _st.replace('{{total}}', total);
+  return vi
+    ? `📊 Danh mục của tôi trên Wealthos: ${total}\n🚀 Quản lý tài sản thông minh tại wealthos.world`
+    : `📊 My portfolio on Wealthos: ${total}\n🚀 Smart asset management at wealthos.world`;
+}
+
+async function shareTo(platform) {
+  const url = 'https://wealthos.world';
+  const shareText = buildShareText();
+
+  if (platform === 'native' && navigator.share) {
+    const shareData = { title: 'WealthOS Portfolio', url };
+    try {
+      if (_shareBlob) {
+        const f = new File([_shareBlob], 'portfolio.png', { type: 'image/png' });
+        if (navigator.canShare?.({ files: [f] })) {
+          await navigator.share({ title: 'WealthOS Portfolio', files: [f] });
+          return;
+        }
+      }
+      await navigator.share({ ...shareData, text: shareText });
+    } catch(e) {}
+    return;
+  }
+
+  if (platform === 'download' || !['native'].includes(platform)) {
+    if (_shareDataUrl) {
+      const a = document.createElement('a');
+      a.href = _shareDataUrl;
+      a.download = 'wealthos-portfolio.png';
+      a.click();
+      showShareToast(t('imgSaved')||'✓ Image saved!');
+    } else {
+      showShareToast(t('imgNotReady')||'⏳ Image not ready.');
+    }
+    return;
+  }
+}
+
+async function copyShareLink() {
+  const text = buildShareText() + '\n👉 https://wealthos.world';
+  const btn = document.getElementById('copy-link-btn');
+  try {
+    if (_shareBlob && navigator.clipboard.write) {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          'image/png': _shareBlob,
+          'text/plain': new Blob([text], { type: 'text/plain' })
+        })
+      ]);
+      showShareToast(t('copied')||'✓ Copied!');
+    } else {
+      await navigator.clipboard.writeText(text);
+      showShareToast(t('copiedLink')||'✓ Link copied!');
+    }
+  } catch { await navigator.clipboard.writeText(text).catch(()=>{}); }
+  const _copyLbl = document.getElementById('share-copy-label');
+  if(_copyLbl) _copyLbl.textContent = '✓ ' + (t('copiedLabel')||'Copied');
+  else if(btn) btn.textContent = '✓ ' + (t('copiedLabel')||'Copied');
+  setTimeout(() => {
+    if(_copyLbl) _copyLbl.textContent = t('shareCopyBtn')||t('copyLabel')||'Copy';
+    else if(btn) btn.textContent = t('shareCopyBtn')||'Copy';
+  }, 2500);
+}
+
+function showShareToast(msg) {
+  let t = document.getElementById('share-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'share-toast';
+    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1c2030;border:1px solid rgba(52,211,153,0.4);color:#34d399;padding:10px 20px;border-radius:10px;font-size:12px;font-family:var(--mono);z-index:9999;transition:opacity .3s;box-shadow:0 8px 24px rgba(0,0,0,0.4);white-space:nowrap;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg; t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.style.opacity = '0', 3000);
+}
+
+document.getElementById('share-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('share-modal')) closeShareModal();
+});
 </script>
 </body>
 </html>

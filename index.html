@@ -445,7 +445,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
       </div>
 
       <!-- Metrics -->
-      <div id="pm-metrics" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;"></div>
+      <div id="pm-metrics-hero" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;"></div>
+      <!-- keep for PDF export compat -->
+      <div id="pm-metrics" style="display:none;"></div>
 
       <!-- Chart -->
       <div style="position:relative;height:240px;margin-bottom:16px;">
@@ -3192,11 +3194,20 @@ function pmUpdate() {
   const final = total[pmYears];
   const profit = final - inv[pmYears];
   const cagr = pmYears > 0 ? ((Math.pow(final/Math.max(initAmt,1),1/pmYears)-1)*100).toFixed(1) : 0;
-  document.getElementById('pm-metrics').innerHTML = [
-    { l:`${t('pmAfter')} ${pmYears} ${t('pmYearsUnit')}`, v:'$'+Math.round(final).toLocaleString(), c:'var(--blue)' },
-    { l:t('pmProfit'), v:(profit>=0?'+':'')+'$'+Math.round(profit).toLocaleString(), c:profit>=0?'var(--gr)':'var(--re)' },
-    { l:t('pmCAGR'), v:cagr+'%/'+( currentLang==='vi' ? 'năm' : 'yr'), c:'var(--tx)' },
-  ].map(m=>`<div class="fc-metric"><div class="fc-ml">${m.l}</div><div class="fc-mv" style="color:${m.c}">${m.v}</div></div>`).join('');
+  const multi = (final/Math.max(initAmt,1)).toFixed(2);
+  const pmMetricsData = [
+    { l:`${t('pmAfter')} ${pmYears} ${t('pmYearsUnit')}`, v:'$'+Math.round(final).toLocaleString(), c:'var(--blue)', cls:'' },
+    { l:t('pmProfit'), v:(profit>=0?'+':'')+'$'+Math.round(profit).toLocaleString(), c:profit>=0?'var(--gr)':'var(--re)', cls:'profit' },
+    { l:t('pmCAGR'), v:cagr+'%/'+( currentLang==='vi' ? 'năm' : 'yr'), c:'var(--tx)', cls:'neutral' },
+    { l:t('fcMultipleInv'), v:multi+'x', c:'var(--tx)', cls:'neutral' },
+  ];
+  const pmHeroEl = document.getElementById('pm-metrics-hero');
+  pmHeroEl.style.gridTemplateColumns = 'repeat(4,1fr)';
+  pmHeroEl.innerHTML = pmMetricsData
+    .map(m=>`<div class="fc-metric-hero ${m.cls}"><div class="fc-ml">${m.l}</div><div class="fc-mv" style="color:${m.c}">${m.v}</div></div>`).join('');
+  // keep hidden pm-metrics in sync for PDF export
+  document.getElementById('pm-metrics').innerHTML = pmMetricsData
+    .map(m=>`<div class="fc-metric"><div class="fc-ml">${m.l}</div><div class="fc-mv" style="color:${m.c}">${m.v}</div></div>`).join('');
 
   // Chart
   if (pmChart) pmChart.destroy();

@@ -3120,8 +3120,8 @@ Rules:
           </div>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;justify-content:center;">
-          <button style="padding:4px 12px;border-radius:8px;border:none;background:${color};color:#fff;font-size:11px;font-weight:600;cursor:default;font-family:var(--sans);">${cfg.icon} ${cfg.label}</button>
-          <button style="padding:4px 12px;border-radius:8px;border:1px solid var(--b2);background:transparent;color:var(--tx);font-size:11px;font-weight:600;cursor:default;font-family:var(--mono);">${item.target_pct}% <span style="color:${diffColor};font-size:10px;">(${diffStr})</span></button>
+          <button style="padding:6px 16px;border-radius:8px;border:none;background:${cfg.badge};color:#fff;font-size:12px;font-weight:700;cursor:default;font-family:var(--sans);letter-spacing:0.2px;">${cfg.icon} ${cfg.label}</button>
+          <button style="padding:6px 14px;border-radius:8px;border:1px solid var(--b2);background:transparent;color:var(--tx);font-size:12px;font-weight:600;cursor:default;font-family:var(--mono);">${item.target_pct}% <span style="color:${diffColor};font-size:11px;">(${diffStr})</span></button>
         </div>
         <div style="font-size:10px;color:var(--mu);margin-top:6px;line-height:1.5;text-align:center;">${item.reason}</div>
         <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;justify-content:center;" id="growth-chips-${item.ticker.replace(/\./g,'_')}">${growthChipsInner}</div>

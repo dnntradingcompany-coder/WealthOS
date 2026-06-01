@@ -2109,7 +2109,7 @@ function onCiTypeChange() {
   document.getElementById('ci-other-fields').style.display = val === 'other' ? 'block' : 'none';
 }
 
-
+function showModalErr(msg) {
   const el=$('modal-err'); el.textContent=msg; el.style.display='block';
 }
 

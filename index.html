@@ -81,11 +81,11 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
 .hinput:focus{border-color:rgba(255,255,255,0.3);}
 .hinput::placeholder{color:var(--mu);}
 .hunit{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--mu);font-family:var(--mono);pointer-events:none;}
-.hval-block{margin-top:8px;padding:8px 10px;background:var(--sur2);border-radius:8px;border:1px solid var(--b);}
-.hval-price{font-size:10px;color:var(--mu);font-family:var(--mono);margin-bottom:2px;}
-.hval{font-size:14px;font-weight:600;font-family:var(--mono);color:var(--mu);min-height:20px;}
+.hval-block{margin-top:8px;padding:8px 10px;background:var(--sur2);border-radius:8px;border:1px solid var(--b);text-align:center;}
+.hval-price{font-size:10px;color:var(--mu);font-family:var(--mono);margin-bottom:2px;text-align:center;}
+.hval{font-size:14px;font-weight:600;font-family:var(--mono);color:var(--mu);min-height:20px;text-align:center;}
 .hval.ok{color:var(--gr);}
-.hval-alloc{font-size:10px;font-family:var(--mono);color:var(--mu);margin-top:3px;}
+.hval-alloc{font-size:10px;font-family:var(--mono);color:var(--mu);margin-top:3px;text-align:center;}
 .manual-price-row{display:flex;gap:6px;margin:6px 0 4px;align-items:center;}
 .hico-wrap{display:flex;border-radius:7px;}
 .hico-wrap:hover .hico{filter:brightness(1.2);transform:scale(1.08);}
@@ -2262,7 +2262,7 @@ function renderFcAssetScenarios() {
           <div style="font-size:10px;color:var(--mu);font-family:var(--mono);">${a.ticker}</div>
         </div>
       </div>
-      <div style="display:flex;flex-wrap:wrap;gap:5px;">${chips}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;justify-content:center;">${chips}</div>
     </div>`;
   }).join('');
 }
@@ -3081,8 +3081,7 @@ Rules:
         ? (histPeriod === '10yr' ? 'TB 10 năm' : histPeriod === '5yr' ? 'TB 5 năm' : histPeriod === '3yr' ? 'TB 3 năm' : histPeriod === '1yr' ? 'TB 1 năm' : `TB ${histPeriod}`)
         : `Avg ${histPeriod}`;
 
-      const growthScenarios = g.hist10 != null ? `
-        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;" id="growth-chips-${item.ticker.replace(/\./g,'_')}">
+      const growthChipsInner = g.hist10 != null ? `
           <span class="growth-chip" data-ticker="${item.ticker}" data-rate="${g.hist10}" data-type="hist10"
             data-color="#e8eaf0"
             style="padding:3px 9px;border-radius:6px;font-size:10px;font-weight:700;font-family:var(--mono);background:rgba(232,234,240,0.08);color:#e8eaf0;border:2px solid rgba(232,234,240,0.5);cursor:pointer;transition:all .15s;"
@@ -3110,8 +3109,7 @@ Rules:
             onclick="selectGrowthChip(this)"
             title="${vi?'Kịch bản bi quan':'Pessimistic / Bear case'}">
             ${vi?'Bi quan':'Bear'} ${g.pessimistic>=0?'+':''}${g.pessimistic?.toFixed(1)}%
-          </span>
-        </div>` : '';
+          </span>` : '';
 
       return `<div style="background:var(--sur);border:1px solid var(--b);border-radius:12px;padding:14px 16px;position:relative;">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
@@ -3126,12 +3124,12 @@ Rules:
             <div style="font-size:12px;font-weight:600;font-family:var(--mono);color:var(--mu);">${item.current_pct}%</div>
           </div>
         </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;justify-content:center;">
           <button style="padding:4px 12px;border-radius:8px;border:none;background:${color};color:#fff;font-size:11px;font-weight:600;cursor:default;font-family:var(--sans);">${cfg.icon} ${cfg.label}</button>
           <button style="padding:4px 12px;border-radius:8px;border:1px solid var(--b2);background:transparent;color:var(--tx);font-size:11px;font-weight:600;cursor:default;font-family:var(--mono);">${item.target_pct}% <span style="color:${diffColor};font-size:10px;">(${diffStr})</span></button>
         </div>
-        <div style="font-size:10px;color:var(--mu);margin-top:6px;line-height:1.5;">${item.reason}</div>
-        ${growthScenarios}
+        <div style="font-size:10px;color:var(--mu);margin-top:6px;line-height:1.5;text-align:center;">${item.reason}</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;justify-content:center;" id="growth-chips-${item.ticker.replace(/\./g,'_')}">${growthChipsInner}</div>
       </div>`;
     }).join('');
 

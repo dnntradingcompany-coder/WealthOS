@@ -3232,22 +3232,22 @@ Rules:
           </span>` : '';
 
       return `<div style="background:var(--sur);border:1px solid var(--b);border-radius:12px;padding:12px 14px;position:relative;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
           <div style="width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;background:${color}22;border:2px solid ${color}44;flex-shrink:0;">${icon}</div>
           <div style="flex:1;min-width:0;">
             <div style="font-size:12px;font-weight:600;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name}${item.isNew?` <span style="font-size:8px;padding:1px 5px;border-radius:4px;background:rgba(167,139,250,0.2);color:#a78bfa;font-family:var(--mono);vertical-align:middle;">NEW</span>`:''}</div>
             <div style="font-size:9px;color:var(--mu);font-family:var(--mono);">${item.ticker}</div>
           </div>
-          <div style="margin-left:auto;text-align:right;flex-shrink:0;">
+          <div style="display:flex;gap:5px;align-items:center;flex-shrink:0;">
+            <button style="padding:4px 12px;border-radius:7px;border:none;background:${cfg.badge};color:#fff;font-size:11px;font-weight:700;cursor:default;font-family:var(--sans);white-space:nowrap;">${cfg.icon} ${cfg.label}</button>
+            <button style="padding:4px 10px;border-radius:7px;border:1px solid var(--b2);background:transparent;color:var(--tx);font-size:11px;font-weight:600;cursor:default;font-family:var(--mono);white-space:nowrap;">${item.target_pct}% <span style="color:${diffColor};font-size:10px;">(${diffStr})</span></button>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
             <div style="font-size:9px;color:var(--mu);font-family:var(--mono);">${vi?'Hiện tại':'Current'}</div>
             <div style="font-size:11px;font-weight:600;font-family:var(--mono);color:var(--mu);">${item.current_pct}%</div>
           </div>
         </div>
-        <div style="display:flex;gap:6px;align-items:center;justify-content:center;margin-bottom:6px;">
-          <button style="padding:5px 14px;border-radius:8px;border:none;background:${cfg.badge};color:#fff;font-size:11px;font-weight:700;cursor:default;font-family:var(--sans);">${cfg.icon} ${cfg.label}</button>
-          <button style="padding:5px 12px;border-radius:8px;border:1px solid var(--b2);background:transparent;color:var(--tx);font-size:11px;font-weight:600;cursor:default;font-family:var(--mono);">${item.target_pct}% <span style="color:${diffColor};font-size:10px;">(${diffStr})</span></button>
-        </div>
-        <div style="font-size:10px;color:var(--mu);margin-bottom:8px;line-height:1.4;text-align:center;">${item.reason}</div>
+        <div style="font-size:10px;color:var(--mu);margin-bottom:8px;line-height:1.4;">${item.reason}</div>
         <div style="display:flex;flex-wrap:wrap;gap:4px;" id="growth-chips-${item.ticker.replace(/\./g,'_')}">${growthChipsInner}</div>
       </div>`;
     }).join('');

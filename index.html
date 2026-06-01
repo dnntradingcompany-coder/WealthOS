@@ -435,7 +435,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
     <!-- PREMIUM CONTENT (blurred when locked) -->
     <div id="premium-content" style="filter:blur(4px);pointer-events:none;user-select:none;">
       <div class="chdr" style="margin-bottom:16px;">
-        <span class="ctit" data-i18n="pmTitle">PHÂN BỔ TỐI ƯU & MÔ PHỎNG DÀI HẠN ✦</span>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:9px;font-weight:700;letter-spacing:1.5px;padding:3px 10px;border-radius:20px;background:linear-gradient(135deg,#7c3aed,#4f8ef7);color:#fff;font-family:var(--mono);">✦ PREMIUM</span>
+          <span style="font-size:14px;font-weight:700;letter-spacing:0.3px;background:linear-gradient(135deg,#c4b5fd 0%,#818cf8 50%,#60a5fa 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;" data-i18n="pmTitle">PHÂN BỔ TỐI ƯU & MÔ PHỎNG DÀI HẠN</span>
+        </div>
         <button onclick="exportPDF()" style="display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;border:1px solid rgba(167,139,250,0.3);background:rgba(167,139,250,0.08);color:#a78bfa;font-size:11px;cursor:pointer;font-family:var(--sans);">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           <span data-i18n="pmExportPDF">Xuất PDF</span>
@@ -815,7 +818,7 @@ const LANG = {
     today:'hôm nay',
     // Premium
     pmLockTitle:'Tính năng Premium', pmLockDesc:'Phân bổ % danh mục theo khẩu vị rủi ro + Mô phỏng tăng trưởng tùy chọn 3–100 năm',
-    pmUpgradeBtn:'✦ Nâng cấp Premium', pmTitle:'PHÂN BỔ TỐI ƯU & MÔ PHỎNG DÀI HẠN ✦',
+    pmUpgradeBtn:'✦ Nâng cấp Premium', pmTitle:'PHÂN BỔ TỐI ƯU & MÔ PHỎNG DÀI HẠN',
     pmAllocHint:'Chọn khẩu vị để xem gợi ý phân bổ...', pmAllocTitle:'GỢI Ý PHÂN BỔ', pmYearsLabel:'SỐ NĂM MÔ PHỎNG', pmYearsUnit:'năm',
     pmDisclaimer:'⚠ Mô phỏng dựa trên lãi suất giả định — không phải dự báo thực tế.',
     pmTypeStock:'Cổ phiếu/ETF', pmTypeCrypto:'Crypto', pmTypeCommodity:'Hàng hóa', pmTypeCash:'Tiền mặt', pmTypeRE:'Bất động sản',
@@ -908,7 +911,7 @@ const LANG = {
     today:'today',
     // Premium
     pmLockTitle:'Premium Feature', pmLockDesc:'AI-based portfolio allocation by risk profile + Growth simulation 3–100 years',
-    pmUpgradeBtn:'✦ Upgrade to Premium', pmTitle:'OPTIMAL ALLOCATION & LONG-TERM SIMULATION ✦',
+    pmUpgradeBtn:'✦ Upgrade to Premium', pmTitle:'OPTIMAL ALLOCATION & LONG-TERM SIMULATION',
     pmAllocHint:'Select a risk profile to see allocation suggestion...', pmAllocTitle:'ALLOCATION SUGGESTION', pmYearsLabel:'SIMULATION YEARS', pmYearsUnit:'years',
     pmDisclaimer:'⚠ Simulation based on assumed rates — not a real forecast.',
     pmTypeStock:'Stocks/ETF', pmTypeCrypto:'Crypto', pmTypeCommodity:'Commodities', pmTypeCash:'Cash', pmTypeRE:'Real Estate',
@@ -2221,6 +2224,7 @@ function saveAll() {
     id:a.id, name:a.name, ticker:a.ticker, icon:a.icon, color:a.color, type:a.type, qty:a.qty||0,
     cashRate:a.cashRate, currency:a.currency,
     reLocation:a.reLocation, reGrowthRate:a.reGrowthRate, manualPrice:a.manualPrice,
+    customGrowthRate:a.customGrowthRate, desc:a.desc,
   }));
   localStorage.setItem('portfolio_v2', JSON.stringify(save));
 }
@@ -3086,7 +3090,10 @@ async function pmRenderAlloc() {
   const riskName = t('aiRisk'+['conservative','balanced','growth','aggressive'].indexOf(pmSelectedRisk)+'Name');
   const resultEl = document.getElementById('pm-alloc-result');
 
-  resultEl.innerHTML = `<div style="font-size:11px;color:#a78bfa;font-weight:600;margin-bottom:10px;font-family:var(--mono);">${t('pmAllocTitle')} · ${riskName.toUpperCase()}</div>
+  resultEl.innerHTML = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+      <span style="font-size:9px;font-weight:700;letter-spacing:1px;padding:2px 8px;border-radius:12px;background:linear-gradient(135deg,#7c3aed,#4f8ef7);color:#fff;font-family:var(--mono);">✦ PREMIUM</span>
+      <span style="font-size:13px;font-weight:700;background:linear-gradient(135deg,#c4b5fd,#818cf8,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:0.5px;">${t('pmAllocTitle')} · ${riskName.toUpperCase()}</span>
+    </div>
     <div style="display:flex;align-items:center;gap:8px;color:var(--mu);font-size:11px;font-family:var(--mono);">
       <span class="ai-typing"></span> ${vi?'Đang phân tích danh mục...':'Analyzing your portfolio...'}
     </div>`;
@@ -3249,7 +3256,10 @@ Rules:
     }).join('');
 
     resultEl.innerHTML = `
-      <div style="font-size:11px;color:#a78bfa;font-weight:600;margin-bottom:12px;font-family:var(--mono);">${t('pmAllocTitle')} · ${riskName.toUpperCase()}</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+        <span style="font-size:9px;font-weight:700;letter-spacing:1px;padding:2px 8px;border-radius:12px;background:linear-gradient(135deg,#7c3aed,#4f8ef7);color:#fff;font-family:var(--mono);">✦ PREMIUM</span>
+        <span style="font-size:13px;font-weight:700;background:linear-gradient(135deg,#c4b5fd,#818cf8,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:0.5px;">${t('pmAllocTitle')} · ${riskName.toUpperCase()}</span>
+      </div>
       <div class="pm-alloc-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">${cards}</div>`;
 
     // Cache kết quả để dùng cho PDF

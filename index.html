@@ -2492,13 +2492,28 @@ function fcUpdate() {
   if (fcChart2) fcChart2.destroy();
   const ctx2 = document.getElementById('fc-chart').getContext('2d');
   const datasets = [
-    { label:'Tổng', data:total, borderColor:'var(--blue)', borderWidth:2.5, pointRadius:3, pointBackgroundColor:'var(--blue)', backgroundColor:'rgba(79,142,247,0.07)', fill:true, tension:0.35 },
-    ...assetData.map(d=>({ label:d.a.ticker, data:d.series, borderColor:d.a.color, borderWidth:1.5, borderDash:[5,3], pointRadius:0, fill:false, tension:0.35 })),
-    { label:'Vốn', data:inv, borderColor:'rgba(255,255,255,0.2)', borderWidth:1.2, borderDash:[2,4], pointRadius:0, fill:false, tension:0.1 },
+    { label:'Tổng', data:total, borderColor:'#4f8ef7', borderWidth:3.5, pointRadius:4, pointBackgroundColor:'#4f8ef7', pointBorderColor:'#fff', pointBorderWidth:1.5, backgroundColor:'rgba(79,142,247,0.1)', fill:true, tension:0.35, order:0 },
+    ...assetData.map(d=>({ label:d.a.ticker, data:d.series, borderColor:d.a.color, borderWidth:1.5, borderDash:[5,3], pointRadius:0, fill:false, tension:0.35, order:1 })),
+    { label:'Vốn', data:inv, borderColor:'rgba(255,255,255,0.25)', borderWidth:1.2, borderDash:[2,4], pointRadius:0, fill:false, tension:0.1, order:2 },
   ];
+
+  // Glow plugin for Tổng line
+  const glowPlugin = {
+    id:'glowLine',
+    beforeDatasetsDraw(chart) {
+      const ctx = chart.ctx;
+      ctx.save();
+      ctx.shadowColor = 'rgba(79,142,247,0.55)';
+      ctx.shadowBlur = 16;
+    },
+    afterDatasetDraw(chart, args) {
+      if (args.index === 0) chart.ctx.restore();
+    }
+  };
   fcChart2 = new Chart(ctx2, {
     type:'line',
     data:{ labels, datasets },
+    plugins:[glowPlugin],
     options:{
       responsive:true, maintainAspectRatio:false,
       plugins:{

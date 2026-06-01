@@ -248,29 +248,60 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
   /* Forecast */
   #fc-asset-scenarios{grid-template-columns:1fr !important;}
   #fc-metrics-hero{grid-template-columns:1fr 1fr !important;}
-  .fc-metric-hero .fc-mv{font-size:22px !important;}
+  .fc-metric-hero{padding:12px 10px !important;}
+  .fc-metric-hero .fc-mv{font-size:18px !important;}
+  .fc-metric-hero .fc-ml{font-size:8px !important;}
   #fc-metrics-sub{grid-template-columns:1fr 1fr !important;}
   #fc-metrics{grid-template-columns:1fr 1fr !important;}
   .fc-metric{padding:10px 12px;}
   .fc-metric .fc-mv{font-size:14px;}
   .fc-metric .fc-ml{font-size:9px;}
-  /* Sliders vốn/DCA */
+  /* Vốn ban đầu */
   #forecast-section > div:nth-child(3){grid-template-columns:1fr !important;}
+  .fc-params-grid{grid-template-columns:1fr !important;}
   /* Chart dự báo */
-  #fc-chart{height:180px !important;}
-  #forecast-section [style*="height:260px"]{height:180px !important;}
-  /* Bảng ẩn bớt cột trên mobile */
-  #fc-table{font-size:10px;}
-  #fc-table th,#fc-table td{padding:5px 5px;}
+  #fc-chart{height:160px !important;}
+  #forecast-section [style*="height:260px"]{height:160px !important;}
+  /* Bảng năm — ẩn bớt trên mobile */
+  #fc-table{font-size:9px;}
+  #fc-table th,#fc-table td{padding:4px 4px;}
+  /* Scenario chips */
+  .fc-sc-btn{font-size:9px;padding:2px 7px;}
   /* Sync button */
   .chdr .btn{font-size:10px;padding:4px 8px;}
+
+  /* Premium section */
+  #pm-risk-grid{grid-template-columns:1fr 1fr !important;}
+  .pm-risk-btn{padding:14px 8px;font-size:12px;}
+  .pm-risk-btn span[style*="font-size:28px"]{font-size:22px !important;}
+  #pm-metrics-hero{grid-template-columns:1fr 1fr !important;}
+  #pm-metrics-hero .fc-metric-hero .fc-mv{font-size:18px !important;}
+  /* PM params grid: 1 col */
+  #premium-content > div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr !important;}
+  /* Alloc cards: 1 col */
+  .pm-alloc-grid{grid-template-columns:1fr !important;}
+  #pm-alloc-result > div[style*="grid-template-columns:repeat(3"]{grid-template-columns:1fr !important;}
+  #pm-alloc-result > div[style*="grid-template-columns:repeat(2"]{grid-template-columns:1fr !important;}
+  /* PM chart */
+  #pm-chart{height:160px !important;}
+  #premium-content [style*="height:240px"]{height:160px !important;}
+  /* Growth chips wrap nicely */
+  #pm-alloc-result .growth-chip,#pm-alloc-result span[class*="growth"]{font-size:9px !important;padding:2px 6px !important;}
+
+
 }
 
 @media(min-width:641px) and (max-width:900px){
   .holdings-row{grid-template-columns:repeat(2,1fr);}
   .smry-sub{grid-template-columns:repeat(3,1fr);}
   #fc-asset-scenarios{grid-template-columns:repeat(2,1fr) !important;}
+  #fc-metrics-hero{grid-template-columns:repeat(2,1fr) !important;}
+  #fc-metrics-sub{grid-template-columns:repeat(2,1fr) !important;}
   #fc-metrics{grid-template-columns:repeat(3,1fr) !important;}
+  #pm-risk-grid{grid-template-columns:repeat(2,1fr) !important;}
+  #pm-metrics-hero{grid-template-columns:repeat(2,1fr) !important;}
+  #pm-alloc-result > div[style*="grid-template-columns:repeat(3"]{grid-template-columns:repeat(2,1fr) !important;}
+  .pm-alloc-grid{grid-template-columns:repeat(2,1fr) !important;}
 }
 </style>
 </head>
@@ -3220,7 +3251,7 @@ Rules:
 
     resultEl.innerHTML = `
       <div style="font-size:11px;color:#a78bfa;font-weight:600;margin-bottom:12px;font-family:var(--mono);">${t('pmAllocTitle')} · ${riskName.toUpperCase()}</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">${cards}</div>`;
+      <div class="pm-alloc-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">${cards}</div>`;
 
     // Cache kết quả để dùng cho PDF
     window._pmAllocItems = items;

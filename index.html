@@ -1653,7 +1653,7 @@ const usd = (n, d=2) => '$' + Number(n).toLocaleString('en-US', {minimumFraction
 const big = n => !n ? '—' : n>=1e9 ? '$'+(n/1e9).toFixed(2)+'B' : n>=1e6 ? '$'+(n/1e6).toFixed(1)+'M' : '$'+Number(n).toLocaleString();
 const norm = arr => { if(!arr?.length) return []; const b=arr[0]; return arr.map(v=>+(v/b*100).toFixed(2)); };
 const fmtChg = pct => pct==null ? '' : (pct>=0?'▲ +':'▼ ')+Math.abs(pct).toFixed(2)+'% (24h)';
-const qty = id => { const el = $(id); if(!el) return 0; const raw = String(el.value).replace(/,/g,''); return Math.max(0, parseFloat(raw)||0); };
+const qty = id => { const el = $(id); if(!el) return 0; let raw = String(el.value).trim(); if(!raw) return 0; const dots = (raw.match(/\./g)||[]).length, commas = (raw.match(/,/g)||[]).length; if(commas===1 && dots===0) raw=raw.replace(',','.'); else raw=raw.replace(/,/g,''); return Math.max(0, parseFloat(raw)||0); };
 
 // Format số cho input: luôn dùng dấu phẩy phân cách nghìn, dấu chấm thập phân
 function fmtNum(n, maxDec=8) {
@@ -2272,7 +2272,8 @@ function renderHoldings() {
       valBlock = `<div class="hval-price" id="price-${i}" style="color:var(--mu)">${t('noPrice')}</div>
                   <div class="manual-price-row">
                     <div class="hinput-wrap" style="flex:1">
-                      <input class="hinput" id="mprice-${i}" type="number" inputmode="decimal" step="any" min="0"
+                      <input class="hinput" id="mprice-${i}" type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
+                        autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
                         placeholder="${t('manualPrice')}"
                         value="${a.manualPrice || ''}"
                         oninput="setManualPrice(${i},this.value)"
@@ -2307,7 +2308,8 @@ function renderHoldings() {
       <div style="margin-top:10px;padding:10px 10px 8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;">
         <div style="font-size:10px;letter-spacing:1px;color:var(--mu);margin-bottom:8px;font-family:var(--mono);">✏ ${isCash ? t('balanceLabel') : isRE ? t('propertyLabel') : isOther ? t('assetValLabel') : t('qtyLabel')}</div>
         <div class="hinput-wrap">
-          <input class="hinput" id="qty-${i}" type="number" inputmode="decimal" step="any" min="0"
+          <input class="hinput" id="qty-${i}" type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
+            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
             placeholder="${qtyPlaceholder}"
             value="${a.qty || ''}"
             oninput="onQtyChange(${i})">

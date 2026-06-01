@@ -324,7 +324,16 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
     </div>
   </div>
 
-  <div class="foot">
+  <!-- ── BIẾN ĐỘNG GIÁ 7 NGÀY ── -->
+  <div class="csec" style="margin-bottom:1rem;">
+    <div class="chdr" style="margin-bottom:12px;">
+      <span class="ctit" data-i18n="chart7d">BIẾN ĐỘNG 7 NGÀY (chỉ số hóa, ngày đầu = 100)</span>
+      <div class="leg" id="chart-legend"></div>
+    </div>
+    <div class="cw">
+      <canvas id="ch"></canvas>
+    </div>
+  </div>
     <span class="fsrc"><span data-i18n="source">Nguồn</span>: CoinGecko · Yahoo Finance · <span id="ut" data-i18n="loading">đang tải...</span></span>
     <button class="btn" onclick="loadAll()">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>

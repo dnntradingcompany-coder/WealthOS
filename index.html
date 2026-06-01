@@ -69,29 +69,29 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
 
 /* ── HOLDINGS ── */
 .holdings-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1rem;}
-.hfield{background:var(--sur);border:1px solid var(--b);border-radius:12px;padding:14px 16px;position:relative;}
-.hfield-top{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
-.hico{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
-.hlabel{font-size:12px;font-weight:500;color:var(--tx);}
-.hticker{font-size:10px;color:var(--mu);font-family:var(--mono);}
-.hdelete{position:absolute;top:10px;right:10px;width:20px;height:20px;border-radius:5px;border:none;background:transparent;color:var(--mu);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .2s;padding:0;}
+.hfield{background:var(--sur);border:1px solid var(--b);border-radius:14px;padding:16px 18px;position:relative;}
+.hfield-top{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.hico{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.hlabel{font-size:14px;font-weight:600;color:var(--tx);}
+.hticker{font-size:11px;color:var(--mu);font-family:var(--mono);}
+.hdelete{position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:5px;border:none;background:transparent;color:var(--mu);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .2s;padding:0;}
 .hdelete:hover{background:rgba(248,113,113,.15);color:var(--re);}
 .hinput-wrap{position:relative;}
-.hinput{width:100%;background:var(--sur2);border:1px solid var(--b2);border-radius:8px;padding:8px 52px 8px 12px;font-size:14px;font-family:var(--mono);color:var(--tx);outline:none;transition:border-color .2s;}
+.hinput{width:100%;background:var(--sur2);border:1px solid var(--b2);border-radius:8px;padding:10px 52px 10px 14px;font-size:16px;font-family:var(--mono);color:var(--tx);outline:none;transition:border-color .2s;}
 .hinput:focus{border-color:rgba(255,255,255,0.3);}
 .hinput::placeholder{color:var(--mu);}
-.hunit{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--mu);font-family:var(--mono);pointer-events:none;}
+.hunit{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--mu);font-family:var(--mono);pointer-events:none;}
 .hval-block{margin-top:8px;padding:8px 10px;background:var(--sur2);border-radius:8px;border:1px solid var(--b);text-align:center;}
-.hval-price{font-size:10px;color:var(--mu);font-family:var(--mono);margin-bottom:2px;text-align:center;}
-.hval{font-size:14px;font-weight:600;font-family:var(--mono);color:var(--mu);min-height:20px;text-align:center;}
+.hval-price{font-size:11px;color:var(--mu);font-family:var(--mono);margin-bottom:3px;text-align:center;}
+.hval{font-size:20px;font-weight:700;font-family:var(--mono);color:var(--mu);min-height:24px;text-align:center;}
 .hval.ok{color:var(--gr);}
 .hval-alloc{font-size:10px;font-family:var(--mono);color:var(--mu);margin-top:3px;text-align:center;}
 .manual-price-row{display:flex;gap:6px;margin:6px 0 4px;align-items:center;}
-.hico-wrap{display:flex;border-radius:7px;}
+.hico-wrap{display:flex;border-radius:9px;}
 .hico-wrap:hover .hico{filter:brightness(1.2);transform:scale(1.08);}
 .hico-wrap .hico{transition:all .2s;}
-.extra-field-label{font-size:10px;color:var(--mu);font-family:var(--mono);white-space:nowrap;}
-.einput{width:68px;background:transparent;border:none;border-bottom:1px solid var(--b2);font-size:13px;font-weight:600;font-family:var(--mono);color:var(--tx);outline:none;text-align:right;padding:2px 4px;}
+.extra-field-label{font-size:11px;color:var(--mu);font-family:var(--mono);white-space:nowrap;}
+.einput{width:68px;background:transparent;border:none;border-bottom:1px solid var(--b2);font-size:14px;font-weight:600;font-family:var(--mono);color:var(--tx);outline:none;text-align:right;padding:2px 4px;}
 .einput:focus{border-bottom-color:var(--blue);}
 
 /* ── ADD ASSET BUTTON ── */
@@ -404,10 +404,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
 
       <!-- Risk selector -->
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;" id="pm-risk-grid">
-        <div class="pm-risk-btn active" data-risk="conservative" onclick="selectPmRisk(this)">🛡️<br><span data-i18n="aiRisk0Name">An toàn</span></div>
-        <div class="pm-risk-btn" data-risk="balanced" onclick="selectPmRisk(this)">⚖️<br><span data-i18n="aiRisk1Name">Cân bằng</span></div>
-        <div class="pm-risk-btn" data-risk="growth" onclick="selectPmRisk(this)">📈<br><span data-i18n="aiRisk2Name">Tăng trưởng</span></div>
-        <div class="pm-risk-btn" data-risk="aggressive" onclick="selectPmRisk(this)">🚀<br><span data-i18n="aiRisk3Name">Mạo hiểm</span></div>
+        <div class="pm-risk-btn active" data-risk="conservative" onclick="selectPmRisk(this)"><span style="font-size:28px;display:block;margin-bottom:6px;">🛡️</span><span data-i18n="aiRisk0Name">An toàn</span></div>
+        <div class="pm-risk-btn" data-risk="balanced" onclick="selectPmRisk(this)"><span style="font-size:28px;display:block;margin-bottom:6px;">⚖️</span><span data-i18n="aiRisk1Name">Cân bằng</span></div>
+        <div class="pm-risk-btn" data-risk="growth" onclick="selectPmRisk(this)"><span style="font-size:28px;display:block;margin-bottom:6px;">📈</span><span data-i18n="aiRisk2Name">Tăng trưởng</span></div>
+        <div class="pm-risk-btn" data-risk="aggressive" onclick="selectPmRisk(this)"><span style="font-size:28px;display:block;margin-bottom:6px;">🚀</span><span data-i18n="aiRisk3Name">Mạo hiểm</span></div>
       </div>
 
       <!-- AI allocation result -->
@@ -691,9 +691,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
 </div>
 
 <style>
-.pm-risk-btn{padding:10px 6px;border-radius:10px;border:1px solid var(--b);background:var(--sur2);cursor:pointer;text-align:center;font-size:11px;font-weight:600;color:var(--mu);transition:all .2s;line-height:1.6;}
-.pm-risk-btn:hover{border-color:var(--b2);color:var(--tx);}
-.pm-risk-btn.active{border-color:#a78bfa;background:rgba(167,139,250,0.1);color:#a78bfa;}
+.pm-risk-btn{padding:18px 10px;border-radius:14px;border:1px solid var(--b);background:var(--sur2);cursor:pointer;text-align:center;font-size:14px;font-weight:700;color:var(--mu);transition:all .25s;line-height:1.8;letter-spacing:0.2px;}
+.pm-risk-btn:hover{border-color:var(--b2);color:var(--tx);background:rgba(255,255,255,0.05);transform:translateY(-1px);}
+.pm-risk-btn.active{border-color:#a78bfa;background:rgba(167,139,250,0.12);color:#a78bfa;box-shadow:0 0 16px rgba(167,139,250,0.15);}
 .plan-card{padding:14px;border-radius:10px;border:1px solid var(--b);background:var(--sur2);cursor:pointer;transition:all .2s;}
 .plan-card.active{border-color:#a78bfa;background:rgba(167,139,250,0.08);}
 </style>
@@ -705,7 +705,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
 const LANG = {
   vi: {
     logo:'WEALTHOS', title:'Nền tảng quản trị tài sản thông minh.',
-    refresh:'Làm mới', addAsset:'Thêm tài sản', holdingsTitle:'KHỐI LƯỢNG TÀI SẢN CỦA BẠN', assetValTitle:'GIÁ TRỊ TỪNG LOẠI TÀI SẢN',
+    refresh:'Làm mới', addAsset:'Thêm tài sản', holdingsTitle:'GIÁ TRỊ CÁC LOẠI TÀI SẢN', assetValTitle:'GIÁ TRỊ TỪNG LOẠI TÀI SẢN',
     totalPortfolio:'TỔNG DANH MỤC (USD)', byQty:'theo khối lượng nhập',
     chart7d:'BIẾN ĐỘNG 7 NGÀY (chỉ số hóa, ngày đầu = 100)',
     source:'Nguồn', loading:'đang tải...', updatedAt:'cập nhật',
@@ -732,7 +732,7 @@ const LANG = {
     btnCancel:'Huỷ', btnAdd:'Thêm vào danh mục',
     // Dynamic strings
     enterQty:'nhập khối lượng', enterValue:'nhập giá trị', loading2:'đang tải...',
-    noPrice:'Không tải được giá tự động', manualPrice:'Nhập giá thủ công', retry:'↻',
+    noPrice:'Không tải được giá tự động', manualPrice:'Nhập giá thủ công', retry:'↻', price:'Giá',
     perYear:'/năm', savingsRate:'Lãi suất/năm', growthRate:'Tăng trưởng/năm',
     perYearShort:'%/năm',
     currUSD:'USD – Đô la Mỹ', currVND:'VND – Đồng Việt Nam', currEUR:'EUR – Euro',
@@ -794,7 +794,7 @@ const LANG = {
   },
   en: {
     logo:'WEALTHOS', title:'AI Net Worth & Portfolio Tracker',
-    refresh:'Refresh', addAsset:'Add Asset', holdingsTitle:'YOUR HOLDINGS', assetValTitle:'ASSET VALUES BY TYPE',
+    refresh:'Refresh', addAsset:'Add Asset', holdingsTitle:'ASSET VALUES', assetValTitle:'ASSET VALUES BY TYPE',
     totalPortfolio:'TOTAL PORTFOLIO (USD)', byQty:'enter quantities below',
     chart7d:'7-DAY PERFORMANCE (indexed, day 1 = 100)',
     source:'Source', loading:'loading...', updatedAt:'updated',
@@ -821,7 +821,7 @@ const LANG = {
     btnCancel:'Cancel', btnAdd:'Add to Portfolio',
     // Dynamic
     enterQty:'enter quantity', enterValue:'enter value', loading2:'loading...',
-    noPrice:'Could not load price automatically', manualPrice:'Enter price manually', retry:'↻',
+    noPrice:'Could not load price automatically', manualPrice:'Enter price manually', retry:'↻', price:'Price',
     perYear:'/yr', savingsRate:'Interest rate/yr', growthRate:'Growth rate/yr',
     perYearShort:'%/yr',
     currUSD:'USD – US Dollar', currVND:'VND – Vietnamese Dong', currEUR:'EUR – Euro',
@@ -1570,7 +1570,7 @@ function renderHoldings() {
         ${isNotUSD && fxInfo ? `<div class="hval-price" id="price-${i}" style="color:var(--mu);font-size:10px;">💱 ${fxInfo}</div>` : `<div id="price-${i}" style="display:none"></div>`}
         <div class="hval ${usdVal>0?'ok':''}" id="val-${i}">${usdVal>0 ? usd(usdVal) : '—'}${isNotUSD&&usdVal>0?' <span style="font-size:10px;opacity:.6;font-weight:400">USD</span>':''}</div>
         ${isNotUSD&&usdVal>0 ? `<div style="font-size:10px;color:var(--mu);font-family:var(--mono);margin-top:2px;">${fmtNum(a.qty||0)} ${a.currency}</div>` : ''}
-        ${a.pct != null ? `<div style="font-size:11px;font-family:var(--mono);margin-top:2px;color:${a.pct>=0?'var(--gr)':'var(--re)'};">${a.pct>=0?'▲ +':'▼ '}${Math.abs(a.pct).toFixed(2)}% (24h)</div>` : ''}`;
+        ${a.pct != null ? `<div style="font-size:13px;font-family:var(--mono);margin-top:4px;color:${a.pct>=0?'var(--gr)':'var(--re)'};">${a.pct>=0?'▲ +':'▼ '}${Math.abs(a.pct).toFixed(2)}% (24h)</div>` : ''}`;
     } else if (isRE) {
       const v = a.qty||0;
       valBlock = `<div id="price-${i}" style="display:none"></div>
@@ -1580,11 +1580,11 @@ function renderHoldings() {
       const fxRate = FX_RATES['VND'] ?? FX_FALLBACK['VND'];
       const priceVND = isVN && fxRate ? Math.round(effectivePrice / fxRate) : null;
       const priceLabel = isVN && priceVND
-        ? `Giá: ${usd(effectivePrice)} (${priceVND.toLocaleString('en-US')} VND)`
-        : `Giá: ${usd(effectivePrice, effectivePrice>100?2:effectivePrice>1?3:5)}`;
+        ? `${t('price')}: ${usd(effectivePrice)} (${priceVND.toLocaleString('en-US')} VND)`
+        : `${t('price')}: ${usd(effectivePrice, effectivePrice>100?2:effectivePrice>1?3:5)}`;
       valBlock = `<div class="hval-price" id="price-${i}">${priceLabel}</div>
                   <div class="hval ${(a.qty||0)>0?'ok':''}" id="val-${i}">${(a.qty||0)>0?usd(effectivePrice*(a.qty||0)):'—'}</div>
-                  ${a.pct != null ? `<div style="font-size:11px;font-family:var(--mono);margin-top:2px;color:${a.pct>=0?'var(--gr)':'var(--re)'};">${a.pct>=0?'▲ +':'▼ '}${Math.abs(a.pct).toFixed(2)}% (24h)</div>` : ''}`;
+                  ${a.pct != null ? `<div style="font-size:13px;font-family:var(--mono);margin-top:4px;color:${a.pct>=0?'var(--gr)':'var(--re)'};">${a.pct>=0?'▲ +':'▼ '}${Math.abs(a.pct).toFixed(2)}% (24h)</div>` : ''}`;
     } else {
       valBlock = `<div class="hval-price" id="price-${i}" style="color:var(--mu)">${t('noPrice')}</div>
                   <div class="manual-price-row">
@@ -1616,14 +1616,14 @@ function renderHoldings() {
           <div class="hticker">${a.ticker} · USD</div>
         </div>
         <div style="margin-left:auto;text-align:right;">
-          <div id="pct-badge-${i}" style="font-size:16px;font-weight:700;font-family:var(--mono);color:${a.color};"></div>
+          <div id="pct-badge-${i}" style="font-size:18px;font-weight:700;font-family:var(--mono);color:${a.color};"></div>
         </div>
         <button class="hdelete" onclick="removeAsset(${i})" title="Xoá" style="position:absolute;top:10px;right:10px;">×</button>
       </div>
 
       <!-- INPUT SECTION -->
       <div style="margin-top:10px;padding:10px 10px 8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;">
-        <div style="font-size:9px;letter-spacing:1px;color:var(--mu);margin-bottom:6px;font-family:var(--mono);">✏ ${isCash ? (currentLang==='vi'?'SỐ DƯ':'BALANCE') : isRE ? (currentLang==='vi'?'GIÁ TRỊ BĐS':'PROPERTY VALUE') : (currentLang==='vi'?'KHỐI LƯỢNG NẮM GIỮ':'QUANTITY HELD')}</div>
+        <div style="font-size:10px;letter-spacing:1px;color:var(--mu);margin-bottom:8px;font-family:var(--mono);">✏ ${isCash ? (currentLang==='vi'?'SỐ DƯ':'BALANCE') : isRE ? (currentLang==='vi'?'GIÁ TRỊ BĐS':'PROPERTY VALUE') : (currentLang==='vi'?'KHỐI LƯỢNG NẮM GIỮ':'QUANTITY HELD')}</div>
         <div class="hinput-wrap">
           <input class="hinput" id="qty-${i}" type="text" inputmode="decimal"
             placeholder="${qtyPlaceholder}"
@@ -1637,7 +1637,7 @@ function renderHoldings() {
 
       <!-- VALUE SECTION -->
       <div style="margin-top:6px;padding:10px;background:var(--sur2);border:1px solid var(--b);border-radius:8px;text-align:center;">
-        <div style="font-size:9px;letter-spacing:1px;color:var(--mu);margin-bottom:6px;font-family:var(--mono);">💰 ${currentLang==='vi'?'GIÁ TRỊ QUY ĐỔI (USD)':'CURRENT VALUE (USD)'}</div>
+        <div style="font-size:10px;letter-spacing:1px;color:var(--mu);margin-bottom:8px;font-family:var(--mono);">💰 ${currentLang==='vi'?'GIÁ TRỊ QUY ĐỔI (USD)':'CURRENT VALUE (USD)'}</div>
         ${valBlock}
       </div>
     </div>`;
@@ -1686,9 +1686,9 @@ function recalc() {
       if (isVNStock(a.id)) {
         const fxRate = FX_RATES['VND'] ?? FX_FALLBACK['VND'];
         const priceVND = fxRate ? Math.round(a.price / fxRate) : null;
-        priceEl.textContent = `Giá: ${usd(a.price)} (${priceVND ? priceVND.toLocaleString('en-US')+' VND' : '...'})`;
+        priceEl.textContent = `${t('price')}: ${usd(a.price)} (${priceVND ? priceVND.toLocaleString('en-US')+' VND' : '...'})`;
       } else {
-        priceEl.textContent = 'Giá: '+usd(a.price, a.price>100?2:a.price>1?3:5);
+        priceEl.textContent = t('price')+': '+usd(a.price, a.price>100?2:a.price>1?3:5);
       }
     }
   });
@@ -1852,7 +1852,7 @@ async function loadAll() {
       a.price = c.current_price;
       a.pct   = c.price_change_percentage_24h;
       const priceEl = $(`price-${assets.indexOf(a)}`);
-      if (priceEl && a.price!=null) priceEl.textContent = 'Giá: '+usd(a.price, a.price>100?2:a.price>1?3:5);
+      if (priceEl && a.price!=null) priceEl.textContent = t('price')+': '+usd(a.price, a.price>100?2:a.price>1?3:5);
     } catch(e) {
       msgs.push({type:'info', text:`${a.ticker}: ${e.message}`});
     }
@@ -1864,7 +1864,7 @@ async function loadAll() {
       const c = await fetchCommodity(a.id);
       a.price = c.current_price; a.pct = c.price_change_percentage_24h;
       const priceEl = $(`price-${assets.indexOf(a)}`);
-      if (priceEl && a.price!=null) priceEl.textContent = 'Giá: '+usd(a.price, a.price>100?2:a.price>1?3:5);
+      if (priceEl && a.price!=null) priceEl.textContent = t('price')+': '+usd(a.price, a.price>100?2:a.price>1?3:5);
     } catch(e) {
       msgs.push({type:'info', text:`${a.ticker}: ${e.message}`});
     }
@@ -1876,7 +1876,7 @@ async function loadAll() {
       const v = await fetchYahoo(a.id);
       a.price = v.price; a.pct = v.pct; a.history = v.history||[];
       const priceEl = $(`price-${assets.indexOf(a)}`);
-      if (priceEl && a.price!=null) priceEl.textContent = 'Giá: '+usd(a.price, a.price>100?2:a.price>1?3:5);
+      if (priceEl && a.price!=null) priceEl.textContent = t('price')+': '+usd(a.price, a.price>100?2:a.price>1?3:5);
     } catch(e) {
       msgs.push({type:'info', text:`${a.ticker}: không tải được (CORS)`});
     }
@@ -2086,12 +2086,12 @@ async function fetchSingleAsset(i) {
       a.price=v.price; a.pct=v.pct; a.history=v.history||[];
     }
     const priceEl=$(`price-${i}`);
-    if (priceEl && a.price!=null) priceEl.textContent='Giá: '+usd(a.price,a.price>100?2:a.price>1?3:5);
+    if (priceEl && a.price!=null) priceEl.textContent=t('price')+': '+usd(a.price,a.price>100?2:a.price>1?3:5);
     recalc();
     buildChart();
   } catch(e) {
     const priceEl=$(`price-${i}`);
-    if (priceEl) priceEl.textContent='Giá: không tải được';
+    if (priceEl) priceEl.textContent=t('price')+': —';
   }
 }
 
@@ -2463,7 +2463,7 @@ async function silentRefresh() {
   // Update giá hiển thị trong từng card mà không re-render
   assets.forEach((a,i) => {
     const priceEl = $(`price-${i}`);
-    if (priceEl && a.price!=null) priceEl.textContent = 'Giá: '+usd(a.price, a.price>100?2:a.price>1?3:5);
+    if (priceEl && a.price!=null) priceEl.textContent = t('price')+': '+usd(a.price, a.price>100?2:a.price>1?3:5);
   });
   recalc();
   buildChart();

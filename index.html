@@ -544,24 +544,24 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
       <div class="modal-label">TÊN HIỂN THỊ</div>
       <input class="modal-input" id="ci-name" placeholder="Ví dụ: Bitcoin" maxlength="30">
       <div class="modal-label">MÃ TICKER / ID</div>
-      <input class="modal-input" id="ci-ticker" placeholder="Ví dụ: BTC hoặc bitcoin (CoinGecko ID)" maxlength="30">
+      <input class="modal-input" id="ci-ticker" maxlength="30">
       <div class="modal-hint">Crypto: nhập CoinGecko ID (vd: bitcoin, ethereum). Cổ phiếu/ETF: Yahoo ticker (vd: AAPL, VUAA.L)</div>
       <div class="modal-label">LOẠI</div>
       <select class="modal-input" id="ci-type" style="cursor:pointer" onchange="onCiTypeChange()">
         <option value="crypto">Crypto (CoinGecko)</option>
         <option value="stock">Cổ phiếu / ETF (Yahoo Finance)</option>
-        <option value="other">🗂️ Khác / Other</option>
+        <option value="other" data-i18n-opt="otherTypeLabel">🗂️ Khác / Other</option>
       </select>
       <!-- Hiện khi chọn "Khác" -->
       <div id="ci-other-fields" style="display:none;">
-        <div class="modal-label" style="margin-top:8px;">MÔ TẢ LOẠI TÀI SẢN <span style="color:var(--mu);font-weight:400;">(tuỳ chọn)</span></div>
-        <input class="modal-input" id="ci-other-desc" placeholder="Vd: Quỹ tư nhân, NFT, Watch..." maxlength="40">
-        <div class="modal-label">LÃI SUẤT / TĂNG TRƯỞNG DỰ KIẾN (%/năm)</div>
+        <div class="modal-label" style="margin-top:8px;" data-i18n="otherDesc">MÔ TẢ LOẠI TÀI SẢN <span style="color:var(--mu);font-weight:400;" data-i18n="otherDescOpt">(tuỳ chọn)</span></div>
+        <input class="modal-input" id="ci-other-desc" maxlength="40">
+        <div class="modal-label" data-i18n="otherRate">LÃI SUẤT / TĂNG TRƯỞNG DỰ KIẾN (%/năm)</div>
         <div style="position:relative;">
-          <input class="modal-input" id="ci-other-rate" type="number" min="-100" max="1000" step="0.1" placeholder="Vd: 8" style="padding-right:64px;">
-          <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--mu);font-family:var(--mono);pointer-events:none;">% /năm</span>
+          <input class="modal-input" id="ci-other-rate" type="number" min="-100" max="1000" step="0.1" style="padding-right:64px;">
+          <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--mu);font-family:var(--mono);pointer-events:none;">% /yr</span>
         </div>
-        <div class="modal-hint">Dùng để tính dự báo tăng trưởng. Để trống = dùng 8%/năm mặc định.</div>
+        <div class="modal-hint" data-i18n="otherHint">Used to calculate growth forecast. Leave blank = default 8%/yr.</div>
       </div>
       <div class="modal-label">ICON (emoji)</div>
       <input class="modal-input" id="ci-icon" placeholder="🪙" maxlength="4" style="font-size:20px;width:60px;text-align:center;">
@@ -746,9 +746,13 @@ const LANG = {
     reHint:'Nhập giá trị BĐS thủ công (USD). Tăng trưởng theo khu vực dùng cho phần Dự báo.',
     rePlaceholder:'Ví dụ: Căn hộ Quận 7', reDefault:'Bất động sản',
     reCustomPlaceholder:'Để trống = dùng ước tính khu vực',
-    customName:'TÊN HIỂN THỊ', customTicker:'MÃ TICKER / ID',
+    customName:'TÊN HIỂN THỊ', customTicker:'MÃ TICKER / ID', customTickerPlaceholder:'Vd: BTC hoặc bitcoin (CoinGecko ID)',
     customHint:'Crypto: nhập CoinGecko ID (vd: bitcoin, ethereum). Cổ phiếu/ETF: Yahoo ticker (vd: AAPL, VUAA.L)',
     customType:'LOẠI', customIcon:'ICON (emoji)', customColor:'MÀU',
+    otherDesc:'MÔ TẢ LOẠI TÀI SẢN', otherDescOpt:'(tuỳ chọn)', otherDescPlaceholder:'Vd: Quỹ tư nhân, NFT, Watch...',
+    otherRate:'LÃI SUẤT / TĂNG TRƯỞNG DỰ KIẾN (%/năm)', otherRatePlaceholder:'Vd: 8',
+    otherHint:'Dùng để tính dự báo tăng trưởng. Để trống = dùng 8%/năm mặc định.',
+    otherTypeLabel:'🗂️ Khác / Other',
     optCrypto:'Crypto (CoinGecko)', optStock:'Cổ phiếu / ETF (Yahoo Finance)',
     btnCancel:'Huỷ', btnAdd:'Thêm vào danh mục',
     // Dynamic strings
@@ -835,9 +839,13 @@ const LANG = {
     reHint:'Enter the property value manually (USD). Region growth rate is used for Forecast.',
     rePlaceholder:'e.g. Downtown Apartment', reDefault:'Real Estate',
     reCustomPlaceholder:'Leave blank = use region estimate',
-    customName:'DISPLAY NAME', customTicker:'TICKER / ID',
+    customName:'DISPLAY NAME', customTicker:'TICKER / ID', customTickerPlaceholder:'e.g. BTC or bitcoin (CoinGecko ID)',
     customHint:'Crypto: enter CoinGecko ID (e.g. bitcoin, ethereum). Stocks/ETF: Yahoo ticker (e.g. AAPL, VUAA.L)',
     customType:'TYPE', customIcon:'ICON (emoji)', customColor:'COLOR',
+    otherDesc:'ASSET TYPE DESCRIPTION', otherDescOpt:'(optional)', otherDescPlaceholder:'e.g. Private Fund, NFT, Watch...',
+    otherRate:'EXPECTED GROWTH RATE (%/yr)', otherRatePlaceholder:'e.g. 8',
+    otherHint:'Used to calculate growth forecast. Leave blank = default 8%/yr.',
+    otherTypeLabel:'🗂️ Other',
     optCrypto:'Crypto (CoinGecko)', optStock:'Stock / ETF (Yahoo Finance)',
     btnCancel:'Cancel', btnAdd:'Add to Portfolio',
     // Dynamic
@@ -944,6 +952,9 @@ function applyLang() {
   setPlh('re-custom-rate', 'reCustomPlaceholder');
   // Custom tab inputs
   setPlh('ci-name', 'customName');
+  setPlh('ci-ticker', 'customTickerPlaceholder');
+  setPlh('ci-other-desc', 'otherDescPlaceholder');
+  setPlh('ci-other-rate', 'otherRatePlaceholder');
   // Re-render select options for re-location
   const reLoc = document.getElementById('re-location');
   if (reLoc) {
@@ -976,6 +987,8 @@ function applyLang() {
       'MÃ TICKER / ID':t('customTicker'),'TICKER / ID':t('customTicker'),
       'LOẠI':t('customType'),'TYPE':t('customType'),
       'ICON (emoji)':t('customIcon'), 'MÀU':t('customColor'),'COLOR':t('customColor'),
+      'MÔ TẢ LOẠI TÀI SẢN':t('otherDesc'),'ASSET TYPE DESCRIPTION':t('otherDesc'),
+      'LÃI SUẤT / TĂNG TRƯỞNG DỰ KIẾN (%/năm)':t('otherRate'),'EXPECTED GROWTH RATE (%/yr)':t('otherRate'),
     };
     if (map[txt]) el.textContent = map[txt];
   });
@@ -985,6 +998,11 @@ function applyLang() {
     if (txt.startsWith('Nhập lãi suất') || txt.startsWith('Enter your bank')) el.textContent = t('cashHint');
     if (txt.startsWith('Nhập giá trị BĐS') || txt.startsWith('Enter the property')) el.textContent = t('reHint');
     if (txt.startsWith('Crypto: nhập') || txt.startsWith('Crypto: enter')) el.textContent = t('customHint');
+    if (txt.startsWith('Dùng để tính') || txt.startsWith('Used to calculate')) el.textContent = t('otherHint');
+  });
+  // Update ci-type other option label
+  document.querySelectorAll('option[data-i18n-opt]').forEach(el => {
+    el.textContent = t(el.dataset.i18nOpt);
   });
   // Currency options
   const cashCur = document.getElementById('cash-currency');
@@ -1546,6 +1564,7 @@ function getAssetValue(a,i) {
     return usdVal;
   }
   if (a.type==='realestate') return a.qty||0;
+  if (a.type==='custom' && a.customGrowthRate!=null) return a.qty||0;
   if (a.price!=null) return a.price*(a.qty||0);
   if (a.manualPrice) return a.manualPrice*(a.qty||0);
   return 0;
@@ -1560,8 +1579,8 @@ function renderHoldings() {
   row.innerHTML = assets.map((a, i) => {
     const isCash = a.type==='cash', isRE = a.type==='realestate';
     const isOther = a.type==='custom' && a.customGrowthRate != null;
-    const qtyLabel = isCash ? (a.currency||'USD') : isRE ? 'USD' : a.ticker.split('.')[0];
-    const qtyPlaceholder = isCash ? 'Số dư tiết kiệm' : isRE ? 'Giá trị BĐS (USD)' : '0';
+    const qtyLabel = isCash ? (a.currency||'USD') : isRE ? 'USD' : isOther ? 'USD' : a.ticker.split('.')[0];
+    const qtyPlaceholder = isCash ? 'Số dư tiết kiệm' : isRE ? 'Giá trị BĐS (USD)' : isOther ? (currentLang==='vi'?'Giá trị tài sản (USD)':'Asset value (USD)') : '0';
     const effectivePrice = a.price ?? a.manualPrice ?? null;
 
     // Extra info field (lãi suất hoặc % tăng trưởng BĐS hoặc custom)
@@ -1602,7 +1621,7 @@ function renderHoldings() {
         <div class="hval ${usdVal>0?'ok':''}" id="val-${i}">${usdVal>0 ? usd(usdVal) : '—'}${isNotUSD&&usdVal>0?' <span style="font-size:10px;opacity:.6;font-weight:400">USD</span>':''}</div>
         ${isNotUSD&&usdVal>0 ? `<div style="font-size:10px;color:var(--mu);font-family:var(--mono);margin-top:2px;">${fmtNum(a.qty||0)} ${a.currency}</div>` : ''}
         ${a.pct != null ? `<div style="font-size:13px;font-family:var(--mono);margin-top:4px;color:${a.pct>=0?'var(--gr)':'var(--re)'};">${a.pct>=0?'▲ +':'▼ '}${Math.abs(a.pct).toFixed(2)}% (24h)</div>` : ''}`;
-    } else if (isRE) {
+    } else if (isRE || isOther) {
       const v = a.qty||0;
       valBlock = `<div id="price-${i}" style="display:none"></div>
                   <div class="hval ${v>0?'ok':''}" id="val-${i}">${v>0?usd(v):'—'}</div>`;
@@ -1654,7 +1673,7 @@ function renderHoldings() {
 
       <!-- INPUT SECTION -->
       <div style="margin-top:10px;padding:10px 10px 8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;">
-        <div style="font-size:10px;letter-spacing:1px;color:var(--mu);margin-bottom:8px;font-family:var(--mono);">✏ ${isCash ? (currentLang==='vi'?'SỐ DƯ':'BALANCE') : isRE ? (currentLang==='vi'?'GIÁ TRỊ BĐS':'PROPERTY VALUE') : (currentLang==='vi'?'KHỐI LƯỢNG NẮM GIỮ':'QUANTITY HELD')}</div>
+        <div style="font-size:10px;letter-spacing:1px;color:var(--mu);margin-bottom:8px;font-family:var(--mono);">✏ ${isCash ? (currentLang==='vi'?'SỐ DƯ':'BALANCE') : isRE ? (currentLang==='vi'?'GIÁ TRỊ BĐS':'PROPERTY VALUE') : isOther ? (currentLang==='vi'?'GIÁ TRỊ TÀI SẢN (USD)':'ASSET VALUE (USD)') : (currentLang==='vi'?'KHỐI LƯỢNG NẮM GIỮ':'QUANTITY HELD')}</div>
         <div class="hinput-wrap">
           <input class="hinput" id="qty-${i}" type="text" inputmode="decimal"
             placeholder="${qtyPlaceholder}"
@@ -2107,6 +2126,16 @@ function addSelectedAsset() {
 function onCiTypeChange() {
   const val = document.getElementById('ci-type').value;
   document.getElementById('ci-other-fields').style.display = val === 'other' ? 'block' : 'none';
+  if (val === 'other') {
+    const descEl = document.getElementById('ci-other-desc');
+    const rateEl = document.getElementById('ci-other-rate');
+    if (descEl) descEl.placeholder = t('otherDescPlaceholder');
+    if (rateEl) rateEl.placeholder = t('otherRatePlaceholder');
+    const descLabel = document.querySelector('#ci-other-fields .modal-label');
+    if (descLabel) descLabel.innerHTML = t('otherDesc') + ` <span style="color:var(--mu);font-weight:400;">${t('otherDescOpt')}</span>`;
+    const rateSpan = document.querySelector('#ci-other-fields span[style*="right:12px"]');
+    if (rateSpan) rateSpan.textContent = '% ' + t('perYear');
+  }
 }
 
 function showModalErr(msg) {
@@ -2115,7 +2144,7 @@ function showModalErr(msg) {
 
 async function fetchSingleAsset(i) {
   const a = assets[i];
-  if (a.type==='cash'||a.type==='realestate') { recalc(); return; } // không cần fetch giá
+  if (a.type==='cash'||a.type==='realestate'||(a.type==='custom'&&a.customGrowthRate!=null)) { recalc(); return; }
   try {
     if (a.type==='crypto') {
       const [c, hist] = await Promise.all([fetchOneCrypto(a.id), fetchCryptoHistory(a.id)]);

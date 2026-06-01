@@ -1259,72 +1259,61 @@ const isVNStock = sym => VND_SUFFIXES.some(s => sym.toUpperCase().endsWith(s));
 
 async function fetchVNStock(symbol) {
   const ticker = symbol.replace(/\.VN$/i, '').toUpperCase();
-  // Stooq uses lowercase .vn suffix: fpt.vn, vhm.vn
   const stooqSym = ticker.toLowerCase() + '.vn';
 
-  const attempts = [];
+  // Short-timeout fetch for VN sources
+  const ftVN = async (url, opts={}) => {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 4000); // 4s per attempt
+    try {
+      const r = await fetch(url, { ...opts, signal: ctrl.signal });
+      clearTimeout(t);
+      return r;
+    } catch(e) { clearTimeout(t); throw e; }
+  };
 
-  // 1) Stooq CSV — no CORS issues, works well for VN stocks
-  attempts.push((async () => {
-    const url = `https://stooq.com/q/l/?s=${stooqSym}&f=sd2t2ohlcv&h&e=csv`;
-    const r = await fetchWithTimeout(url);
-    if (!r.ok) throw new Error('stooq direct fail');
-    const text = await r.text();
-    const lines = text.trim().split('\n');
-    if (lines.length < 2) throw new Error('no data');
-    const cols = lines[1].split(',');
-    const close = parseFloat(cols[6]); // Close column
-    const open  = parseFloat(cols[3]);
-    if (!close || close <= 0) throw new Error('no price');
-    return { price: close, pct: open ? (close-open)/open*100 : null, history: [close] };
-  })());
-
-  // 2) Stooq via corsproxy
-  attempts.push((async () => {
-    const url = `https://stooq.com/q/l/?s=${stooqSym}&f=sd2t2ohlcv&h&e=csv`;
-    const r = await fetchWithTimeout(`https://corsproxy.io/?${encodeURIComponent(url)}`);
-    if (!r.ok) throw new Error('stooq proxy fail');
+  const parseStooq = async (r) => {
+    if (!r.ok) throw new Error('not ok');
     const text = await r.text();
     const lines = text.trim().split('\n');
     if (lines.length < 2) throw new Error('no data');
     const cols = lines[1].split(',');
     const close = parseFloat(cols[6]);
     const open  = parseFloat(cols[3]);
-    if (!close || close <= 0) throw new Error('no price');
-    return { price: close, pct: open ? (close-open)/open*100 : null, history: [close] };
-  })());
+    if (!close || close <= 0 || isNaN(close)) throw new Error('no price');
+    return { price: close, pct: open && !isNaN(open) ? (close-open)/open*100 : null, history:[close] };
+  };
 
-  // 3) Yahoo Finance direct (sometimes works without proxy)
-  attempts.push((async () => {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`;
-    const r = await fetchWithTimeout(url, { headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0' } });
-    if (!r.ok) throw new Error('yahoo direct fail');
+  const parseYahooChart = async (r) => {
+    if (!r.ok) throw new Error('not ok');
     const d = await r.json();
     const res = d?.chart?.result?.[0];
     const price = res?.meta?.regularMarketPrice;
     if (!price) throw new Error('no price');
-    const prev = res?.meta?.previousClose;
-    return { price, pct: prev ? (price-prev)/prev*100 : null, history: res?.indicators?.quote?.[0]?.close?.filter(Boolean) || [] };
-  })());
+    const prev = res?.meta?.previousClose || res?.meta?.chartPreviousClose;
+    return { price, pct: prev ? (price-prev)/prev*100 : null, history: res?.indicators?.quote?.[0]?.close?.filter(Boolean)||[] };
+  };
 
-  // 4) Yahoo via allorigins (different proxy from main)
-  attempts.push((async () => {
-    const yahooUrl = `https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`;
-    const r = await fetchWithTimeout(`https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`);
-    if (!r.ok) throw new Error('yahoo allorigins fail');
-    const d = await r.json();
-    const res = d?.chart?.result?.[0];
-    const price = res?.meta?.regularMarketPrice;
-    if (!price) throw new Error('no price');
-    const prev = res?.meta?.previousClose;
-    return { price, pct: prev ? (price-prev)/prev*100 : null, history: res?.indicators?.quote?.[0]?.close?.filter(Boolean) || [] };
-  })());
+  const stooqUrl = `https://stooq.com/q/l/?s=${stooqSym}&f=sd2t2ohlcv&h&e=csv`;
+  const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`;
 
-  try {
-    return await Promise.any(attempts);
-  } catch(_) {
-    throw new Error(`${ticker} VN price unavailable`);
-  }
+  const proxies = [
+    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+  ];
+
+  const attempts = [
+    // Stooq via all proxies
+    ...proxies.map(pk => parseStooq(ftVN(pk(stooqUrl))).catch(()=>Promise.reject())),
+    // Yahoo via all proxies
+    ...proxies.map(pk => parseYahooChart(ftVN(pk(yahooUrl))).catch(()=>Promise.reject())),
+    // Yahoo direct (sometimes works)
+    parseYahooChart(ftVN(yahooUrl, { headers:{'Accept':'application/json'} })).catch(()=>Promise.reject()),
+  ];
+
+  const result = await Promise.any(attempts);
+  return result;
 }
 
 async function fetchYahoo(symbol) {

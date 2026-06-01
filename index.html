@@ -1257,9 +1257,75 @@ async function fetchTwelveData(symbol) {
 const VND_SUFFIXES = ['.VN'];
 const isVNStock = sym => VND_SUFFIXES.some(s => sym.toUpperCase().endsWith(s));
 
+async function fetchVNStock(symbol) {
+  // symbol = e.g. "FPT.VN" → ticker = "FPT"
+  const ticker = symbol.replace(/\.VN$/i, '').toUpperCase();
+
+  const attempts = [];
+
+  // 1) SSI Data API — public, CORS OK
+  attempts.push((async () => {
+    const r = await fetchWithTimeout(`https://iboard-query.ssi.com.vn/v2/stock/quote/${ticker}`);
+    if (!r.ok) throw new Error('ssi fail');
+    const d = await r.json();
+    const price = d?.data?.c || d?.data?.lastPrice || d?.data?.mp;
+    const prev  = d?.data?.rf || d?.data?.refPrice;
+    if (!price) throw new Error('no price');
+    return { price: parseFloat(price), pct: prev ? (parseFloat(price)-parseFloat(prev))/parseFloat(prev)*100 : null, history: [] };
+  })());
+
+  // 2) TCBS API — public, CORS OK
+  attempts.push((async () => {
+    const r = await fetchWithTimeout(`https://apix.tcbs.com.vn/stock-insight/v2/stock/recap?ticker=${ticker}&period=D&size=3`);
+    if (!r.ok) throw new Error('tcbs fail');
+    const d = await r.json();
+    const items = d?.data || [];
+    if (!items.length) throw new Error('no data');
+    const latest = items[items.length - 1];
+    const price = latest?.c;
+    const prev  = items.length > 1 ? items[items.length - 2]?.c : null;
+    if (!price) throw new Error('no price');
+    return { price: parseFloat(price), pct: prev ? (price-prev)/prev*100 : null, history: items.map(i=>i.c).filter(Boolean) };
+  })());
+
+  // 3) VNDirect — public API
+  attempts.push((async () => {
+    const url = `https://finfo-api.vndirect.com.vn/v4/stock_prices?sort=date:desc&q=code:${ticker}&size=3&fields=code,date,close,pctChange`;
+    const r = await fetchWithTimeout(url);
+    if (!r.ok) throw new Error('vnd fail');
+    const d = await r.json();
+    const rows = d?.data || [];
+    if (!rows.length) throw new Error('no data');
+    const price = rows[0]?.close;
+    const pct   = rows[0]?.pctChange;
+    if (!price) throw new Error('no price');
+    return { price: parseFloat(price), pct: pct ? parseFloat(pct) : null, history: rows.map(r=>r.close).filter(Boolean).reverse() };
+  })());
+
+  try {
+    return await Promise.any(attempts);
+  } catch(_) {
+    throw new Error(`${ticker} VN not found`);
+  }
+}
+
 async function fetchYahoo(symbol) {
   const cached = cacheGet('yahoo:'+symbol);
   if (cached) return { price: cached.price, pct: cached.pct, history: [] };
+
+  // For VN stocks, try local sources first (faster + no CORS issues)
+  if (isVNStock(symbol)) {
+    try {
+      await loadFxRates(['VND']);
+      const fxRate = FX_RATES['VND'] ?? FX_FALLBACK['VND'];
+      const vn = await fetchVNStock(symbol);
+      vn.price   = vn.price * fxRate;
+      vn.history = (vn.history||[]).map(p => p * fxRate);
+      vn.isVND   = true;
+      cacheSet('yahoo:'+symbol, vn.price, vn.pct);
+      return vn;
+    } catch(_) { /* fallthrough to Yahoo */ }
+  }
 
   const parseYahoo = d => {
     if (d?.chart?.result?.[0]) {

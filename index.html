@@ -33,6 +33,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);min-height:100
 .btn{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;border:1px solid var(--b2);background:var(--sur);color:var(--mu);font-size:12px;cursor:pointer;font-family:var(--sans);transition:all .2s;}
 .btn:hover{background:var(--sur2);color:var(--tx);}
 .btn:disabled{opacity:.5;cursor:not-allowed;}
+.hbtn{font-size:12px;padding:5px 12px;white-space:nowrap;}
 .btn-add{border-color:rgba(52,211,153,0.3);color:var(--gr);}
 .btn-add:hover{background:rgba(52,211,153,0.06);color:var(--gr);}
 @keyframes sp{to{transform:rotate(360deg)}}
@@ -199,12 +200,16 @@ input[type=number]{-moz-appearance:textfield;}
 @media(max-width:640px){
   /* Layout */
   .app{padding:1rem 0.85rem;}
-  .header{margin-bottom:1.25rem;flex-wrap:wrap;gap:8px;}
-  .ttl{font-size:11px;}
-  .logo{font-size:17px;letter-spacing:3px;}
-  .hright{gap:6px;}
-  .live{padding:4px 8px;font-size:10px;}
-  .btn{padding:5px 10px;font-size:11px;}
+  .header{margin-bottom:1.25rem;flex-wrap:nowrap;gap:6px;align-items:center;}
+  .ttl{display:none;}
+  .logo{font-size:15px;letter-spacing:2px;}
+  .hright{gap:5px;flex-shrink:0;}
+  .live{padding:5px 8px;font-size:10px;}
+  .live .btn-label{display:none;}
+  /* Icon-only buttons on mobile */
+  .hbtn{padding:6px 8px !important;font-size:11px;}
+  .hbtn .btn-label{display:none;}
+  #refresh-countdown{display:none !important;}
 
   /* Tổng danh mục */
   .sc-total{padding:16px 18px;}
@@ -322,17 +327,17 @@ input[type=number]{-moz-appearance:textfield;}
       <div class="ttl" data-i18n="title">Nền tảng quản trị tài sản thông minh.</div>
     </div>
     <div class="hright">
-      <div class="live"><span class="dot"></span>LIVE</div>
-      <button class="btn" id="ai-btn" onclick="openAIAdvisor()" style="font-size:12px;padding:5px 12px;color:#a78bfa;border-color:rgba(167,139,250,0.35);background:rgba(167,139,250,0.06);">
-        ✦ <span>AI Tư vấn</span>
+      <div class="live"><span class="dot"></span><span class="btn-label">LIVE</span></div>
+      <button class="btn hbtn" id="ai-btn" onclick="openAIAdvisor()" style="color:#a78bfa;border-color:rgba(167,139,250,0.35);background:rgba(167,139,250,0.06);">
+        <span>✦</span><span class="btn-label" data-i18n="aiAdvisorBtn">AI Advisor</span>
       </button>
-      <button class="btn" onclick="openShareModal()" style="font-size:12px;padding:5px 12px;color:#34d399;border-color:rgba(52,211,153,0.35);background:rgba(52,211,153,0.06);" data-i18n-btn="share">
+      <button class="btn hbtn" onclick="openShareModal()" style="color:#34d399;border-color:rgba(52,211,153,0.35);background:rgba(52,211,153,0.06);">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-        <span data-i18n="shareBtn">Chia sẻ</span>
+        <span class="btn-label" data-i18n="shareBtn">Chia sẻ</span>
       </button>
       <div style="position:relative;display:inline-block;" id="lang-dropdown-wrap">
-        <button class="btn" id="lang-btn" onclick="toggleLangDropdown()" style="font-size:12px;padding:5px 10px;letter-spacing:.5px;gap:4px;">
-          <span id="lang-flag">🇻🇳</span><span id="lang-code" style="font-size:11px;">VI</span>
+        <button class="btn hbtn" id="lang-btn" onclick="toggleLangDropdown()" style="gap:4px;">
+          <span id="lang-flag">🇻🇳</span><span id="lang-code" class="btn-label" style="font-size:11px;">VI</span>
           <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <div id="lang-menu" style="display:none;position:absolute;right:0;top:calc(100% + 6px);background:var(--sur);border:1px solid var(--b2);border-radius:10px;padding:5px;min-width:150px;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,0.45);">
@@ -345,10 +350,10 @@ input[type=number]{-moz-appearance:textfield;}
           <div class="lang-opt" data-lang="ru"  onclick="setLang('ru')">🇷🇺 Русский</div>
         </div>
       </div>
-      <button class="btn" id="rbtn" onclick="loadAll()" style="gap:6px;">
+      <button class="btn hbtn" id="rbtn" onclick="loadAll()" style="gap:5px;">
         <svg id="rico" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-        <span data-i18n="refresh">Làm mới</span>
-        <span id="refresh-countdown" style="font-size:10px;color:var(--mu);font-family:var(--mono);opacity:0.7;">60s</span>
+        <span class="btn-label" data-i18n="refresh">Làm mới</span>
+        <span id="refresh-countdown" class="btn-label" style="font-size:10px;color:var(--mu);font-family:var(--mono);opacity:0.7;">60s</span>
       </button>
     </div>
   </div>
@@ -795,7 +800,7 @@ input[type=number]{-moz-appearance:textfield;}
 const LANG = {
   vi: {
     logo:'WEALTHOS', title:'Nền tảng quản trị tài sản thông minh.',
-    refresh:'Làm mới', addAsset:'Thêm tài sản', holdingsTitle:'GIÁ TRỊ CÁC LOẠI TÀI SẢN', assetValTitle:'GIÁ TRỊ TỪNG LOẠI TÀI SẢN', shareBtn:'Chia sẻ',
+    refresh:'Làm mới', addAsset:'Thêm tài sản', holdingsTitle:'GIÁ TRỊ CÁC LOẠI TÀI SẢN', assetValTitle:'GIÁ TRỊ TỪNG LOẠI TÀI SẢN', shareBtn:'Chia sẻ', aiAdvisorBtn:'AI Advisor',
     totalPortfolio:'TỔNG DANH MỤC (USD)', byQty:'theo khối lượng nhập',
     chart7d:'BIẾN ĐỘNG 7 NGÀY (chỉ số hóa, ngày đầu = 100)',
     source:'Nguồn', loading:'đang tải...', updatedAt:'cập nhật',
@@ -890,7 +895,7 @@ const LANG = {
   },
   en: {
     logo:'WEALTHOS', title:'AI Net Worth & Portfolio Tracker',
-    refresh:'Refresh', addAsset:'Add Asset', holdingsTitle:'ASSET VALUES', assetValTitle:'ASSET VALUES BY TYPE', shareBtn:'Share',
+    refresh:'Refresh', addAsset:'Add Asset', holdingsTitle:'ASSET VALUES', assetValTitle:'ASSET VALUES BY TYPE', shareBtn:'Share', aiAdvisorBtn:'AI Advisor',
     totalPortfolio:'TOTAL PORTFOLIO (USD)', byQty:'enter quantities below',
     chart7d:'7-DAY PERFORMANCE (indexed, day 1 = 100)',
     source:'Source', loading:'loading...', updatedAt:'updated',
@@ -985,7 +990,7 @@ const LANG = {
   },
   zh: {
     logo:'WEALTHOS', title:'AI 净资产与投资组合追踪器',
-    refresh:'刷新', addAsset:'添加资产', holdingsTitle:'资产价值', assetValTitle:'各类资产价值', shareBtn:'分享',
+    refresh:'刷新', addAsset:'添加资产', holdingsTitle:'资产价值', assetValTitle:'各类资产价值', shareBtn:'分享', aiAdvisorBtn:'AI 顾问',
     totalPortfolio:'投资组合总值 (USD)', byQty:'请输入持仓数量',
     chart7d:'7天表现（指数化，第1天=100）',
     source:'数据来源', loading:'加载中...', updatedAt:'更新于',
@@ -1076,7 +1081,7 @@ const LANG = {
   },
   ja: {
     logo:'WEALTHOS', title:'AI 純資産・ポートフォリオ管理',
-    refresh:'更新', addAsset:'資産を追加', holdingsTitle:'資産価値', assetValTitle:'種類別資産価値', shareBtn:'共有',
+    refresh:'更新', addAsset:'資産を追加', holdingsTitle:'資産価値', assetValTitle:'種類別資産価値', shareBtn:'共有', aiAdvisorBtn:'AI アドバイザー',
     totalPortfolio:'ポートフォリオ合計 (USD)', byQty:'保有数量を入力してください',
     chart7d:'7日間パフォーマンス（指数化、初日=100）',
     source:'データソース', loading:'読込中...', updatedAt:'更新',
@@ -1165,7 +1170,7 @@ const LANG = {
   },
   ko: {
     logo:'WEALTHOS', title:'AI 순자산 & 포트폴리오 추적기',
-    refresh:'새로고침', addAsset:'자산 추가', holdingsTitle:'자산 가치', assetValTitle:'유형별 자산 가치', shareBtn:'공유',
+    refresh:'새로고침', addAsset:'자산 추가', holdingsTitle:'자산 가치', assetValTitle:'유형별 자산 가치', shareBtn:'공유', aiAdvisorBtn:'AI 어드바이저',
     totalPortfolio:'포트폴리오 합계 (USD)', byQty:'보유 수량을 입력하세요',
     chart7d:'7일 성과 (지수화, 1일차=100)',
     source:'데이터 출처', loading:'불러오는 중...', updatedAt:'업데이트',
@@ -1254,7 +1259,7 @@ const LANG = {
   },
   fr: {
     logo:'WEALTHOS', title:'Suivi IA de patrimoine et portefeuille',
-    refresh:'Actualiser', addAsset:'Ajouter un actif', holdingsTitle:'VALEUR DES ACTIFS', assetValTitle:'VALEUR PAR TYPE', shareBtn:'Partager',
+    refresh:'Actualiser', addAsset:'Ajouter un actif', holdingsTitle:'VALEUR DES ACTIFS', assetValTitle:'VALEUR PAR TYPE', shareBtn:'Partager', aiAdvisorBtn:'Conseiller IA',
     totalPortfolio:'PORTEFEUILLE TOTAL (USD)', byQty:'entrez les quantités ci-dessous',
     chart7d:'PERFORMANCE 7 JOURS (indexé, jour 1 = 100)',
     source:'Source', loading:'chargement...', updatedAt:'mis à jour',
@@ -1343,7 +1348,7 @@ const LANG = {
   },
   ru: {
     logo:'WEALTHOS', title:'ИИ-трекер активов и портфеля',
-    refresh:'Обновить', addAsset:'Добавить актив', holdingsTitle:'СТОИМОСТЬ АКТИВОВ', assetValTitle:'СТОИМОСТЬ ПО ТИПАМ', shareBtn:'Поделиться',
+    refresh:'Обновить', addAsset:'Добавить актив', holdingsTitle:'СТОИМОСТЬ АКТИВОВ', assetValTitle:'СТОИМОСТЬ ПО ТИПАМ', shareBtn:'Поделиться', aiAdvisorBtn:'ИИ Советник',
     totalPortfolio:'ИТОГО ПОРТФЕЛЬ (USD)', byQty:'введите количество активов',
     chart7d:'ДИНАМИКА ЗА 7 ДНЕЙ (индексировано, день 1 = 100)',
     source:'Источник', loading:'загрузка...', updatedAt:'обновлено',

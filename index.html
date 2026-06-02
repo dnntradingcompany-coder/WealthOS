@@ -2932,20 +2932,127 @@ const FC_ASSET_DATA = {
   custom:     { histRate:0.08,  histPeriod:'5yr',  bull:0.15,  real:0.08,  bear:0.02  },
 };
 
+// Cache for live historical rates per asset
+const FC_LIVE_RATES = {}; // key: asset.id → { cagr1, cagr3, cagr5, cagr10, best, period, updatedAt }
+
+// Fetch historical prices and compute CAGR for 1/3/5/10yr
+async function fetchHistoricalCAGR(asset) {
+  const cacheKey = 'fcHist:' + asset.id;
+  const cached = sessionStorage.getItem(cacheKey);
+  if (cached) { try { return JSON.parse(cached); } catch(_) {} }
+
+  const now = Math.floor(Date.now()/1000);
+  const yrs = [1, 3, 5, 10];
+  const results = {};
+
+  const computeCAGR = (start, end, years) => {
+    if (!start || !end || start <= 0) return null;
+    return Math.pow(end / start, 1 / years) - 1;
+  };
+
+  const tryYahoo = async (sym, range) => {
+    const urls = [
+      `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1mo&range=${range}`,
+      `https://query2.finance.yahoo.com/v8/finance/chart/${sym}?interval=1mo&range=${range}`,
+      CF_WORKER_URL ? `${CF_WORKER_URL}?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1mo&range=${range}`)}` : null,
+      `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1mo&range=${range}`)}`,
+    ].filter(Boolean);
+
+    const r = await Promise.any(urls.map(u => fetchWithTimeout(u, { headers:{ Accept:'application/json' } }).then(r => { if(!r.ok) throw new Error('fail'); return r.json(); })));
+    const closes = r?.chart?.result?.[0]?.indicators?.quote?.[0]?.close?.filter(Boolean);
+    const current = r?.chart?.result?.[0]?.meta?.regularMarketPrice;
+    if (!closes?.length || !current) throw new Error('no data');
+    return { start: closes[0], end: current, closes };
+  };
+
+  const tryCoinGecko = async (id, days) => {
+    const url = `https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=${days}&interval=monthly`;
+    const proxied = CF_WORKER_URL ? `${CF_WORKER_URL}?url=${encodeURIComponent(url)}` : `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+    const r = await Promise.any([url, proxied].map(u => fetchWithTimeout(u).then(r => { if(!r.ok) throw new Error('fail'); return r.json(); })));
+    const prices = r?.prices;
+    if (!prices?.length) throw new Error('no data');
+    return { start: prices[0][1], end: prices[prices.length-1][1] };
+  };
+
+  // Get Yahoo symbol
+  const yahooMap = { 'XAUUSD':'GC=F','XAGUSD':'SI=F','USOIL':'CL=F','NATGAS':'NG=F','XPTUSD':'PL=F','XCUUSD':'HG=F','WHEAT':'ZW=F','COFFEE':'KC=F' };
+  const yahooCommoditySym = yahooMap[asset.id];
+  const yahooStockSym = (asset.type === 'stock') ? asset.id : null;
+
+  for (const yr of yrs) {
+    const range = yr === 1 ? '1y' : yr === 3 ? '3y' : yr === 5 ? '5y' : '10y';
+    try {
+      let data = null;
+      if (asset.type === 'crypto' && asset.id !== 'usd-coin' && asset.id !== 'tether') {
+        data = await tryCoinGecko(asset.id, yr * 365);
+      } else if (yahooCommoditySym || yahooStockSym) {
+        data = await tryYahoo(yahooCommoditySym || yahooStockSym, range);
+      } else if (asset.type === 'stock') {
+        data = await tryYahoo(asset.id, range);
+      }
+      if (data?.start && data?.end) {
+        results[yr] = computeCAGR(data.start, data.end, yr);
+      }
+    } catch(_) {}
+  }
+
+  // Pick best available period
+  const available = yrs.filter(y => results[y] !== undefined && results[y] !== null);
+  if (!available.length) return null;
+
+  // Use longest available period as "hist"
+  const bestYr = available[available.length - 1];
+  const histRate = results[bestYr];
+  const histPeriod = bestYr + 'yr';
+
+  const liveData = {
+    cagr1:  results[1]  ?? null,
+    cagr3:  results[3]  ?? null,
+    cagr5:  results[5]  ?? null,
+    cagr10: results[10] ?? null,
+    histRate, histPeriod,
+    // Derive bull/real/bear from actual volatility
+    bull: histRate * 1.6,
+    real: (results[3] ?? results[5] ?? histRate),
+    bear: Math.max((results[1] ?? histRate) - Math.abs(histRate) * 0.8, -0.5),
+    updatedAt: Date.now(),
+  };
+
+  sessionStorage.setItem(cacheKey, JSON.stringify(liveData));
+  return liveData;
+}
+
+// Stablecoin IDs and tickers
+const STABLECOIN_IDS = new Set(['usd-coin','tether','dai','usdc','usdt','busd','tusd','usdp','frax','lusd','gusd','pyusd']);
+const STABLECOIN_TICKERS = new Set(['USDC','USDT','DAI','BUSD','TUSD','USDP','FRAX','GUSD','PYUSD']);
+
 function fcGetScenarios(type, asset) {
   let d = FC_ASSET_DATA[type] || FC_ASSET_DATA.stock;
-  // If asset has a custom growth rate (from "Khác / Other"), override rates
+
+  // Use live historical data if available
+  if (asset && FC_LIVE_RATES[asset.id]) {
+    const live = FC_LIVE_RATES[asset.id];
+    d = { histRate: live.histRate, histPeriod: live.histPeriod, bull: live.bull, real: live.real, bear: live.bear };
+  }
+
+  // Custom growth rate override
   if (asset && asset.customGrowthRate != null) {
     const r = asset.customGrowthRate;
     d = { histRate: r, histPeriod: 'custom', bull: r * 1.5, real: r, bear: Math.max(r * 0.3, -0.2) };
   }
-  const lang = currentLang || 'vi';
-  const vi = lang === 'vi';
+
+  // Stablecoin override
+  if (asset && (STABLECOIN_IDS.has((asset.id||'').toLowerCase()) || STABLECOIN_TICKERS.has((asset.ticker||'').toUpperCase()))) {
+    d = { histRate: 0.01, histPeriod: '1yr', bull: 0.055, real: 0.01, bear: 0.001 };
+  }
+
+  const vi = (currentLang || 'vi') === 'vi';
   const pMap = { '10yr':vi?'10 năm':'10yr','5yr':vi?'5 năm':'5yr','3yr':vi?'3 năm':'3yr','1yr':vi?'1 năm':'1yr','since launch':vi?'từ ra mắt':'since launch','custom':vi?'tùy chỉnh':'custom' };
   const p = pMap[d.histPeriod] || d.histPeriod;
   const fmt = r => (r>=0?'+':'') + (r*100).toFixed(1)+'%';
+  const liveNote = (asset && FC_LIVE_RATES[asset.id]) ? ' 📊' : '';
   return {
-    hist: { r: d.histRate, label: `${vi?'TB':'Avg'} ${p} ${fmt(d.histRate)}` },
+    hist: { r: d.histRate, label: `${vi?'TB':'Avg'} ${p} ${fmt(d.histRate)}${liveNote}` },
     bull: { r: d.bull,     label: `${vi?'Lạc quan':'Bull'} ${fmt(d.bull)}`  },
     real: { r: d.real,     label: `${vi?'Khả thi':'Real'} ${fmt(d.real)}`   },
     bear: { r: d.bear,     label: `${vi?'Bi quan':'Bear'} ${fmt(d.bear)}`   },
@@ -2953,6 +3060,29 @@ function fcGetScenarios(type, asset) {
 }
 
 function fcDefaultScenario(type) { return 'hist'; }
+
+// Fetch live historical rates for all assets and re-render forecast
+async function fetchAllForecastRates() {
+  const eligible = assets.filter(a =>
+    a.type !== 'cash' && a.type !== 'realestate' &&
+    !STABLECOIN_IDS.has((a.id||'').toLowerCase()) &&
+    !STABLECOIN_TICKERS.has((a.ticker||'').toUpperCase())
+  );
+  if (!eligible.length) return;
+
+  await Promise.allSettled(eligible.map(async a => {
+    try {
+      const live = await fetchHistoricalCAGR(a);
+      if (live) FC_LIVE_RATES[a.id] = live;
+    } catch(_) {}
+  }));
+
+  // Re-render forecast with live rates
+  if (typeof renderFcAssetScenarios === 'function') renderFcAssetScenarios();
+  if (typeof fcUpdate === 'function') fcUpdate();
+  // Refresh Premium simulation with live rates
+  if (typeof pmUpdate === 'function') { pmSelectedRates = {}; pmUpdate(); }
+}
 
 const FC_YRS = 3;
 let fcInitAmt = 30000, fcDCA = 0;
@@ -2981,6 +3111,24 @@ function renderFcAssetScenarios() {
   container.innerHTML = assets.map((a,i) => {
     const color = a.color || '#4f8ef7';
 
+    // Stablecoin — show flat rate info card
+    if (STABLECOIN_IDS.has((a.id||'').toLowerCase()) || STABLECOIN_TICKERS.has((a.ticker||'').toUpperCase())) {
+      return `
+      <div style="background:var(--sur);border:1px solid var(--b);border-radius:12px;padding:12px 14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <div style="width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;background:${color}22;border:2px solid ${color}44;flex-shrink:0;">${a.icon}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:12px;font-weight:600;color:var(--tx);">${a.name}</div>
+            <div style="font-size:9px;color:var(--mu);font-family:var(--mono);">${a.ticker}</div>
+          </div>
+          <div style="font-size:9px;padding:2px 8px;border-radius:6px;background:rgba(52,211,153,0.1);color:#34d399;font-weight:700;font-family:var(--mono);">STABLECOIN</div>
+        </div>
+        <div style="background:var(--sur2);border-radius:8px;padding:8px 12px;font-size:12px;color:#34d399;font-weight:600;font-family:var(--mono);">
+          ≈ $1.00 · ${currentLang==='vi'?'Giá trị ổn định':'Stable value pegged to USD'}
+        </div>
+        <div style="font-size:10px;color:var(--mu);margin-top:6px;">${currentLang==='vi'?'Không tính tăng trưởng — stablecoin giữ giá trị USD.':'No growth simulated — stablecoin maintains USD peg.'}</div>
+      </div>`;
+    }
     // Cash special card
     if (a.type === 'cash') return `
       <div style="background:var(--sur);border:1px solid var(--b);border-radius:12px;padding:12px 14px;">
@@ -3231,7 +3379,7 @@ if (!hadSaved) {
 }
 renderHoldings();
 recalc();
-loadAll().then(() => { initForecast(); applyLang(); translateDefaultAssets(); initPremium(); });
+loadAll().then(() => { initForecast(); applyLang(); translateDefaultAssets(); initPremium(); setTimeout(fetchAllForecastRates, 2000); });
 
 // Re-render khi xoay màn hình
 window.addEventListener('resize', () => {
@@ -3750,10 +3898,12 @@ function unlockPremium() {
     window._pmInitFromPortfolio = total;
   }
 
-  // Pre-fill rates từ FC_ASSET_DATA hist làm default
+  // Pre-fill rates from live historical data → FC_ASSET_DATA fallback
   assets.forEach(a => {
     if (pmSelectedRates[a.ticker] === undefined) {
-      pmSelectedRates[a.ticker] = (FC_ASSET_DATA[a.type] || FC_ASSET_DATA.stock).histRate;
+      const stablecoin = STABLECOIN_IDS.has((a.id||'').toLowerCase()) || STABLECOIN_TICKERS.has((a.ticker||'').toUpperCase());
+      const liveRate = FC_LIVE_RATES[a.id]?.real ?? FC_LIVE_RATES[a.id]?.histRate;
+      pmSelectedRates[a.ticker] = stablecoin ? 0.01 : (liveRate ?? (FC_ASSET_DATA[a.type] || FC_ASSET_DATA.stock).histRate);
     }
   });
 
@@ -3863,6 +4013,18 @@ Rules:
       const icon = assetObj ? assetObj.icon : (item.isNew ? '✨' : '💰');
       const color = assetObj ? assetObj.color : (item.color || cfg.badge);
       const g = item.growth && item.growth.hist10 != null ? item.growth : (() => {
+        // Use live historical rates if available
+        const live = assetObj ? FC_LIVE_RATES[assetObj.id] : null;
+        if (live) {
+          const pLabel = live.histPeriod || '5yr';
+          return {
+            hist_period: pLabel,
+            hist10:      Math.round((live.histRate || 0) * 1000) / 10,
+            realistic:   Math.round((live.real     || live.histRate || 0) * 1000) / 10,
+            optimistic:  Math.round((live.bull     || live.histRate * 1.6 || 0) * 1000) / 10,
+            pessimistic: Math.round((live.bear     || -0.1) * 1000) / 10,
+          };
+        }
         const fallbacks = {
           crypto:    { hist_period:'since launch', hist10:30, realistic:20, optimistic:80, pessimistic:-20 },
           stock:     { hist_period:'5yr',          hist10:10, realistic:8,  optimistic:15, pessimistic:3   },
@@ -3989,11 +4151,11 @@ function pmUpdate() {
   assets.forEach(a => { totalByType[a.type] = (totalByType[a.type]||0) + 1; });
 
   const datasets = assets.map(a => {
-    // Priority: 1) user clicked chip, 2) AI alloc card hist rate, 3) FC_ASSET_DATA realistic
-    const defaultRate = (FC_ASSET_DATA[a.type] || FC_ASSET_DATA.stock).histRate;
-    const rate = pmSelectedRates[a.ticker] !== undefined
-      ? pmSelectedRates[a.ticker]
-      : defaultRate;
+    // Priority: 1) user clicked chip, 2) live historical rate, 3) FC_ASSET_DATA fallback
+    const liveRate = FC_LIVE_RATES[a.id]?.real ?? FC_LIVE_RATES[a.id]?.histRate;
+    const stablecoin = STABLECOIN_IDS.has((a.id||'').toLowerCase()) || STABLECOIN_TICKERS.has((a.ticker||'').toUpperCase());
+    const defaultRate = stablecoin ? 0.01 : (liveRate ?? (FC_ASSET_DATA[a.type] || FC_ASSET_DATA.stock).histRate);
+    const rate = pmSelectedRates[a.ticker] !== undefined ? pmSelectedRates[a.ticker] : defaultRate;
     const assetPct = (alloc[a.type]||20) / 100 / (totalByType[a.type]||1);
     let v = initAmt * assetPct;
     const series = [Math.round(v)];

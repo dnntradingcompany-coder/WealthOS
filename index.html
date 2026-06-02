@@ -567,7 +567,7 @@ input[type=number]{-moz-appearance:textfield;}
     <!-- TAB TIỀN MẶT -->
     <div id="tab-cash" style="display:none">
       <div class="modal-label">TÊN GỌI</div>
-      <input class="modal-input" id="cash-name" placeholder="Ví dụ: Tiết kiệm VPBank" maxlength="40" value="Tiền mặt / Tiết kiệm">
+      <input class="modal-input" id="cash-name" placeholder="Ví dụ: Tiết kiệm VPBank" maxlength="40">
       <div class="modal-label">TIỀN TỆ</div>
       <select class="modal-input" id="cash-currency" style="cursor:pointer">
         <option value="USD">USD – Đô la Mỹ</option>
@@ -892,6 +892,8 @@ const LANG = {
     shareModalTitle:'Chia sẻ danh mục', shareModalSub:'Lan truyền Wealthos đến bạn bè & cộng đồng',
     shareDownloadBtn:'Tải ảnh về', shareCopyBtn:'Sao chép link',
     aiErrConn:'Lỗi kết nối. Vui lòng thử lại.',
+    qtyLabel:'KHỐI LƯỢNG NẮM GIỮ', currentValueLabel:'GIÁ TRỊ QUY ĐỔI (USD)', balanceLabel:'SỐ DƯ',
+    propertyLabel:'GIÁ TRỊ BĐS (USD)', assetValLabel:'GIÁ TRỊ TÀI SẢN (USD)', expectedReturnLabel:'Tăng trưởng dự kiến',
   },
   en: {
     logo:'WEALTHOS', title:'AI Net Worth & Portfolio Tracker',
@@ -987,6 +989,8 @@ const LANG = {
     shareModalTitle:'Share Portfolio', shareModalSub:'Spread Wealthos to friends & community',
     shareDownloadBtn:'Download Image', shareCopyBtn:'Copy Link',
     aiErrConn:'Connection error. Please try again.',
+    qtyLabel:'QUANTITY HELD', currentValueLabel:'CURRENT VALUE (USD)', balanceLabel:'BALANCE',
+    propertyLabel:'PROPERTY VALUE (USD)', assetValLabel:'ASSET VALUE (USD)', expectedReturnLabel:'Expected return',
   },
   zh: {
     logo:'WEALTHOS', title:'AI 净资产与投资组合追踪器',
@@ -1437,7 +1441,7 @@ const LANG = {
   },
 };
 
-let currentLang = (['vi','en','zh','ja','ko','fr','ru'].includes(localStorage.getItem('lang'))) ? localStorage.getItem('lang') : 'vi';
+let currentLang = (['vi','en','zh','ja','ko','fr','ru'].includes(localStorage.getItem('lang'))) ? localStorage.getItem('lang') : 'en';
 const t = key => {
   try {
     return (LANG[currentLang] && LANG[currentLang][key] !== undefined ? LANG[currentLang][key] : null) || (LANG.en && LANG.en[key]) || (LANG.vi && LANG.vi[key]) || key;
@@ -1470,7 +1474,7 @@ function applyLang() {
   if(assetBtns[1]) assetBtns[1].textContent = t('btnAdd');
   // AI advisor button in header
   const aiBtn = document.getElementById('ai-btn');
-  if(aiBtn) aiBtn.querySelector('span').textContent = t('aiBtn');
+  if(aiBtn) { const lbl = aiBtn.querySelector('.btn-label'); if(lbl) lbl.textContent = t('aiAdvisorBtn'); }
   // AI context placeholder
   const aiCtx = document.getElementById('ai-context');
   if(aiCtx) aiCtx.placeholder = t('aiContextPlh');
@@ -1590,12 +1594,40 @@ function _closeLangMenu(e) {
   const wrap = document.getElementById('lang-dropdown-wrap');
   if (wrap && !wrap.contains(e.target)) { const m = document.getElementById('lang-menu'); if(m) m.style.display='none'; }
 }
+// Translate names of default localizable assets when lang changes
+const LOCALIZABLE_ASSET_NAMES = {
+  OIL:    { vi:'Dầu thô WTI', en:'Crude Oil WTI', zh:'原油', ja:'原油', ko:'원유', fr:'Pétrole brut', ru:'Нефть WTI' },
+  SILVER: { vi:'Bạc',        en:'Silver',         zh:'白银', ja:'銀',   ko:'은',   fr:'Argent',      ru:'Серебро' },
+};
+function translateDefaultAssets() {
+  if (typeof assets === 'undefined') return;
+  assets.forEach(a => {
+    // Translate commodity names
+    if (LOCALIZABLE_ASSET_NAMES[a.ticker]) {
+      a.name = LOCALIZABLE_ASSET_NAMES[a.ticker][currentLang] || LOCALIZABLE_ASSET_NAMES[a.ticker].en;
+    }
+    // Translate cash name if it's still a default value
+    if (a.type === 'cash') {
+      const defaultNames = Object.values(LOCALIZABLE_ASSET_NAMES).concat(
+        Object.values(LANG).map(l => l.cashDefault).filter(Boolean)
+      );
+      const allCashDefaults = Object.values(LANG).map(l => l.cashDefault).filter(Boolean);
+      if (allCashDefaults.includes(a.name) || a.name === 'Cash / Savings' || a.name === 'Tiền mặt / Tiết kiệm') {
+        a.name = t('cashDefault');
+      }
+    }
+  });
+  renderHoldings();
+  saveAll();
+}
+
 function setLang(code) {
   if (!LANG[code]) return;
   currentLang = code;
   localStorage.setItem('lang', currentLang);
   const menu = document.getElementById('lang-menu'); if (menu) menu.style.display = 'none';
   applyLang();
+  translateDefaultAssets();
 }
 function toggleLang() { setLang(currentLang==='vi'?'en':'vi'); }
 
@@ -2714,7 +2746,7 @@ function addSelectedAsset() {
   $('modal-err').style.display='none';
   let asset;
   if (currentTab==='cash') {
-    const name     = ($('cash-name').value.trim())||'Tiền mặt';
+    const name     = ($('cash-name').value.trim())||t('cashDefault');
     const currency = $('cash-currency').value;
     const rate     = parseFloat($('cash-rate').value)||5.5;
     asset = { id:'cash_'+Date.now(), name, ticker:currency, icon:'💵', color:'#34d399',
@@ -3157,16 +3189,19 @@ function initForecast() {
 
 const hadSaved = loadSaved();
 if (!hadSaved) {
-  // defaults
   assets = [
-    { id:'VUAA.L',     name:'VUAA ETF',    ticker:'VUAA.L', icon:'📈', color:'#4f8ef7', type:'stock',  qty:0, price:null, pct:null, history:[] },
-    { id:'hyperliquid',name:'Hyperliquid', ticker:'HYPE',   icon:'⚡', color:'#8b6cf7', type:'crypto', qty:0, price:null, pct:null, history:[] },
-    { id:'pax-gold',   name:'PAX Gold',    ticker:'PAXG',   icon:'🪙', color:'#f5a623', type:'crypto', qty:0, price:null, pct:null, history:[] },
+    { id:'bitcoin',   name:'Bitcoin',    ticker:'BTC',    icon:'₿',  color:'#f7931a', type:'crypto',     qty:1,     price:null, pct:null, history:[] },
+    { id:'ethereum',  name:'Ethereum',   ticker:'ETH',    icon:'◆',  color:'#627eea', type:'crypto',     qty:100,   price:null, pct:null, history:[] },
+    { id:'NVDA',      name:'Nvidia',     ticker:'NVDA',   icon:'🟢', color:'#76b900', type:'stock',      qty:100,   price:null, pct:null, history:[] },
+    { id:'QQQ',       name:'Nasdaq ETF', ticker:'QQQ',    icon:'📊', color:'#4f8ef7', type:'stock',      qty:100,   price:null, pct:null, history:[] },
+    { id:'OIL',       name:'Crude Oil WTI', ticker:'OIL',   icon:'🛢️', color:'#8b4513', type:'commodity',  qty:1000,  price:null, pct:null, history:[] },
+    { id:'SILVER',    name:'Silver',         ticker:'SILVER', icon:'🥈', color:'#a8a9ad', type:'commodity',  qty:1000,  price:null, pct:null, history:[] },
+    { id:'USD',       name:'Cash / Savings', ticker:'USD',   icon:'💵', color:'#34d399', type:'cash',       qty:20000, cashRate:5.5, currency:'USD' },
   ];
 }
 renderHoldings();
 recalc();
-loadAll().then(() => { initForecast(); applyLang(); initPremium(); });
+loadAll().then(() => { initForecast(); applyLang(); translateDefaultAssets(); initPremium(); });
 
 // Re-render khi xoay màn hình
 window.addEventListener('resize', () => {

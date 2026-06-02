@@ -271,8 +271,7 @@ input[type=number]{-moz-appearance:textfield;}
   .fc-metric .fc-ml{font-size:9px;}
   /* Vốn ban đầu */
   #forecast-section > div:nth-child(3){grid-template-columns:1fr !important;}
-  .fc-params-grid{grid-template-columns:1fr !important;}
-  /* Chart dự báo */
+  .fc-params-grid{grid-template-columns:1fr !important;}  /* Chart dự báo */
   #fc-chart{height:160px !important;}
   #forecast-section [style*="height:260px"]{height:160px !important;}
   /* Bảng năm — ẩn bớt trên mobile */
@@ -415,12 +414,21 @@ input[type=number]{-moz-appearance:textfield;}
     <div id="fc-asset-scenarios" style="display:grid;gap:12px;margin-bottom:16px;"></div>
 
     <!-- Thông số -->
-    <div class="fc-params-grid" style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:16px;">
+    <div class="fc-params-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
       <div class="hfield" style="padding:14px 16px;">
         <div class="sl" style="margin-bottom:8px;" data-i18n="initCapital">VỐN BAN ĐẦU (USD)</div>
         <div class="hinput-wrap">
           <input class="hinput" type="text" id="fc-init" value="30,000"
             placeholder="30,000" oninput="fcInputInit(this)"
+            style="font-size:15px;font-weight:600;padding-right:48px;">
+          <span class="hunit">USD</span>
+        </div>
+      </div>
+      <div class="hfield" style="padding:14px 16px;">
+        <div class="sl" style="margin-bottom:8px;" data-i18n="dcaMonth">DCA / THÁNG (USD)</div>
+        <div class="hinput-wrap">
+          <input class="hinput" type="text" id="fc-dca-field" value="0"
+            placeholder="0" oninput="fcInputDCA(this)"
             style="font-size:15px;font-weight:600;padding-right:48px;">
           <span class="hunit">USD</span>
         </div>
@@ -892,6 +900,7 @@ const LANG = {
     shareModalTitle:'Chia sẻ danh mục', shareModalSub:'Lan truyền Wealthos đến bạn bè & cộng đồng',
     shareDownloadBtn:'Tải ảnh về', shareCopyBtn:'Sao chép link',
     aiErrConn:'Lỗi kết nối. Vui lòng thử lại.',
+    commGold:'Vàng', commSilver:'Bạc', commOil:'Dầu thô WTI', commGas:'Khí tự nhiên', commPlat:'Bạch kim', commCopper:'Đồng', commWheat:'Lúa mì', commCoffee:'Cà phê',
     qtyLabel:'KHỐI LƯỢNG NẮM GIỮ', currentValueLabel:'GIÁ TRỊ QUY ĐỔI (USD)', balanceLabel:'SỐ DƯ',
     propertyLabel:'GIÁ TRỊ BĐS (USD)', assetValLabel:'GIÁ TRỊ TÀI SẢN (USD)', expectedReturnLabel:'Tăng trưởng dự kiến',
   },
@@ -989,6 +998,7 @@ const LANG = {
     shareModalTitle:'Share Portfolio', shareModalSub:'Spread Wealthos to friends & community',
     shareDownloadBtn:'Download Image', shareCopyBtn:'Copy Link',
     aiErrConn:'Connection error. Please try again.',
+    commGold:'Gold', commSilver:'Silver', commOil:'Crude Oil WTI', commGas:'Natural Gas', commPlat:'Platinum', commCopper:'Copper', commWheat:'Wheat', commCoffee:'Coffee',
     qtyLabel:'QUANTITY HELD', currentValueLabel:'CURRENT VALUE (USD)', balanceLabel:'BALANCE',
     propertyLabel:'PROPERTY VALUE (USD)', assetValLabel:'ASSET VALUE (USD)', expectedReturnLabel:'Expected return',
   },
@@ -1067,6 +1077,7 @@ const LANG = {
     aiClose:'关闭', aiAnalyze:'✦ 立即分析', aiAnalyzing:'分析中...',
     aiBack:'← 重新分析',
     aiErrNoRisk:'请在分析前选择风险偏好。', aiErrNoKey:'请输入Google Gemini API Key。', aiErrConn:'连接错误，请重试。',
+    commGold:'黄金', commSilver:'白银', commOil:'原油 WTI', commGas:'天然气', commPlat:'铂金', commCopper:'铜', commWheat:'小麦', commCoffee:'咖啡',
     shareModalTitle:'分享投资组合', shareModalSub:'将Wealthos分享给朋友和社区',
     shareDownloadBtn:'下载图片', shareCopyBtn:'复制链接',
     // dynamic inline strings
@@ -1157,6 +1168,7 @@ const LANG = {
     aiClose:'閉じる', aiAnalyze:'✦ 今すぐ分析', aiAnalyzing:'分析中...',
     aiBack:'← 再分析',
     aiErrNoRisk:'分析前にリスク志向を選択してください。', aiErrNoKey:'Google Gemini API Keyを入力してください。', aiErrConn:'接続エラー。再試行してください。',
+    commGold:'金', commSilver:'銀', commOil:'原油 WTI', commGas:'天然ガス', commPlat:'プラチナ', commCopper:'銅', commWheat:'小麦', commCoffee:'コーヒー',
     shareModalTitle:'ポートフォリオを共有', shareModalSub:'Wealthosを友達やコミュニティに広める',
     shareDownloadBtn:'画像をダウンロード', shareCopyBtn:'リンクをコピー',
     balanceLabel:'残高', propertyLabel:'不動産価値 (USD)', assetValLabel:'資産価値 (USD)', qtyLabel:'保有数量',
@@ -1246,6 +1258,7 @@ const LANG = {
     aiClose:'닫기', aiAnalyze:'✦ 지금 분석', aiAnalyzing:'분석 중...',
     aiBack:'← 재분석',
     aiErrNoRisk:'분석 전에 위험 성향을 선택하세요.', aiErrNoKey:'Google Gemini API Key를 입력하세요.', aiErrConn:'연결 오류. 다시 시도하세요.',
+    commGold:'금', commSilver:'은', commOil:'원유 WTI', commGas:'천연가스', commPlat:'백금', commCopper:'구리', commWheat:'밀', commCoffee:'커피',
     shareModalTitle:'포트폴리오 공유', shareModalSub:'Wealthos를 친구 및 커뮤니티에 알리세요',
     shareDownloadBtn:'이미지 다운로드', shareCopyBtn:'링크 복사',
     balanceLabel:'잔액', propertyLabel:'부동산 가치 (USD)', assetValLabel:'자산 가치 (USD)', qtyLabel:'보유 수량',
@@ -1335,6 +1348,7 @@ const LANG = {
     aiClose:'Fermer', aiAnalyze:'✦ Analyser maintenant', aiAnalyzing:'Analyse en cours...',
     aiBack:'← Réanalyser',
     aiErrNoRisk:"Veuillez sélectionner un profil de risque avant d'analyser.", aiErrNoKey:'Veuillez entrer votre clé Google Gemini API.', aiErrConn:'Erreur de connexion. Veuillez réessayer.',
+    commGold:'Or', commSilver:'Argent', commOil:'Pétrole brut WTI', commGas:'Gaz naturel', commPlat:'Platine', commCopper:'Cuivre', commWheat:'Blé', commCoffee:'Café',
     shareModalTitle:'Partager le portefeuille', shareModalSub:"Faites connaître Wealthos à vos amis",
     shareDownloadBtn:"Télécharger l'image", shareCopyBtn:'Copier le lien',
     balanceLabel:'Solde', propertyLabel:'Valeur immobilière (USD)', assetValLabel:"Valeur de l'actif (USD)", qtyLabel:'Quantité détenue',
@@ -1424,6 +1438,7 @@ const LANG = {
     aiClose:'Закрыть', aiAnalyze:'✦ Анализировать', aiAnalyzing:'Анализ...',
     aiBack:'← Повторить анализ',
     aiErrNoRisk:'Пожалуйста, выберите риск-профиль перед анализом.', aiErrNoKey:'Пожалуйста, введите ключ Google Gemini API.', aiErrConn:'Ошибка подключения. Повторите попытку.',
+    commGold:'Золото', commSilver:'Серебро', commOil:'Нефть WTI', commGas:'Природный газ', commPlat:'Платина', commCopper:'Медь', commWheat:'Пшеница', commCoffee:'Кофе',
     shareModalTitle:'Поделиться портфелем', shareModalSub:'Расскажите о Wealthos друзьям и сообществу',
     shareDownloadBtn:'Скачать изображение', shareCopyBtn:'Копировать ссылку',
     balanceLabel:'Баланс', propertyLabel:'Стоимость недвижимости (USD)', assetValLabel:'Стоимость актива (USD)', qtyLabel:'Количество',
@@ -1663,16 +1678,19 @@ const STOCK_CATALOG = [
   { id:'VPB.VN',  name:'VPBank',      ticker:'VPB.VN',  icon:'🏛️', color:'#0ea5e9', type:'stock' },
   { id:'MWG.VN',  name:'Thế Giới Di Động', ticker:'MWG.VN', icon:'📱', color:'#8b5cf6', type:'stock' },
 ];
-const COMMODITY_CATALOG = [
-  { id:'XAUUSD', name:'Vàng',         ticker:'GOLD',   icon:'🥇', color:'#ffd700', type:'commodity', stooq:'xauusd', cc:'XAU' },
-  { id:'XAGUSD', name:'Bạc',          ticker:'SILVER', icon:'🥈', color:'#c0c0c0', type:'commodity', stooq:'xagusd', cc:'XAG' },
-  { id:'USOIL',  name:'Dầu thô WTI', ticker:'OIL',    icon:'🛢️', color:'#6b4f2a', type:'commodity', stooq:'cl.f',  cc:null  },
-  { id:'NATGAS', name:'Khí tự nhiên',ticker:'GAS',    icon:'🔥', color:'#f97316', type:'commodity', stooq:'ng.f',  cc:null  },
-  { id:'XPTUSD', name:'Bạch kim',     ticker:'PLAT',   icon:'⚪', color:'#e5e7eb', type:'commodity', stooq:'xptusd',cc:'XPT' },
-  { id:'XCUUSD', name:'Đồng',         ticker:'COPPER', icon:'🟤', color:'#b87333', type:'commodity', stooq:'hg.f',  cc:null  },
-  { id:'WHEAT',  name:'Lúa mì',       ticker:'WHEAT',  icon:'🌾', color:'#d4a017', type:'commodity', stooq:'zw.f',  cc:null  },
-  { id:'COFFEE', name:'Cà phê',       ticker:'COFFEE', icon:'☕', color:'#6f4e37', type:'commodity', stooq:'kc.f',  cc:null  },
+const COMMODITY_CATALOG_DATA = [
+  { id:'XAUUSD', nameKey:'commGold',    ticker:'GOLD',   icon:'🥇', color:'#ffd700', type:'commodity', stooq:'xauusd', cc:'XAU' },
+  { id:'XAGUSD', nameKey:'commSilver',  ticker:'SILVER', icon:'🥈', color:'#c0c0c0', type:'commodity', stooq:'xagusd', cc:'XAG' },
+  { id:'USOIL',  nameKey:'commOil',     ticker:'OIL',    icon:'🛢️', color:'#6b4f2a', type:'commodity', stooq:'cl.f',  cc:null  },
+  { id:'NATGAS', nameKey:'commGas',     ticker:'GAS',    icon:'🔥', color:'#f97316', type:'commodity', stooq:'ng.f',  cc:null  },
+  { id:'XPTUSD', nameKey:'commPlat',    ticker:'PLAT',   icon:'⚪', color:'#e5e7eb', type:'commodity', stooq:'xptusd',cc:'XPT' },
+  { id:'XCUUSD', nameKey:'commCopper',  ticker:'COPPER', icon:'🟤', color:'#b87333', type:'commodity', stooq:'hg.f',  cc:null  },
+  { id:'WHEAT',  nameKey:'commWheat',   ticker:'WHEAT',  icon:'🌾', color:'#d4a017', type:'commodity', stooq:'zw.f',  cc:null  },
+  { id:'COFFEE', nameKey:'commCoffee',  ticker:'COFFEE', icon:'☕', color:'#6f4e37', type:'commodity', stooq:'kc.f',  cc:null  },
 ];
+const getCommodityCatalog = () => COMMODITY_CATALOG_DATA.map(c => ({ ...c, name: t(c.nameKey) || c.ticker }));
+// Keep COMMODITY_CATALOG as getter for backward compat
+Object.defineProperty(window, 'COMMODITY_CATALOG', { get: getCommodityCatalog });
 
 // ─────────────────────────────────────────────────────────────
 //  STATE
@@ -2093,7 +2111,7 @@ async function fetchCryptoHistory(id) {
 //  COMMODITY FETCH  (Stooq → CryptoCompare metals → Yahoo)
 // ─────────────────────────────────────────────────────────────
 const COMMODITY_MAP = {};
-COMMODITY_CATALOG.forEach(c => { COMMODITY_MAP[c.id] = c; });
+COMMODITY_CATALOG_DATA.forEach(c => { COMMODITY_MAP[c.id] = c; });
 
 async function fetchCommodity(id) {
   const cached = cacheGet('commodity:'+id);
@@ -3180,6 +3198,7 @@ function initForecast() {
   assets.forEach((_,i) => { if (!fcScenarios[i]) fcScenarios[i] = fcDefaultScenario(assets[i].type); });
   const initEl = $('fc-init'); if (initEl) initEl.value = fmtNum(fcInitAmt, 0);
   const dcaEl  = $('fc-dca');  if (dcaEl)  dcaEl.value  = fcDCA > 0 ? fmtNum(fcDCA, 0) : '0';
+  const dcaEl2 = $('fc-dca-field'); if (dcaEl2) dcaEl2.value = fcDCA > 0 ? fmtNum(fcDCA, 0) : '0';
   renderFcAssetScenarios();
   fcUpdate();
 }

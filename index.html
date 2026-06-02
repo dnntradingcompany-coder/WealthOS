@@ -2119,31 +2119,41 @@ async function fetchCommodity(id) {
   const meta = COMMODITY_MAP[id] || {};
   const attempts = [];
 
-  // 1) Stooq CSV qua proxy — lấy 2 ngày để tính % đúng
-  if (meta.stooq) {
-    attempts.push((async () => {
-      const url = `https://stooq.com/q/d/l/?s=${meta.stooq}&i=d`;
-      const proxies = [
-        `https://corsproxy.io/?${encodeURIComponent(url)}`,
-        `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-      ];
-      const r = await Promise.any(proxies.map(p => fetchWithTimeout(p)));
+  // Yahoo Finance futures map — these often work CORS-free directly
+  const yahooMap = { 'XAUUSD':'GC=F','XAGUSD':'SI=F','USOIL':'CL=F','NATGAS':'NG=F','XPTUSD':'PL=F','XCUUSD':'HG=F','WHEAT':'ZW=F','COFFEE':'KC=F' };
+  const yahooSym = yahooMap[id];
+
+  // 1) Yahoo direct (no proxy) — fastest, works on most browsers
+  if (yahooSym) {
+    const parseYF = async url => {
+      const r = await fetchWithTimeout(url, { headers: { Accept: 'application/json' } });
       if (!r.ok) throw new Error('fail');
-      const text = await r.text();
-      const lines = text.trim().split('\n').slice(1).slice(-2); // 2 ngày gần nhất
-      if (lines.length < 1) throw new Error('no data');
-      // Format: Date,Open,High,Low,Close,Volume
-      const today = lines[lines.length-1].split(',');
-      const close = parseFloat(today[4]);
-      if (!close || isNaN(close)) throw new Error('bad price');
-      // prev close = close của ngày hôm qua (không dùng open)
-      const prev = lines.length >= 2 ? parseFloat(lines[lines.length-2].split(',')[4]) : null;
-      const pct = prev && prev > 0 ? (close - prev) / prev * 100 : null;
-      return { id, current_price: close, price_change_percentage_24h: pct };
-    })());
+      const d = await r.json();
+      const res = d?.chart?.result?.[0];
+      const price = res?.meta?.regularMarketPrice;
+      if (!price) throw new Error('no price');
+      const prev = res?.meta?.previousClose || res?.meta?.chartPreviousClose;
+      return { id, current_price: price, price_change_percentage_24h: prev ? (price-prev)/prev*100 : null };
+    };
+    const yUrl1 = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSym}?interval=1d&range=2d`;
+    const yUrl2 = `https://query2.finance.yahoo.com/v8/finance/chart/${yahooSym}?interval=1d&range=2d`;
+    attempts.push(parseYF(yUrl1).catch(() => parseYF(yUrl2)));
+
+    // 2) Yahoo via CF Worker (reliable on all browsers including Safari)
+    if (CF_WORKER_URL) {
+      attempts.push(parseYF(`${CF_WORKER_URL}?url=${encodeURIComponent(yUrl1)}`));
+    }
+
+    // 3) Yahoo via other proxies
+    const proxyList = [
+      `https://api.allorigins.win/raw?url=${encodeURIComponent(yUrl1)}`,
+      `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(yUrl1)}`,
+      `https://corsproxy.io/?${encodeURIComponent(yUrl1)}`,
+    ];
+    proxyList.forEach(p => attempts.push(parseYF(p)));
   }
 
-  // 2) CryptoCompare metals (XAU, XAG, XPT)
+  // 4) CryptoCompare metals — no CORS, works everywhere
   if (meta.cc) {
     attempts.push((async () => {
       const r = await fetchWithTimeout(`https://min-api.cryptocompare.com/data/pricemultifull?fsyms=${meta.cc}&tsyms=USD`);
@@ -2155,32 +2165,36 @@ async function fetchCommodity(id) {
     })());
   }
 
-  // 3) Twelve Data (ETF/futures symbols)
-  const tdMap = { 'XAUUSD':'XAU/USD','XAGUSD':'XAG/USD','USOIL':'WTI/USD','XPTUSD':'XPT/USD' };
-  const tdSym = tdMap[id];
-  if (tdSym) {
-    attempts.push((async () => {
-      const v = await fetchTwelveData(tdSym);
-      return { id, current_price: v.price, price_change_percentage_24h: v.pct };
-    })());
+  // 5) Stooq via CF Worker + proxies
+  if (meta.stooq) {
+    const stooqUrl = `https://stooq.com/q/d/l/?s=${meta.stooq}&i=d`;
+    const parseStooq = async url => {
+      const r = await fetchWithTimeout(url);
+      if (!r.ok) throw new Error('fail');
+      const text = await r.text();
+      const lines = text.trim().split('\n').slice(1).slice(-2);
+      if (lines.length < 1) throw new Error('no data');
+      const today = lines[lines.length-1].split(',');
+      const close = parseFloat(today[4]);
+      if (!close || isNaN(close)) throw new Error('bad price');
+      const prev = lines.length >= 2 ? parseFloat(lines[lines.length-2].split(',')[4]) : null;
+      return { id, current_price: close, price_change_percentage_24h: prev && prev>0 ? (close-prev)/prev*100 : null };
+    };
+    const stooqProxies = [
+      ...(CF_WORKER_URL ? [`${CF_WORKER_URL}?url=${encodeURIComponent(stooqUrl)}`] : []),
+      `https://api.allorigins.win/raw?url=${encodeURIComponent(stooqUrl)}`,
+      `https://corsproxy.io/?${encodeURIComponent(stooqUrl)}`,
+    ];
+    stooqProxies.forEach(p => attempts.push(parseStooq(p)));
   }
 
-  // 4) Yahoo Finance futures
-  const yahooMap = { 'XAUUSD':'GC=F','XAGUSD':'SI=F','USOIL':'CL=F','NATGAS':'NG=F','XPTUSD':'PL=F','XCUUSD':'HG=F','WHEAT':'ZW=F','COFFEE':'KC=F' };
-  const yahooSym = yahooMap[id];
-  if (yahooSym) {
-    attempts.push((async () => {
-      const v = await fetchYahoo(yahooSym);
-      return { id, current_price: v.price, price_change_percentage_24h: v.pct };
-    })());
-  }
+  if (!attempts.length) throw new Error(`${meta.ticker||id} not supported`);
 
   try {
     const result = await Promise.any(attempts);
     cacheSet('commodity:'+id, result.current_price, result.price_change_percentage_24h);
     return result;
-  }
-  catch(_) { throw new Error(`${meta.ticker||id} không tải được`); }
+  } catch(_) { throw new Error(`${meta.ticker||id} không tải được`); }
 }
 
 const RE_GROWTH = {

@@ -3047,10 +3047,18 @@ function fcGetScenarios(type, asset) {
   }
 
   const vi = (currentLang || 'vi') === 'vi';
+  // Pick best available historical period: 10yr > 5yr > 3yr > 1yr
+  const live = asset ? FC_LIVE_RATES[asset.id] : null;
+  const bestHistRate = live ? (live.cagr10 ?? live.cagr5 ?? live.cagr3 ?? live.cagr1 ?? d.histRate) : d.histRate;
+  const bestHistPeriod = live
+    ? (live.cagr10 != null ? '10yr' : live.cagr5 != null ? '5yr' : live.cagr3 != null ? '3yr' : '1yr')
+    : d.histPeriod;
+  if (live) { d = { ...d, histRate: bestHistRate, histPeriod: bestHistPeriod }; }
+
   const pMap = { '10yr':vi?'10 năm':'10yr','5yr':vi?'5 năm':'5yr','3yr':vi?'3 năm':'3yr','1yr':vi?'1 năm':'1yr','since launch':vi?'từ ra mắt':'since launch','custom':vi?'tùy chỉnh':'custom' };
   const p = pMap[d.histPeriod] || d.histPeriod;
   const fmt = r => (r>=0?'+':'') + (r*100).toFixed(1)+'%';
-  const liveNote = (asset && FC_LIVE_RATES[asset.id]) ? ' 📊' : '';
+  const liveNote = live ? ' 📊' : '';
   return {
     hist: { r: d.histRate, label: `${vi?'TB':'Avg'} ${p} ${fmt(d.histRate)}${liveNote}` },
     bull: { r: d.bull,     label: `${vi?'Lạc quan':'Bull'} ${fmt(d.bull)}`  },
@@ -4059,49 +4067,40 @@ Rules:
         ? (histPeriod === '10yr' ? 'TB 10 năm' : histPeriod === '5yr' ? 'TB 5 năm' : histPeriod === '3yr' ? 'TB 3 năm' : histPeriod === '1yr' ? 'TB 1 năm' : histPeriod === 'stable' ? 'Stablecoin' : `TB ${histPeriod}`)
         : (histPeriod === 'stable' ? 'Stablecoin' : `Avg ${histPeriod}`);
 
-      // Build period chips — show each available timeframe
-      const periodChips = g.isLive ? [
-        g.cagr1  != null ? { label: vi?'1 năm':'1yr',   rate: g.cagr1  } : null,
-        g.cagr3  != null ? { label: vi?'3 năm':'3yr',   rate: g.cagr3  } : null,
-        g.cagr5  != null ? { label: vi?'5 năm':'5yr',   rate: g.cagr5  } : null,
-        g.cagr10 != null ? { label: vi?'10 năm':'10yr', rate: g.cagr10 } : null,
-      ].filter(Boolean) : [];
+      // Pick best single historical period: 10yr > 5yr > 3yr > 1yr
+      const bestPeriodRate = g.isLive
+        ? (g.cagr10 ?? g.cagr5 ?? g.cagr3 ?? g.cagr1 ?? g.hist10)
+        : g.hist10;
+      const bestPeriodLabel = g.isLive
+        ? (g.cagr10 != null ? (vi?'TB 10 năm':'Avg 10yr') :
+           g.cagr5  != null ? (vi?'TB 5 năm' :'Avg 5yr')  :
+           g.cagr3  != null ? (vi?'TB 3 năm' :'Avg 3yr')  :
+                              (vi?'TB 1 năm' :'Avg 1yr'))
+        : histLabel;
 
-      const growthChipsInner = g.hist10 != null ? `
-          ${periodChips.length > 0 ? `
-          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px;grid-column:1/-1;">
-            ${periodChips.map(p => `
-            <span style="padding:3px 8px;border-radius:5px;font-size:9.5px;font-weight:700;font-family:var(--mono);
-              background:rgba(232,234,240,0.08);color:#e8eaf0;border:1px solid rgba(232,234,240,0.3);cursor:default;"
-              title="${vi?'CAGR lịch sử':'Historical CAGR'}">
-              📊 ${p.label}: ${p.rate>=0?'+':''}${p.rate.toFixed(1)}%
-            </span>`).join('')}
-          </div>` : `
-          <span class="growth-chip" data-ticker="${item.ticker}" data-rate="${g.hist10}" data-type="hist10"
+      const growthChipsInner = bestPeriodRate != null ? `
+          <span class="growth-chip" data-ticker="${item.ticker}" data-rate="${bestPeriodRate}" data-type="hist10"
             data-color="#e8eaf0"
-            style="flex:1 1 calc(50% - 3px);text-align:center;padding:5px 4px;border-radius:6px;font-size:10px;font-weight:700;font-family:var(--mono);background:rgba(232,234,240,0.08);color:#e8eaf0;border:2px solid rgba(232,234,240,0.5);cursor:pointer;transition:all .15px;"
+            style="flex:1 1 calc(50% - 3px);text-align:center;padding:5px 4px;border-radius:6px;font-size:10px;font-weight:700;font-family:var(--mono);background:rgba(232,234,240,0.08);color:#e8eaf0;border:2px solid rgba(232,234,240,0.5);cursor:pointer;transition:all .15s;"
             onclick="selectGrowthChip(this)">
-            ${histLabel} ${g.hist10>=0?'+':''}${g.hist10?.toFixed(1)}%
-          </span>`}
+            ${bestPeriodLabel} ${bestPeriodRate>=0?'+':''}${bestPeriodRate?.toFixed(1)}%
+          </span>
           <span class="growth-chip" data-ticker="${item.ticker}" data-rate="${g.realistic}" data-type="realistic"
             data-color="#34d399"
             style="flex:1 1 calc(50% - 3px);text-align:center;padding:5px 4px;border-radius:6px;font-size:10px;font-weight:600;font-family:var(--mono);background:rgba(52,211,153,0.08);color:#34d399;border:1px solid rgba(52,211,153,0.25);cursor:pointer;transition:all .15s;"
-            onclick="selectGrowthChip(this)"
-            title="${vi?'Tăng trưởng khả thi':'Realistic growth'}">
+            onclick="selectGrowthChip(this)">
             ${vi?'Khả thi':'Real'} ${g.realistic>=0?'+':''}${g.realistic?.toFixed(1)}%
           </span>
           <span class="growth-chip" data-ticker="${item.ticker}" data-rate="${g.optimistic}" data-type="optimistic"
             data-color="#4f8ef7"
             style="flex:1 1 calc(50% - 3px);text-align:center;padding:5px 4px;border-radius:6px;font-size:10px;font-weight:600;font-family:var(--mono);background:rgba(79,142,247,0.08);color:#4f8ef7;border:1px solid rgba(79,142,247,0.25);cursor:pointer;transition:all .15s;"
-            onclick="selectGrowthChip(this)"
-            title="${vi?'Kịch bản lạc quan':'Optimistic / Bull case'}">
+            onclick="selectGrowthChip(this)">
             ${vi?'Lạc quan':'Bull'} ${g.optimistic>=0?'+':''}${g.optimistic?.toFixed(1)}%
           </span>
           <span class="growth-chip" data-ticker="${item.ticker}" data-rate="${g.pessimistic}" data-type="pessimistic"
             data-color="#f87171"
             style="flex:1 1 calc(50% - 3px);text-align:center;padding:5px 4px;border-radius:6px;font-size:10px;font-weight:600;font-family:var(--mono);background:rgba(248,113,113,0.08);color:#f87171;border:1px solid rgba(248,113,113,0.25);cursor:pointer;transition:all .15s;"
-            onclick="selectGrowthChip(this)"
-            title="${vi?'Kịch bản bi quan':'Pessimistic / Bear case'}">
+            onclick="selectGrowthChip(this)">
             ${vi?'Bi quan':'Bear'} ${g.pessimistic>=0?'+':''}${g.pessimistic?.toFixed(1)}%
           </span>` : '';
 

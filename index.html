@@ -1598,21 +1598,18 @@ function _closeLangMenu(e) {
 const LOCALIZABLE_ASSET_NAMES = {
   OIL:    { vi:'Dầu thô WTI', en:'Crude Oil WTI', zh:'原油', ja:'原油', ko:'원유', fr:'Pétrole brut', ru:'Нефть WTI' },
   SILVER: { vi:'Bạc',        en:'Silver',         zh:'白银', ja:'銀',   ko:'은',   fr:'Argent',      ru:'Серебро' },
+  GOLD:   { vi:'Vàng',       en:'Gold',            zh:'黄金', ja:'金',   ko:'금',   fr:'Or',          ru:'Золото' },
+  GAS:    { vi:'Khí tự nhiên', en:'Natural Gas',   zh:'天然气', ja:'天然ガス', ko:'천연가스', fr:'Gaz naturel', ru:'Природный газ' },
 };
 function translateDefaultAssets() {
   if (typeof assets === 'undefined') return;
   assets.forEach(a => {
-    // Translate commodity names
     if (LOCALIZABLE_ASSET_NAMES[a.ticker]) {
       a.name = LOCALIZABLE_ASSET_NAMES[a.ticker][currentLang] || LOCALIZABLE_ASSET_NAMES[a.ticker].en;
     }
-    // Translate cash name if it's still a default value
     if (a.type === 'cash') {
-      const defaultNames = Object.values(LOCALIZABLE_ASSET_NAMES).concat(
-        Object.values(LANG).map(l => l.cashDefault).filter(Boolean)
-      );
       const allCashDefaults = Object.values(LANG).map(l => l.cashDefault).filter(Boolean);
-      if (allCashDefaults.includes(a.name) || a.name === 'Cash / Savings' || a.name === 'Tiền mặt / Tiết kiệm') {
+      if (allCashDefaults.includes(a.name)) {
         a.name = t('cashDefault');
       }
     }
@@ -3194,8 +3191,8 @@ if (!hadSaved) {
     { id:'ethereum',  name:'Ethereum',   ticker:'ETH',    icon:'◆',  color:'#627eea', type:'crypto',     qty:100,   price:null, pct:null, history:[] },
     { id:'NVDA',      name:'Nvidia',     ticker:'NVDA',   icon:'🟢', color:'#76b900', type:'stock',      qty:100,   price:null, pct:null, history:[] },
     { id:'QQQ',       name:'Nasdaq ETF', ticker:'QQQ',    icon:'📊', color:'#4f8ef7', type:'stock',      qty:100,   price:null, pct:null, history:[] },
-    { id:'OIL',       name:'Crude Oil WTI', ticker:'OIL',   icon:'🛢️', color:'#8b4513', type:'commodity',  qty:1000,  price:null, pct:null, history:[] },
-    { id:'SILVER',    name:'Silver',         ticker:'SILVER', icon:'🥈', color:'#a8a9ad', type:'commodity',  qty:1000,  price:null, pct:null, history:[] },
+    { id:'USOIL',    name:'Crude Oil WTI', ticker:'OIL',    icon:'🛢️', color:'#6b4f2a', type:'commodity',  qty:1000,  price:null, pct:null, history:[] },
+    { id:'XAGUSD',   name:'Silver',         ticker:'SILVER', icon:'🥈', color:'#c0c0c0', type:'commodity',  qty:1000,  price:null, pct:null, history:[] },
     { id:'USD',       name:'Cash / Savings', ticker:'USD',   icon:'💵', color:'#34d399', type:'cash',       qty:20000, cashRate:5.5, currency:'USD' },
   ];
 }

@@ -1896,7 +1896,8 @@ function fetchWithTimeout(url, opts={}) {
 
 // ── CLOUDFLARE WORKER PROXY ──────────────────────────────────────────
 // Deploy worker tại workers.cloudflare.com, paste URL vào đây:
-const CF_WORKER_URL = 'https://wealthos-proxy-worker.dnntradingcompany.workers.dev';
+const CF_WORKER_URL = 'https://proud-feather-b76c.dnntradingcompany.workers.dev';
+const APP_SECRET = 'WOS_2024_xK9mP3qR7nB'; // khớp với secret trong Cloudflare Worker
 // ─────────────────────────────────────────────────────────────────────
 
 const PROXIES = [
@@ -3738,7 +3739,7 @@ Answer in ${currentLang==='vi'?'Vietnamese':currentLang==='zh'?'Chinese':current
 
     const res = await fetch('https://proud-feather-b76c.dnntradingcompany.workers.dev/ai', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-App-Token': APP_SECRET },
       body: JSON.stringify({ messages }),
     });
     const data = await res.json();
@@ -3833,7 +3834,7 @@ Reply in ${lang}. Only comment on strengths and weaknesses of the current portfo
     const workerUrl = 'https://proud-feather-b76c.dnntradingcompany.workers.dev' + (isPremium ? '/ai' : '/');
     const response = await fetch(workerUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-App-Token': APP_SECRET },
       body: JSON.stringify({
         messages: [{ role: 'user', content: prompt }],
       }),
@@ -3941,7 +3942,7 @@ async function initPremium() {
   try {
     const res = await fetch('https://proud-feather-b76c.dnntradingcompany.workers.dev/verify', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-App-Token': APP_SECRET },
       body: JSON.stringify({ email, license_key: key }),
     });
     if (!res.ok) return; // server error → giữ unlock
@@ -4013,7 +4014,7 @@ async function verifyAndUnlock() {
     const workerUrl = 'https://proud-feather-b76c.dnntradingcompany.workers.dev/verify';
     const res = await fetch(workerUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-App-Token': APP_SECRET },
       body: JSON.stringify({ email, license_key: key }),
     });
     const data = await res.json();
@@ -4155,7 +4156,7 @@ Rules:
   try {
     const res = await fetch('https://proud-feather-b76c.dnntradingcompany.workers.dev/ai', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-App-Token': APP_SECRET },
       body: JSON.stringify({ messages: [{ role: 'user', content: prompt }] }),
     });
     const data = await res.json();

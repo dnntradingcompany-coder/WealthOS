@@ -1859,7 +1859,23 @@ async function fetchVNStock(symbol) {
     const price = res?.meta?.regularMarketPrice;
     if (!price) throw new Error('no price');
     const pct = res?.meta?.regularMarketChangePercent ?? null;
-    return { price, pct, history: res?.indicators?.quote?.[0]?.close?.filter(Boolean)||[] };
+    // Compute true 24h change from hourly timestamps if available
+    const ts = res?.timestamp;
+    const closes = res?.indicators?.quote?.[0]?.close;
+    let true24hPct = pct;
+    if (ts && closes && ts.length > 1) {
+      const nowTs = Date.now() / 1000;
+      const target = nowTs - 86400; // 24h ago
+      // Find closest point to 24h ago
+      let bestIdx = 0, bestDiff = Infinity;
+      ts.forEach((t, i) => { const diff = Math.abs(t - target); if (diff < bestDiff && closes[i] != null) { bestDiff = diff; bestIdx = i; } });
+      const price24hAgo = closes[bestIdx];
+      const currentPrice = res.meta.regularMarketPrice;
+      if (price24hAgo && price24hAgo > 0 && currentPrice) {
+        true24hPct = (currentPrice - price24hAgo) / price24hAgo * 100;
+      }
+    }
+    return { price, pct: true24hPct, history: closes?.filter(Boolean)||[] };
   // removed old prev calc
     return { price, pct: prev ? (price-prev)/prev*100 : null, history: res?.indicators?.quote?.[0]?.close?.filter(Boolean)||[] };
   };
@@ -1867,8 +1883,8 @@ async function fetchVNStock(symbol) {
   const cfProxy = url => CF_WORKER_URL ? `${CF_WORKER_URL}?url=${encodeURIComponent(url)}` : null;
 
   const stooqUrl  = `https://stooq.com/q/l/?s=${stooqSym}&f=sd2t2ohlcv&h&e=csv`;
-  const yahooUrl  = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`;
-  const yahoo2Url = `https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`;
+  const url1 = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1h&range=2d`;
+  const url2 = `https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1h&range=2d`;
 
   const mkProxies = u => [
     cfProxy(u),
@@ -1910,9 +1926,25 @@ async function fetchYahoo(symbol) {
       const res = d.chart.result[0];
       const price = res.meta?.regularMarketPrice;
       if (!price) return null;
-      const closes = res.indicators?.quote?.[0]?.close?.filter(Boolean) || [];
-      const pct = res.meta?.regularMarketChangePercent ?? null;
-      return { price, pct, history: closes };
+      const closes = res.indicators?.quote?.[0]?.close || [];
+      const timestamps = res.timestamp || [];
+      // Compute true 24h pct from hourly data if available
+      let pct = res.meta?.regularMarketChangePercent ?? null;
+      if (timestamps.length > 1) {
+        const nowTs = Date.now() / 1000;
+        const target = nowTs - 86400;
+        let bestIdx = 0, bestDiff = Infinity;
+        timestamps.forEach((t, i) => {
+          if (closes[i] == null) return;
+          const diff = Math.abs(t - target);
+          if (diff < bestDiff) { bestDiff = diff; bestIdx = i; }
+        });
+        const price24hAgo = closes[bestIdx];
+        if (price24hAgo > 0 && bestDiff < 7200) { // only if within 2h of 24h mark
+          pct = (price - price24hAgo) / price24hAgo * 100;
+        }
+      }
+      return { price, pct, history: closes.filter(Boolean) };
     }
     if (d?.quoteResponse?.result?.[0]) {
       const q = d.quoteResponse.result[0];
@@ -1923,8 +1955,8 @@ async function fetchYahoo(symbol) {
   };
 
   const baseUrls = [
-    `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=10d`,
-    `https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=10d`,
+    `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1h&range=2d`,
+    `https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1h&range=2d`,
     `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbol}`,
     `https://query2.finance.yahoo.com/v7/finance/quote?symbols=${symbol}`,
   ];

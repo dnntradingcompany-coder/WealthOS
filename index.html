@@ -3,7 +3,120 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WealthOS – AI Net Worth & Portfolio Tracker</title>
+<title>WealthOS – AI Net Worth & Portfolio Tracker | Theo Dõi Tài Sản Thông Minh</title>
+
+<!-- ── SEO: Meta Description (multilingual fallback) ── -->
+<meta name="description" content="WealthOS – Nền tảng quản trị tài sản AI: theo dõi crypto, cổ phiếu, bất động sản & danh mục đầu tư theo thời gian thực. AI Advisor, mô phỏng tăng trưởng 3–100 năm. Free & Premium.">
+<meta name="keywords" content="theo dõi tài sản, quản lý danh mục đầu tư, net worth tracker, AI portfolio tracker, crypto tracker, cổ phiếu, bất động sản, tài chính cá nhân, wealth management, WealthOS">
+<meta name="author" content="WealthOS">
+<meta name="robots" content="index, follow">
+
+<!-- ── SEO: Canonical URL ── -->
+<link rel="canonical" href="https://wealthos.world/">
+
+<!-- ── SEO: hreflang – multilingual targeting ── -->
+<link rel="alternate" hreflang="vi" href="https://wealthos.world/?lang=vi">
+<link rel="alternate" hreflang="en" href="https://wealthos.world/?lang=en">
+<link rel="alternate" hreflang="zh" href="https://wealthos.world/?lang=zh">
+<link rel="alternate" hreflang="ja" href="https://wealthos.world/?lang=ja">
+<link rel="alternate" hreflang="ko" href="https://wealthos.world/?lang=ko">
+<link rel="alternate" hreflang="fr" href="https://wealthos.world/?lang=fr">
+<link rel="alternate" hreflang="ru" href="https://wealthos.world/?lang=ru">
+<link rel="alternate" hreflang="x-default" href="https://wealthos.world/">
+
+<!-- ── Open Graph (Facebook, Zalo, LinkedIn) ── -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://wealthos.world/">
+<meta property="og:title" content="WealthOS – AI Net Worth & Portfolio Tracker">
+<meta property="og:description" content="Theo dõi crypto, cổ phiếu, BĐS & tài sản cá nhân theo thời gian thực. AI Advisor phân tích danh mục. Miễn phí – Premium $24/năm.">
+<meta property="og:image" content="https://wealthos.world/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:locale:alternate" content="zh_CN">
+<meta property="og:locale:alternate" content="ja_JP">
+<meta property="og:locale:alternate" content="ko_KR">
+<meta property="og:site_name" content="WealthOS">
+
+<!-- ── Twitter / X Card ── -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@wealthos_world">
+<meta name="twitter:title" content="WealthOS – AI Net Worth & Portfolio Tracker">
+<meta name="twitter:description" content="Theo dõi crypto, cổ phiếu, BĐS & tài sản cá nhân theo thời gian thực. AI Advisor phân tích danh mục.">
+<meta name="twitter:image" content="https://wealthos.world/og-image.png">
+
+<!-- ── Structured Data: SoftwareApplication (Google Rich Results) ── -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "WealthOS",
+  "url": "https://wealthos.world",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Web",
+  "description": "AI-powered net worth and portfolio tracker. Track crypto, stocks, real estate and cash in real time. AI advisor, growth simulation, multi-language support.",
+  "offers": [
+    {
+      "@type": "Offer",
+      "name": "Free",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    {
+      "@type": "Offer",
+      "name": "Premium",
+      "price": "24",
+      "priceCurrency": "USD",
+      "billingDuration": "P1Y"
+    }
+  ],
+  "inLanguage": ["vi","en","zh","ja","ko","fr","ru"],
+  "author": {
+    "@type": "Organization",
+    "name": "WealthOS",
+    "url": "https://wealthos.world",
+    "email": "contact@wealthos.world"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.8",
+    "ratingCount": "120"
+  }
+}
+</script>
+
+<!-- ── Dynamic: update lang attribute & meta on language switch ── -->
+<script>
+(function() {
+  var saved = localStorage.getItem('lang');
+  var valid = ['vi','en','zh','ja','ko','fr','ru'];
+  var lang = valid.includes(saved) ? saved : 'vi';
+  document.documentElement.lang = lang;
+
+  var titles = {
+    vi: 'WealthOS – Theo Dõi Tài Sản & Danh Mục Đầu Tư AI',
+    en: 'WealthOS – AI Net Worth & Portfolio Tracker',
+    zh: 'WealthOS – AI 资产净值与投资组合追踪',
+    ja: 'WealthOS – AI 資産管理・ポートフォリオトラッカー',
+    ko: 'WealthOS – AI 자산 및 포트폴리오 트래커',
+    fr: 'WealthOS – Suivi de Patrimoine & Portefeuille IA',
+    ru: 'WealthOS – ИИ-трекер капитала и портфеля'
+  };
+  var descs = {
+    vi: 'Theo dõi crypto, cổ phiếu, BĐS & tài sản cá nhân theo thời gian thực. AI Advisor phân tích danh mục. Miễn phí – Premium $24/năm.',
+    en: 'Track crypto, stocks, real estate & personal assets in real time. AI Advisor analyses your portfolio. Free – Premium $24/year.',
+    zh: '实时追踪加密货币、股票、房产和个人资产。AI顾问分析您的投资组合。免费 – 高级版$24/年。',
+    ja: '暗号資産・株式・不動産をリアルタイム追跡。AIアドバイザーがポートフォリオを分析。無料 – プレミアム$24/年。',
+    ko: '암호화폐, 주식, 부동산을 실시간 추적. AI 어드바이저가 포트폴리오를 분석. 무료 – 프리미엄 $24/년.',
+    fr: 'Suivez crypto, actions, immobilier en temps réel. Conseiller IA analyse votre portefeuille. Gratuit – Premium 24$/an.',
+    ru: 'Отслеживайте крипту, акции и недвижимость в реальном времени. ИИ-советник анализирует портфель. Бесплатно – Премиум $24/год.'
+  };
+  if (titles[lang]) document.title = titles[lang];
+  var metaDesc = document.querySelector('meta[name="description"]');
+  if (metaDesc && descs[lang]) metaDesc.setAttribute('content', descs[lang]);
+})();
+</script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>

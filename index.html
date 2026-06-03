@@ -1858,7 +1858,9 @@ async function fetchVNStock(symbol) {
     const res = d?.chart?.result?.[0];
     const price = res?.meta?.regularMarketPrice;
     if (!price) throw new Error('no price');
-    const prev = res?.meta?.previousClose || res?.meta?.chartPreviousClose;
+    const pct = res?.meta?.regularMarketChangePercent ?? null;
+    return { price, pct, history: res?.indicators?.quote?.[0]?.close?.filter(Boolean)||[] };
+  // removed old prev calc
     return { price, pct: prev ? (price-prev)/prev*100 : null, history: res?.indicators?.quote?.[0]?.close?.filter(Boolean)||[] };
   };
 
@@ -1909,8 +1911,8 @@ async function fetchYahoo(symbol) {
       const price = res.meta?.regularMarketPrice;
       if (!price) return null;
       const closes = res.indicators?.quote?.[0]?.close?.filter(Boolean) || [];
-      const prev = res.meta?.previousClose || res.meta?.chartPreviousClose;
-      return { price, pct: prev ? (price-prev)/prev*100 : null, history: closes };
+      const pct = res.meta?.regularMarketChangePercent ?? null;
+      return { price, pct, history: closes };
     }
     if (d?.quoteResponse?.result?.[0]) {
       const q = d.quoteResponse.result[0];
@@ -2132,8 +2134,8 @@ async function fetchCommodity(id) {
       const res = d?.chart?.result?.[0];
       const price = res?.meta?.regularMarketPrice;
       if (!price) throw new Error('no price');
-      const prev = res?.meta?.previousClose || res?.meta?.chartPreviousClose;
-      return { id, current_price: price, price_change_percentage_24h: prev ? (price-prev)/prev*100 : null };
+      const pct = res?.meta?.regularMarketChangePercent ?? null;
+      return { id, current_price: price, price_change_percentage_24h: pct };
     };
     const yUrl1 = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSym}?interval=1d&range=2d`;
     const yUrl2 = `https://query2.finance.yahoo.com/v8/finance/chart/${yahooSym}?interval=1d&range=2d`;

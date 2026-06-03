@@ -1896,7 +1896,7 @@ function fetchWithTimeout(url, opts={}) {
 
 // ── CLOUDFLARE WORKER PROXY ──────────────────────────────────────────
 // Deploy worker tại workers.cloudflare.com, paste URL vào đây:
-const CF_WORKER_URL = 'https://wealthos-proxy-worker.dnntradingcompany.workers.dev';
+const CF_WORKER_URL = 'https://proud-feather-b76c.dnntradingcompany.workers.dev';
 const APP_SECRET = 'WOS_2024_xK9mP3qR7nB'; // khớp với secret trong Cloudflare Worker
 // ─────────────────────────────────────────────────────────────────────
 
@@ -2292,7 +2292,12 @@ async function fetchCommodity(id) {
       const res = d?.chart?.result?.[0];
       const price = res?.meta?.regularMarketPrice;
       if (!price) throw new Error('no price');
-      const pct = res?.meta?.regularMarketChangePercent ?? null;
+      // Ưu tiên regularMarketChangePercent, fallback tính từ previousClose
+      let pct = res?.meta?.regularMarketChangePercent ?? null;
+      if (pct == null) {
+        const prev = res?.meta?.chartPreviousClose ?? res?.meta?.previousClose ?? null;
+        pct = (prev && prev > 0) ? (price - prev) / prev * 100 : null;
+      }
       return { id, current_price: price, price_change_percentage_24h: pct };
     };
     const yUrl1 = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSym}?interval=1d&range=2d`;

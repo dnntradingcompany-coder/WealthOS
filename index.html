@@ -1859,23 +1859,16 @@ async function fetchVNStock(symbol) {
     const price = res?.meta?.regularMarketPrice;
     if (!price) throw new Error('no price');
     const pct = res?.meta?.regularMarketChangePercent ?? null;
-    // Compute true 24h change from hourly timestamps if available
-    const ts = res?.timestamp;
-    const closes = res?.indicators?.quote?.[0]?.close;
-    let true24hPct = pct;
-    if (ts && closes && ts.length > 1) {
-      const nowTs = Date.now() / 1000;
-      const target = nowTs - 86400; // 24h ago
-      // Find closest point to 24h ago
-      let bestIdx = 0, bestDiff = Infinity;
-      ts.forEach((t, i) => { const diff = Math.abs(t - target); if (diff < bestDiff && closes[i] != null) { bestDiff = diff; bestIdx = i; } });
-      const price24hAgo = closes[bestIdx];
-      const currentPrice = res.meta.regularMarketPrice;
-      if (price24hAgo && price24hAgo > 0 && currentPrice) {
-        true24hPct = (currentPrice - price24hAgo) / price24hAgo * 100;
-      }
+    // True 24h from timestamps if available
+    const ts2 = res?.timestamp; const cl2 = res?.indicators?.quote?.[0]?.close;
+    let true24 = pct;
+    if (ts2?.length > 1 && cl2) {
+      const nowTs = Date.now()/1000, target = nowTs - 86400;
+      let bi = 0, bd = Infinity;
+      ts2.forEach((t,i) => { if (cl2[i]==null) return; const d=Math.abs(t-target); if(d<bd){bd=d;bi=i;} });
+      if (cl2[bi] > 0 && bd < 129600) true24 = (price - cl2[bi]) / cl2[bi] * 100;
     }
-    return { price, pct: true24hPct, history: closes?.filter(Boolean)||[] };
+    return { price, pct: true24, history: cl2?.filter(Boolean)||[] };
   // removed old prev calc
     return { price, pct: prev ? (price-prev)/prev*100 : null, history: res?.indicators?.quote?.[0]?.close?.filter(Boolean)||[] };
   };
@@ -1940,10 +1933,13 @@ async function fetchYahoo(symbol) {
           if (diff < bestDiff) { bestDiff = diff; bestIdx = i; }
         });
         const price24hAgo = closes[bestIdx];
-        if (price24hAgo > 0 && bestDiff < 7200) { // only if within 2h of 24h mark
+        // Use if within 36h (covers weekends/holidays) and price is valid
+        if (price24hAgo > 0 && bestDiff < 129600) {
           pct = (price - price24hAgo) / price24hAgo * 100;
         }
       }
+      // Always fall back to regularMarketChangePercent if still null
+      if (pct == null) pct = res.meta?.regularMarketChangePercent ?? null;
       return { price, pct, history: closes.filter(Boolean) };
     }
     if (d?.quoteResponse?.result?.[0]) {

@@ -132,6 +132,17 @@
   gtag('js', new Date());
   gtag('config', 'AW-16682803816');
 </script>
+<!-- Event snippet: Purchase conversion (WealthOS Premium) -->
+<script>
+function gtag_report_conversion() {
+  gtag('event', 'conversion', {
+    'send_to': 'AW-16682803816/DEV3CIzrqM0ZEOjE_ZI-',
+    'value': 24.0,
+    'currency': 'USD',
+    'transaction_id': localStorage.getItem('wealthos_email') || '',
+  });
+}
+</script>
 
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -4034,6 +4045,8 @@ async function verifyAndUnlock() {
       isPremium = true;
       closeUpgradeModal();
       unlockPremium();
+      // Google Ads conversion tracking — fire khi activate Premium thành công
+      if (typeof gtag_report_conversion === 'function') gtag_report_conversion();
     } else {
       if (data.reason === 'expired') {
         errEl.textContent = t('pmErrExpired') + ' (' + data.expired_at + ')';

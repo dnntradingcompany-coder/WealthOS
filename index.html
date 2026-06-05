@@ -497,6 +497,37 @@ input[type=number]{-moz-appearance:textfield;}
     </div>
   </div>
 
+  <!-- ── USER GUIDELINE ── -->
+  <style>
+  .guideline-section{margin-bottom:1.75rem;}
+  .guideline-inner{background:var(--sur);border:1px solid rgba(139,108,247,0.25);border-radius:16px;overflow:hidden;position:relative;box-shadow:0 0 32px rgba(139,108,247,0.08),inset 0 1px 0 rgba(255,255,255,0.05);}
+  .guideline-top{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 12px;border-bottom:1px solid rgba(139,108,247,0.12);}
+  .guideline-left{display:flex;align-items:center;gap:10px;}
+  .guideline-icon{width:30px;height:30px;border-radius:8px;background:rgba(139,108,247,0.15);border:1px solid rgba(139,108,247,0.3);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+  .guideline-title{font-size:14px;font-weight:600;color:var(--tx);}
+  .guideline-sub{font-size:10px;color:var(--mu);font-family:var(--mono);margin-top:1px;}
+  .guideline-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;background:rgba(139,108,247,0.1);border:1px solid rgba(139,108,247,0.25);font-size:10px;color:#a78bfa;font-family:var(--mono);}
+  .guideline-video{position:relative;width:100%;padding-bottom:56.25%;background:#0d0f14;}
+  .guideline-video iframe{position:absolute;inset:0;width:100%;height:100%;border:none;}
+  </style>
+  <div class="guideline-section">
+    <div class="guideline-inner">
+      <div class="guideline-top">
+        <div class="guideline-left">
+          <div class="guideline-icon">📖</div>
+          <div>
+            <div class="guideline-title" data-i18n="guideTitle">User Guideline</div>
+            <div class="guideline-sub" data-i18n="guideSub">Hướng dẫn sử dụng WealthOS</div>
+          </div>
+        </div>
+        <span class="guideline-badge">▶ VIDEO</span>
+      </div>
+      <div class="guideline-video">
+        <iframe src="https://www.youtube.com/embed/dtc8EgNjykc" title="User Guideline" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+      </div>
+    </div>
+  </div>
+
   <!-- TỔNG DANH MỤC -->
   <div class="smry">
     <div class="sc-total">
@@ -1037,6 +1068,7 @@ const LANG = {
     aiBack:'← Phân tích lại',
     aiErrNoRisk:'Vui lòng chọn khẩu vị rủi ro trước khi phân tích.',
     aiErrNoKey:'Vui lòng nhập Google Gemini API Key.',
+    guideTitle:'User Guideline', guideSub:'Hướng dẫn sử dụng WealthOS',
     shareModalTitle:'Chia sẻ danh mục', shareModalSub:'Lan truyền Wealthos đến bạn bè & cộng đồng',
     shareDownloadBtn:'Tải ảnh về', shareCopyBtn:'Sao chép link',
     aiErrConn:'Lỗi kết nối. Vui lòng thử lại.',
@@ -1135,6 +1167,7 @@ const LANG = {
     aiBack:'← Analyze again',
     aiErrNoRisk:'Please select a risk profile before analyzing.',
     aiErrNoKey:'Please enter your Google Gemini API Key.',
+    guideTitle:'User Guideline', guideSub:'How to use WealthOS',
     shareModalTitle:'Share Portfolio', shareModalSub:'Spread Wealthos to friends & community',
     shareDownloadBtn:'Download Image', shareCopyBtn:'Copy Link',
     aiErrConn:'Connection error. Please try again.',
@@ -1218,6 +1251,7 @@ const LANG = {
     aiBack:'← 重新分析',
     aiErrNoRisk:'请在分析前选择风险偏好。', aiErrNoKey:'请输入Google Gemini API Key。', aiErrConn:'连接错误，请重试。',
     commGold:'黄金', commSilver:'白银', commOil:'原油 WTI', commGas:'天然气', commPlat:'铂金', commCopper:'铜', commWheat:'小麦', commCoffee:'咖啡',
+    guideTitle:'使用指南', guideSub:'WealthOS 使用教程',
     shareModalTitle:'分享投资组合', shareModalSub:'将Wealthos分享给朋友和社区',
     shareDownloadBtn:'下载图片', shareCopyBtn:'复制链接',
     // dynamic inline strings
@@ -1309,6 +1343,7 @@ const LANG = {
     aiBack:'← 再分析',
     aiErrNoRisk:'分析前にリスク志向を選択してください。', aiErrNoKey:'Google Gemini API Keyを入力してください。', aiErrConn:'接続エラー。再試行してください。',
     commGold:'金', commSilver:'銀', commOil:'原油 WTI', commGas:'天然ガス', commPlat:'プラチナ', commCopper:'銅', commWheat:'小麦', commCoffee:'コーヒー',
+    guideTitle:'使い方ガイド', guideSub:'WealthOS の使い方',
     shareModalTitle:'ポートフォリオを共有', shareModalSub:'Wealthosを友達やコミュニティに広める',
     shareDownloadBtn:'画像をダウンロード', shareCopyBtn:'リンクをコピー',
     balanceLabel:'残高', propertyLabel:'不動産価値 (USD)', assetValLabel:'資産価値 (USD)', qtyLabel:'保有数量',
@@ -1399,6 +1434,7 @@ const LANG = {
     aiBack:'← 재분석',
     aiErrNoRisk:'분석 전에 위험 성향을 선택하세요.', aiErrNoKey:'Google Gemini API Key를 입력하세요.', aiErrConn:'연결 오류. 다시 시도하세요.',
     commGold:'금', commSilver:'은', commOil:'원유 WTI', commGas:'천연가스', commPlat:'백금', commCopper:'구리', commWheat:'밀', commCoffee:'커피',
+    guideTitle:'사용 가이드', guideSub:'WealthOS 사용 방법',
     shareModalTitle:'포트폴리오 공유', shareModalSub:'Wealthos를 친구 및 커뮤니티에 알리세요',
     shareDownloadBtn:'이미지 다운로드', shareCopyBtn:'링크 복사',
     balanceLabel:'잔액', propertyLabel:'부동산 가치 (USD)', assetValLabel:'자산 가치 (USD)', qtyLabel:'보유 수량',
@@ -1489,6 +1525,7 @@ const LANG = {
     aiBack:'← Réanalyser',
     aiErrNoRisk:"Veuillez sélectionner un profil de risque avant d'analyser.", aiErrNoKey:'Veuillez entrer votre clé Google Gemini API.', aiErrConn:'Erreur de connexion. Veuillez réessayer.',
     commGold:'Or', commSilver:'Argent', commOil:'Pétrole brut WTI', commGas:'Gaz naturel', commPlat:'Platine', commCopper:'Cuivre', commWheat:'Blé', commCoffee:'Café',
+    guideTitle:'Guide utilisateur', guideSub:'Comment utiliser WealthOS',
     shareModalTitle:'Partager le portefeuille', shareModalSub:"Faites connaître Wealthos à vos amis",
     shareDownloadBtn:"Télécharger l'image", shareCopyBtn:'Copier le lien',
     balanceLabel:'Solde', propertyLabel:'Valeur immobilière (USD)', assetValLabel:"Valeur de l'actif (USD)", qtyLabel:'Quantité détenue',
@@ -1579,6 +1616,7 @@ const LANG = {
     aiBack:'← Повторить анализ',
     aiErrNoRisk:'Пожалуйста, выберите риск-профиль перед анализом.', aiErrNoKey:'Пожалуйста, введите ключ Google Gemini API.', aiErrConn:'Ошибка подключения. Повторите попытку.',
     commGold:'Золото', commSilver:'Серебро', commOil:'Нефть WTI', commGas:'Природный газ', commPlat:'Платина', commCopper:'Медь', commWheat:'Пшеница', commCoffee:'Кофе',
+    guideTitle:'Руководство', guideSub:'Как пользоваться WealthOS',
     shareModalTitle:'Поделиться портфелем', shareModalSub:'Расскажите о Wealthos друзьям и сообществу',
     shareDownloadBtn:'Скачать изображение', shareCopyBtn:'Копировать ссылку',
     balanceLabel:'Баланс', propertyLabel:'Стоимость недвижимости (USD)', assetValLabel:'Стоимость актива (USD)', qtyLabel:'Количество',

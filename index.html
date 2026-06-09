@@ -2174,7 +2174,7 @@ async function fetchYahoo(symbol) {
 
 // Map CoinGecko id → CryptoCompare symbol & Binance symbol & Bybit symbol
 const CRYPTO_SYMBOLS = {
-  'bitcoin':     { cc:'BTC',  binance:'BTCUSDT',  bybit:'HYPEUSDT' },
+  'bitcoin':     { cc:'BTC',  binance:'BTCUSDT' },
   'ethereum':    { cc:'ETH',  binance:'ETHUSDT' },
   // HYPE không có trên Binance → dùng Hyperliquid DEX API + Bybit + KuCoin
   'hyperliquid': { cc:'HYPE', bybit:'HYPEUSDT', kucoin:'HYPE-USDT' },
@@ -2200,36 +2200,61 @@ async function fetchOneCrypto(id) {
 
   // 0) Hyperliquid DEX API — nguồn chính thống cho HYPE, không cần key, không CORS
   if (id === 'hyperliquid') {
-    attempts.push((async () => {
-      const r = await fetchWithTimeout('https://api.hyperliquid.xyz/info', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'allMids' })
-      });
+    // Thử trực tiếp + qua proxy vì một số browser block CORS POST
+    const hlBody = JSON.stringify({ type: 'allMids' });
+    const hlUrl  = 'https://api.hyperliquid.xyz/info';
+    const hlOpts = { method:'POST', headers:{'Content-Type':'application/json'}, body: hlBody };
+
+    const parseHL = async (r) => {
       if (!r.ok) throw new Error('not ok');
       const d = await r.json();
       const price = parseFloat(d?.HYPE);
       if (!price || isNaN(price)) throw new Error('no price');
-      // Lấy thêm 24h change từ metaAndAssetCtxs
-      let pct = null;
-      try {
-        const r2 = await fetchWithTimeout('https://api.hyperliquid.xyz/info', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type: 'metaAndAssetCtxs' })
-        });
-        if (r2.ok) {
-          const d2 = await r2.json();
-          const assets = d2?.[0]?.universe || [];
-          const ctxs   = d2?.[1] || [];
-          const idx = assets.findIndex(a => a.name === 'HYPE');
-          if (idx >= 0 && ctxs[idx]) {
-            const ctx = ctxs[idx];
-            const prev = parseFloat(ctx.prevDayPx);
-            if (prev > 0) pct = (price - prev) / prev * 100;
-          }
-        }
-      } catch(_) {}
+      return { id, current_price: price, price_change_percentage_24h: null };
+    };
+
+    // Direct POST
+    attempts.push((async () => {
+      const result = await parseHL(await fetchWithTimeout(hlUrl, hlOpts));
+      cacheSet('crypto:'+id, result.current_price, result.price_change_percentage_24h);
+      return result;
+    })());
+
+    // Qua CF Worker proxy (POST → GET workaround)
+    if (CF_WORKER_URL) {
+      attempts.push((async () => {
+        const proxyUrl = `${CF_WORKER_URL}?url=${encodeURIComponent(hlUrl)}`;
+        const result = await parseHL(await fetchWithTimeout(proxyUrl, hlOpts));
+        cacheSet('crypto:'+id, result.current_price, result.price_change_percentage_24h);
+        return result;
+      })());
+    }
+
+    // Gate.io spot — hỗ trợ HYPE_USDT, GET request, không CORS
+    attempts.push((async () => {
+      const r = await fetchWithTimeout('https://api.gateio.ws/api/v4/spot/tickers?currency_pair=HYPE_USDT');
+      if (!r.ok) throw new Error('not ok');
+      const d = await r.json();
+      const item = Array.isArray(d) ? d[0] : d;
+      const price = parseFloat(item?.last);
+      if (!price || isNaN(price)) throw new Error('no price');
+      const changeStr = item?.change_percentage;
+      const pct = changeStr != null ? parseFloat(changeStr) : null;
+      const result = { id, current_price: price, price_change_percentage_24h: pct };
+      cacheSet('crypto:'+id, result.current_price, result.price_change_percentage_24h);
+      return result;
+    })());
+
+    // OKX — hỗ trợ HYPE-USDT, GET request
+    attempts.push((async () => {
+      const r = await fetchWithTimeout('https://www.okx.com/api/v5/market/ticker?instId=HYPE-USDT');
+      if (!r.ok) throw new Error('not ok');
+      const d = await r.json();
+      const item = d?.data?.[0];
+      const price = parseFloat(item?.last);
+      if (!price || isNaN(price)) throw new Error('no price');
+      const open24h = parseFloat(item?.open24h);
+      const pct = open24h > 0 ? (price - open24h) / open24h * 100 : null;
       const result = { id, current_price: price, price_change_percentage_24h: pct };
       cacheSet('crypto:'+id, result.current_price, result.price_change_percentage_24h);
       return result;
@@ -2378,6 +2403,40 @@ async function fetchCommodityHistory(id) {
 }
 
 async function fetchCryptoHistory(id) {
+  // Đặc biệt cho HYPE — dùng các sàn có hỗ trợ
+  if (id === 'hyperliquid') {
+    // Bybit klines (GET, không CORS): interval=D, limit=8
+    try {
+      const r = await fetchWithTimeout('https://api.bybit.com/v5/market/kline?category=spot&symbol=HYPEUSDT&interval=D&limit=8');
+      if (r.ok) {
+        const d = await r.json();
+        // list: [[timestamp, open, high, low, close, volume, turnover], ...] newest first → reverse
+        const closes = (d?.result?.list || []).map(c => parseFloat(c[4])).filter(v => v > 0).reverse();
+        if (closes.length > 1) return closes;
+      }
+    } catch(_) {}
+    // Gate.io candles
+    try {
+      const r = await fetchWithTimeout('https://api.gateio.ws/api/v4/spot/candlesticks?currency_pair=HYPE_USDT&interval=1d&limit=8');
+      if (r.ok) {
+        const d = await r.json();
+        // [timestamp, volume, close, high, low, open, ...] 
+        const closes = (Array.isArray(d) ? d : []).map(c => parseFloat(c[2])).filter(v => v > 0);
+        if (closes.length > 1) return closes;
+      }
+    } catch(_) {}
+    // OKX candles
+    try {
+      const r = await fetchWithTimeout('https://www.okx.com/api/v5/market/candles?instId=HYPE-USDT&bar=1D&limit=8');
+      if (r.ok) {
+        const d = await r.json();
+        // data: [[ts, open, high, low, close, ...]] newest first → reverse
+        const closes = (d?.data || []).map(c => parseFloat(c[4])).filter(v => v > 0).reverse();
+        if (closes.length > 1) return closes;
+      }
+    } catch(_) {}
+  }
+
   try {
     const data = await tryFetch(`https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=7&interval=daily`);
     if (data?.prices) return data.prices.map(x=>x[1]);
@@ -2813,11 +2872,15 @@ function recalc() {
 
   // Auto-sync vốn ban đầu cho dự báo tăng trưởng
   const newTotal = assets.reduce((s,a,i) => s + getAssetValue(a,i), 0);
-  if (newTotal > 0 && Math.round(newTotal) !== fcInitAmt) {
-    fcInitAmt = Math.round(newTotal);
-    const fcEl = document.getElementById('fc-init');
-    if (fcEl) fcEl.value = fmtNum(fcInitAmt, 0);
-    if (typeof fcUpdate === 'function') fcUpdate();
+  if (newTotal > 0) {
+    // Luôn update nếu chênh lệch > 0.5% (tránh loop nhưng đảm bảo update khi HYPE load xong)
+    const diff = Math.abs(Math.round(newTotal) - fcInitAmt);
+    if (diff > Math.max(1, fcInitAmt * 0.005)) {
+      fcInitAmt = Math.round(newTotal);
+      const fcEl = document.getElementById('fc-init');
+      if (fcEl) fcEl.value = fmtNum(fcInitAmt, 0);
+      if (typeof fcUpdate === 'function') fcUpdate();
+    }
   }
   // Re-render forecast asset cards when assets/prices change
   if (typeof renderFcAssetScenarios === 'function') renderFcAssetScenarios();
@@ -2943,7 +3006,9 @@ async function loadAll() {
   renderHoldings();
   buildChart();
   recalc();
-  setTimeout(() => buildChart(), 200);
+  // Gọi thêm lần nữa sau 200ms để đảm bảo fcUpdate dùng đúng giá (kể cả HYPE)
+  setTimeout(() => { buildChart(); recalc(); }, 200);
+  setTimeout(() => { buildChart(); recalc(); }, 800);
 
   $('msgs').innerHTML = msgs.map(m=>`<div class="${m.type==='err'?'err':'info'}">${m.type==='err'?'⚠':'ℹ'} ${m.text}</div>`).join('');
   const timeStr = new Date().toLocaleTimeString('vi-VN');

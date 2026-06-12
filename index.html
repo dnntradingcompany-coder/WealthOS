@@ -608,14 +608,14 @@ input[type=number]{-moz-appearance:textfield;}
 
     <!-- Rebalance toggle -->
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px 14px;background:var(--sur);border:1px solid var(--b);border-radius:10px;">
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;flex:1;">
-        <div style="position:relative;width:36px;height:20px;flex-shrink:0;" onclick="toggleRebalance()">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;flex:1;" onclick="toggleRebalance()">
+        <div style="position:relative;width:36px;height:20px;flex-shrink:0;">
           <div id="rb-track" style="width:36px;height:20px;border-radius:10px;background:rgba(255,255,255,0.1);transition:background .2s;"></div>
           <div id="rb-thumb" style="position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:7px;background:#888;transition:all .2s;"></div>
         </div>
         <div>
           <div style="font-size:11px;font-weight:600;color:var(--tx);" data-i18n="rebalLabel">REBALANCE HÀNG NĂM</div>
-          <div style="font-size:10px;color:var(--mu);" data-i18n="rebalDesc">Giữ nguyên tỉ lệ % ban đầu mỗi năm khi DCA</div>
+          <div id="rb-desc" style="font-size:10px;color:var(--mu);" data-i18n="rebalDesc">Giữ nguyên tỉ lệ % ban đầu mỗi năm khi DCA</div>
         </div>
       </label>
     </div>
@@ -3487,8 +3487,21 @@ function toggleRebalance() {
   fcRebalance = !fcRebalance;
   const track = document.getElementById('rb-track');
   const thumb = document.getElementById('rb-thumb');
+  const desc  = document.getElementById('rb-desc');
   if (track) track.style.background = fcRebalance ? 'rgba(79,142,247,0.6)' : 'rgba(255,255,255,0.1)';
   if (thumb) { thumb.style.left = fcRebalance ? '19px' : '3px'; thumb.style.background = fcRebalance ? '#4f8ef7' : '#888'; }
+  if (desc && fcRebalance) {
+    // Hiển thị tỉ lệ thực tế đang được dùng
+    const totalVal = assets.reduce((s,a,i) => s + getAssetValue(a,i), 0);
+    const pcts = assets.map((a,i) => {
+      const v = getAssetValue(a,i);
+      return totalVal > 0 ? `${a.ticker} ${(v/totalVal*100).toFixed(1)}%` : '';
+    }).filter(Boolean).join(' · ');
+    desc.textContent = pcts || (t('rebalDesc') || 'Giữ nguyên tỉ lệ % ban đầu mỗi năm khi DCA');
+  } else if (desc) {
+    desc.setAttribute('data-i18n', 'rebalDesc');
+    desc.textContent = t('rebalDesc') || 'Giữ nguyên tỉ lệ % ban đầu mỗi năm khi DCA';
+  }
   fcUpdate();
 }
 
@@ -3500,21 +3513,24 @@ function fcCalcAsset(init, dca, rate) {
 
 // Rebalanced version: each year reset allocation to original pct before growing
 function fcCalcRebalanced(assetDefs, initTotal, dcaTotal) {
-  // assetDefs: [{allocPct, rate}, ...]
-  let vals = assetDefs.map(d => initTotal * d.allocPct);
+  // Normalize allocPct để đảm bảo tổng = 1 (tránh rò rỉ nếu asset nào đó price=null)
+  const totalAlloc = assetDefs.reduce((s,d) => s + d.allocPct, 0);
+  const normAlloc  = totalAlloc > 0 ? totalAlloc : 1;
+  const defs = assetDefs.map(d => ({ ...d, allocPct: d.allocPct / normAlloc }));
+
+  let vals = defs.map(d => d.init ?? initTotal * d.allocPct);
   const seriesAll = [vals.map(v => Math.round(v))];
   for (let yr = 0; yr < FC_YRS; yr++) {
-    // 1. Add DCA proportionally (fixed alloc)
+    // 1. Add DCA theo tỉ lệ cố định
     const dcaYear = dcaTotal * 12;
-    vals = vals.map((v, i) => v + dcaYear * assetDefs[i].allocPct);
+    vals = vals.map((v, i) => v + dcaYear * defs[i].allocPct);
     // 2. Grow each asset
-    vals = vals.map((v, i) => v * (1 + assetDefs[i].rate));
-    // 3. Rebalance: redistribute total back to original alloc
+    vals = vals.map((v, i) => v * (1 + defs[i].rate));
+    // 3. Rebalance về đúng tỉ lệ ban đầu
     const tot = vals.reduce((s,v) => s+v, 0);
-    vals = assetDefs.map(d => tot * d.allocPct);
+    vals = defs.map(d => tot * d.allocPct);
     seriesAll.push(vals.map(v => Math.round(v)));
   }
-  // Return per-asset series
   return assetDefs.map((_, i) => seriesAll.map(yr => yr[i]));
 }
 
@@ -3646,6 +3662,11 @@ function fcUpdate() {
   const startYear = new Date().getFullYear();
   const labels = Array.from({length:FC_YRS+1},(_,i)=>String(startYear+i));
 
+  // Tính tổng portfolio thực tế để phân bổ DCA
+  const totalRealVal = assets.reduce((s,x,j) => s + getAssetValue(x,j), 0);
+  // fcInitAmt có thể do user nhập tay → dùng nó làm base nhưng allocPct tính từ giá thực
+  const scaleFactor = totalRealVal > 0 ? fcInitAmt / totalRealVal : 1;
+
   // Tính từng asset
   const assetDefs = assets.map((a,i) => {
     let rate;
@@ -3656,23 +3677,30 @@ function fcUpdate() {
       const key   = fcScenarios[i]||fcDefaultScenario(a.type);
       rate = scens[key]?.r??0.10;
     }
-    const totalVal = assets.reduce((s,x,j)=>s+getAssetValue(x,j),0);
-    const myVal    = getAssetValue(a,i);
-    const allocPct = totalVal>0 ? myVal/totalVal : 1/assets.length;
-    return { a, rate, allocPct };
+    const myRealVal = getAssetValue(a,i);
+    // allocPct tính từ giá thực tế portfolio
+    const allocPct  = totalRealVal > 0 ? myRealVal / totalRealVal : 1 / assets.length;
+    // init: scale theo fcInitAmt nếu user đã chỉnh, DCA chia theo allocPct
+    const init = myRealVal > 0 ? myRealVal * scaleFactor : fcInitAmt * allocPct;
+    const dca  = fcDCA * allocPct;
+    return { a, rate, allocPct, init, dca };
   });
+
+  // Kiểm tra tổng init = fcInitAmt (sanity)
+  const totalInit = assetDefs.reduce((s,d) => s + d.init, 0);
+  // Nếu lệch (do asset nào đó price = null), normalize
+  const normFactor = totalInit > 0 ? fcInitAmt / totalInit : 1;
 
   let assetData;
   if (fcRebalance) {
-    // Rebalanced: giữ nguyên tỉ lệ % gốc mỗi năm
-    const seriesAll = fcCalcRebalanced(assetDefs, fcInitAmt, fcDCA);
-    assetData = assetDefs.map((d, i) => ({ ...d, series: seriesAll[i] }));
+    const normedDefs = assetDefs.map(d => ({ ...d, init: d.init * normFactor }));
+    const seriesAll = fcCalcRebalanced(normedDefs, fcInitAmt, fcDCA);
+    assetData = normedDefs.map((d, i) => ({ ...d, series: seriesAll[i] }));
   } else {
-    // Drift: mỗi asset tăng trưởng độc lập theo allocPct gốc
-    assetData = assetDefs.map(d => {
-      const init = fcInitAmt * d.allocPct, dca = fcDCA * d.allocPct;
-      return { ...d, series: fcCalcAsset(init, dca, d.rate) };
-    });
+    assetData = assetDefs.map(d => ({
+      ...d,
+      series: fcCalcAsset(d.init * normFactor, d.dca, d.rate)
+    }));
   }
 
   const total = assetData[0].series.map((_,i) => assetData.reduce((s,d)=>s+d.series[i],0));

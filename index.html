@@ -3379,11 +3379,22 @@ async function fetchHistoricalCAGR(asset) {
     cagr10: results[10] ?? null,
     histRate, histPeriod,
     // Derive bull/real/bear from actual volatility
-    bull: histRate * 1.6,
-    real: (results[3] ?? results[5] ?? histRate),
+    bull: Math.min(histRate * 1.6, 2.0),   // cap at +200%/yr
+    real: Math.max(Math.min((results[3] ?? results[5] ?? histRate), 1.5), -0.5),
     bear: Math.max((results[1] ?? histRate) - Math.abs(histRate) * 0.8, -0.5),
     updatedAt: Date.now(),
   };
+
+  // Nếu asset mới < 2yr (chỉ có cagr1, không có cagr3+) và là crypto → giữ default rates
+  // vì CAGR 1yr của crypto mới rất nhiễu (listing pump/dump)
+  const hasLongHistory = results[3] != null || results[5] != null || results[10] != null;
+  if (asset.type === 'crypto' && !hasLongHistory) {
+    // Chỉ dùng histRate để label nhưng giữ bull/real/bear từ FC_ASSET_DATA mặc định
+    const def = FC_ASSET_DATA['crypto'];
+    liveData.bull = def.bull;
+    liveData.real = def.real;
+    liveData.bear = def.bear;
+  }
 
   sessionStorage.setItem(cacheKey, JSON.stringify(liveData));
   return liveData;
@@ -3594,8 +3605,8 @@ function renderFcAssetScenarios() {
   }).join('');
 }
 
-function fcSetScenario(i, key) {
-  fcScenarios[i] = key;
+function fcSetScenario(id, key) {
+  fcScenarios[id] = key;
   renderFcAssetScenarios();
   fcUpdate();
 }
@@ -3699,7 +3710,8 @@ function fcUpdate() {
   const subMetrics = assetData.map(d => {
     const endVal = d.series[FC_YRS];
     const endPct = finalTotal > 0 ? (endVal / finalTotal * 100).toFixed(1) : '—';
-    return { l: d.a.ticker + ' ' + (startYear+FC_YRS), v: fcFmt(endVal), pct: endPct, c: d.a.color };
+    const initPct = (d.allocPct * 100).toFixed(1);
+    return { l: d.a.ticker + ' ' + (startYear+FC_YRS), v: fcFmt(endVal), pct: endPct, initPct, c: d.a.color };
   });
   const subEl = document.getElementById('fc-metrics-sub');
   const subCols = Math.min(subMetrics.length, 4);
@@ -3708,7 +3720,9 @@ function fcUpdate() {
     <div class="fc-metric">
       <div class="fc-ml">${m.l}</div>
       <div class="fc-mv" style="color:${m.c}">${m.v}</div>
-      <div style="font-size:10px;color:${m.c};opacity:0.7;font-family:var(--mono);margin-top:2px;">${m.pct}% ${fcRebalance ? '🔄' : '→'}</div>
+      <div style="font-size:10px;color:${m.c};opacity:0.75;font-family:var(--mono);margin-top:2px;">
+        ${(m.initPct)}% → ${m.pct}% ${fcRebalance ? '🔄' : ''}
+      </div>
     </div>`).join('');
 
   // Keep hidden #fc-metrics in sync for PDF export

@@ -606,7 +606,19 @@ input[type=number]{-moz-appearance:textfield;}
       </div>
     </div>
 
-    <!-- Metrics hero: Tổng & Lãi ròng -->
+    <!-- Rebalance toggle -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px 14px;background:var(--sur);border:1px solid var(--b);border-radius:10px;">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;flex:1;">
+        <div style="position:relative;width:36px;height:20px;flex-shrink:0;" onclick="toggleRebalance()">
+          <div id="rb-track" style="width:36px;height:20px;border-radius:10px;background:rgba(255,255,255,0.1);transition:background .2s;"></div>
+          <div id="rb-thumb" style="position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:7px;background:#888;transition:all .2s;"></div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--tx);" data-i18n="rebalLabel">REBALANCE HÀNG NĂM</div>
+          <div style="font-size:10px;color:var(--mu);" data-i18n="rebalDesc">Giữ nguyên tỉ lệ % ban đầu mỗi năm khi DCA</div>
+        </div>
+      </label>
+    </div>
     <div id="fc-metrics-hero"></div>
     <!-- Metrics sub: CAGR, ×lần, per-asset -->
     <div id="fc-metrics-sub" style="margin-bottom:16px;"></div>
@@ -1019,6 +1031,7 @@ const LANG = {
     portAlloc:'% danh mục',
     // Forecast
     fcYearLabel:'Năm', fcCapAccum:'Vốn tích lũy', fcTotal:'Tổng', fcProfit:'Lãi', fcMultiple:'×lần',
+    rebalLabel:'REBALANCE HÀNG NĂM', rebalDesc:'Giữ nguyên tỉ lệ % ban đầu mỗi năm khi DCA',
     fcTotalAfter:'Tổng sau', fcYears:'năm', fcNetProfit:'Lãi ròng',
     fcCAGR:'CAGR danh mục', fcMultipleInv:'×lần vốn đầu tư',
     fcCashNote:'Thay đổi trong card bên dưới', fcRENote:'Thay đổi trong card bên dưới',
@@ -1118,6 +1131,7 @@ const LANG = {
     portAlloc:'% of portfolio',
     // Forecast
     fcYearLabel:'Year', fcCapAccum:'Capital Invested', fcTotal:'Total', fcProfit:'Profit', fcMultiple:'×',
+    rebalLabel:'ANNUAL REBALANCE', rebalDesc:'Keep original allocation % fixed each year during DCA',
     fcTotalAfter:'Total after', fcYears:'years', fcNetProfit:'Net Profit',
     fcCAGR:'Portfolio CAGR', fcMultipleInv:'× invested capital',
     fcCashNote:'Edit in the card below', fcRENote:'Edit in the card below',
@@ -3456,10 +3470,41 @@ function fcFmt(n) {
   return '$'+n.toFixed(0);
 }
 
+let fcRebalance = false;
+
+function toggleRebalance() {
+  fcRebalance = !fcRebalance;
+  const track = document.getElementById('rb-track');
+  const thumb = document.getElementById('rb-thumb');
+  if (track) track.style.background = fcRebalance ? 'rgba(79,142,247,0.6)' : 'rgba(255,255,255,0.1)';
+  if (thumb) { thumb.style.left = fcRebalance ? '19px' : '3px'; thumb.style.background = fcRebalance ? '#4f8ef7' : '#888'; }
+  fcUpdate();
+}
+
 function fcCalcAsset(init, dca, rate) {
   let v = init, res = [init];
   for (let i = 0; i < FC_YRS; i++) { v = (v + dca*12) * (1+rate); res.push(Math.round(v)); }
   return res;
+}
+
+// Rebalanced version: each year reset allocation to original pct before growing
+function fcCalcRebalanced(assetDefs, initTotal, dcaTotal) {
+  // assetDefs: [{allocPct, rate}, ...]
+  let vals = assetDefs.map(d => initTotal * d.allocPct);
+  const seriesAll = [vals.map(v => Math.round(v))];
+  for (let yr = 0; yr < FC_YRS; yr++) {
+    // 1. Add DCA proportionally (fixed alloc)
+    const dcaYear = dcaTotal * 12;
+    vals = vals.map((v, i) => v + dcaYear * assetDefs[i].allocPct);
+    // 2. Grow each asset
+    vals = vals.map((v, i) => v * (1 + assetDefs[i].rate));
+    // 3. Rebalance: redistribute total back to original alloc
+    const tot = vals.reduce((s,v) => s+v, 0);
+    vals = assetDefs.map(d => tot * d.allocPct);
+    seriesAll.push(vals.map(v => Math.round(v)));
+  }
+  // Return per-asset series
+  return assetDefs.map((_, i) => seriesAll.map(yr => yr[i]));
 }
 
 function renderFcAssetScenarios() {
@@ -3591,7 +3636,7 @@ function fcUpdate() {
   const labels = Array.from({length:FC_YRS+1},(_,i)=>String(startYear+i));
 
   // Tính từng asset
-  const assetData = assets.map((a,i) => {
+  const assetDefs = assets.map((a,i) => {
     let rate;
     if (a.type==='cash')        rate = (a.cashRate||5.5)/100;
     else if (a.type==='realestate') rate = a.reGrowthRate||0.08;
@@ -3603,9 +3648,21 @@ function fcUpdate() {
     const totalVal = assets.reduce((s,x,j)=>s+getAssetValue(x,j),0);
     const myVal    = getAssetValue(a,i);
     const allocPct = totalVal>0 ? myVal/totalVal : 1/assets.length;
-    const init = fcInitAmt*allocPct, dca = fcDCA*allocPct;
-    return { a, rate, allocPct, series:fcCalcAsset(init,dca,rate) };
+    return { a, rate, allocPct };
   });
+
+  let assetData;
+  if (fcRebalance) {
+    // Rebalanced: giữ nguyên tỉ lệ % gốc mỗi năm
+    const seriesAll = fcCalcRebalanced(assetDefs, fcInitAmt, fcDCA);
+    assetData = assetDefs.map((d, i) => ({ ...d, series: seriesAll[i] }));
+  } else {
+    // Drift: mỗi asset tăng trưởng độc lập theo allocPct gốc
+    assetData = assetDefs.map(d => {
+      const init = fcInitAmt * d.allocPct, dca = fcDCA * d.allocPct;
+      return { ...d, series: fcCalcAsset(init, dca, d.rate) };
+    });
+  }
 
   const total = assetData[0].series.map((_,i) => assetData.reduce((s,d)=>s+d.series[i],0));
   const inv   = Array.from({length:FC_YRS+1},(_,i)=>Math.round(fcInitAmt+fcDCA*12*i));
@@ -3637,12 +3694,22 @@ function fcUpdate() {
       <div class="fc-mv">${multi}x</div>
     </div>`;
 
-  // Per-asset sub-row only
-  const subMetrics = assetData.map(d=>({ l:d.a.ticker+' '+(startYear+FC_YRS), v:fcFmt(d.series[FC_YRS]), c:d.a.color }));
+  // Per-asset sub-row: value + end % allocation
+  const finalTotal = total[FC_YRS];
+  const subMetrics = assetData.map(d => {
+    const endVal = d.series[FC_YRS];
+    const endPct = finalTotal > 0 ? (endVal / finalTotal * 100).toFixed(1) : '—';
+    return { l: d.a.ticker + ' ' + (startYear+FC_YRS), v: fcFmt(endVal), pct: endPct, c: d.a.color };
+  });
   const subEl = document.getElementById('fc-metrics-sub');
   const subCols = Math.min(subMetrics.length, 4);
   subEl.style.gridTemplateColumns = `repeat(${subCols},1fr)`;
-  subEl.innerHTML = subMetrics.map(m=>`<div class="fc-metric"><div class="fc-ml">${m.l}</div><div class="fc-mv" style="color:${m.c}">${m.v}</div></div>`).join('');
+  subEl.innerHTML = subMetrics.map(m=>`
+    <div class="fc-metric">
+      <div class="fc-ml">${m.l}</div>
+      <div class="fc-mv" style="color:${m.c}">${m.v}</div>
+      <div style="font-size:10px;color:${m.c};opacity:0.7;font-family:var(--mono);margin-top:2px;">${m.pct}% ${fcRebalance ? '🔄' : '→'}</div>
+    </div>`).join('');
 
   // Keep hidden #fc-metrics in sync for PDF export
   const metricsEl = document.getElementById('fc-metrics');

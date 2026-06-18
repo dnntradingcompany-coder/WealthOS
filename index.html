@@ -2206,7 +2206,11 @@ async function fetchOneCrypto(id) {
   const cached = cacheGet('crypto:'+id);
   if (cached) return { id, current_price: cached.price, price_change_percentage_24h: cached.pct };
 
-  const sym    = CRYPTO_SYMBOLS[id]?.cc || id.toUpperCase();
+  // sym dùng cho exchange APIs — strip CoinGecko disambiguation suffixes (-2, -v2, -protocol, -network, etc.)
+  // vd: 'aster-2' → 'ASTER', 'uniswap-v3' → 'UNISWAP', 'matic-network' → 'MATIC'
+  const rawSym = CRYPTO_SYMBOLS[id]?.cc || id.toUpperCase();
+  const sym = rawSym.replace(/-\d+$/, '').replace(/-V\d+$/i, '').replace(/-(NETWORK|PROTOCOL|TOKEN|FINANCE|EXCHANGE|SWAP|DAO|LABS)$/i, '');
+
   const bSym   = CRYPTO_SYMBOLS[id]?.binance;
   const bbSym  = CRYPTO_SYMBOLS[id]?.bybit;
   const kcSym  = CRYPTO_SYMBOLS[id]?.kucoin;
@@ -2316,6 +2320,80 @@ async function fetchOneCrypto(id) {
       const changeRate = parseFloat(d?.data?.changeRate);
       const pct = isNaN(changeRate) ? null : changeRate * 100;
       const result = { id, current_price: price, price_change_percentage_24h: pct };
+      cacheSet('crypto:'+id, result.current_price, result.price_change_percentage_24h);
+      return result;
+    })());
+  }
+
+  // 1d) Generic: thử Bybit, Gate.io, OKX, KuCoin bằng ticker sym cho mọi token không có trong CRYPTO_SYMBOLS
+  if (!bSym && !bbSym && !kcSym && id !== 'hyperliquid') {
+    const ticker = sym; // sym = CRYPTO_SYMBOLS[id]?.cc || id.toUpperCase()
+
+    // Bybit generic
+    attempts.push((async () => {
+      const r = await fetchWithTimeout(`https://api.bybit.com/v5/market/tickers?category=spot&symbol=${ticker}USDT`);
+      if (!r.ok) throw new Error('not ok');
+      const d = await r.json();
+      const item = d?.result?.list?.[0];
+      if (!item?.lastPrice) throw new Error('no price');
+      const price = parseFloat(item.lastPrice);
+      const prev  = parseFloat(item.prevPrice24h);
+      const pct   = prev > 0 ? (price - prev) / prev * 100 : null;
+      const result = { id, current_price: price, price_change_percentage_24h: pct };
+      cacheSet('crypto:'+id, result.current_price, result.price_change_percentage_24h);
+      return result;
+    })());
+
+    // Gate.io generic
+    attempts.push((async () => {
+      const r = await fetchWithTimeout(`https://api.gateio.ws/api/v4/spot/tickers?currency_pair=${ticker}_USDT`);
+      if (!r.ok) throw new Error('not ok');
+      const d = await r.json();
+      const item = Array.isArray(d) ? d[0] : d;
+      const price = parseFloat(item?.last);
+      if (!price || isNaN(price)) throw new Error('no price');
+      const pct = item?.change_percentage != null ? parseFloat(item.change_percentage) : null;
+      const result = { id, current_price: price, price_change_percentage_24h: pct };
+      cacheSet('crypto:'+id, result.current_price, result.price_change_percentage_24h);
+      return result;
+    })());
+
+    // OKX generic
+    attempts.push((async () => {
+      const r = await fetchWithTimeout(`https://www.okx.com/api/v5/market/ticker?instId=${ticker}-USDT`);
+      if (!r.ok) throw new Error('not ok');
+      const d = await r.json();
+      const item = d?.data?.[0];
+      const price = parseFloat(item?.last);
+      if (!price || isNaN(price)) throw new Error('no price');
+      const open24h = parseFloat(item?.open24h);
+      const pct = open24h > 0 ? (price - open24h) / open24h * 100 : null;
+      const result = { id, current_price: price, price_change_percentage_24h: pct };
+      cacheSet('crypto:'+id, result.current_price, result.price_change_percentage_24h);
+      return result;
+    })());
+
+    // KuCoin generic
+    attempts.push((async () => {
+      const r = await fetchWithTimeout(`https://api.kucoin.com/api/v1/market/stats?symbol=${ticker}-USDT`);
+      if (!r.ok) throw new Error('not ok');
+      const d = await r.json();
+      const price = parseFloat(d?.data?.last);
+      if (!price || isNaN(price)) throw new Error('no price');
+      const changeRate = parseFloat(d?.data?.changeRate);
+      const pct = isNaN(changeRate) ? null : changeRate * 100;
+      const result = { id, current_price: price, price_change_percentage_24h: pct };
+      cacheSet('crypto:'+id, result.current_price, result.price_change_percentage_24h);
+      return result;
+    })());
+
+    // Binance generic (thử luôn dù token mới)
+    attempts.push((async () => {
+      const r = await fetchWithTimeout(`https://api.binance.com/api/v3/ticker/24hr?symbol=${ticker}USDT`);
+      if (!r.ok) throw new Error('not ok');
+      const d = await r.json();
+      if (!d.lastPrice) throw new Error('no price');
+      const result = { id, current_price: parseFloat(d.lastPrice), price_change_percentage_24h: parseFloat(d.priceChangePercent) };
       cacheSet('crypto:'+id, result.current_price, result.price_change_percentage_24h);
       return result;
     })());
@@ -3156,7 +3234,11 @@ function addSelectedAsset() {
               type:'realestate', reLocation:loc, reGrowthRate:rate, qty:0, price:null, pct:null, history:[] };
   } else if (currentTab==='custom') {
     const name   = $('ci-name').value.trim();
-    const ticker = $('ci-ticker').value.trim().toUpperCase();
+    const rawTicker = $('ci-ticker').value.trim().toUpperCase();
+    // Clean ticker: strip CoinGecko suffixes user có thể copy-paste (-2, -V2, etc.)
+    const ticker = rawTicker.replace(/-\d+$/, '').replace(/-V\d+$/i, '').replace(/-(NETWORK|PROTOCOL|TOKEN|FINANCE|EXCHANGE|SWAP|DAO|LABS)$/i, '');
+    // CoinGecko id: dùng raw input lowercase (giữ nguyên -2 để query đúng CoinGecko)
+    const cgId   = rawTicker.toLowerCase();
     const type   = $('ci-type').value;
     const icon   = $('ci-icon').value.trim() || '💰';
     const color  = $('ci-color').value;
@@ -3166,6 +3248,9 @@ function addSelectedAsset() {
       const customGrowthRate = (!isNaN(rateRaw) ? rateRaw : 8) / 100;
       const desc = $('ci-other-desc').value.trim();
       asset = { id: ticker.toLowerCase(), name, ticker, icon, color, type: 'custom', customGrowthRate, desc };
+    } else if (type === 'crypto') {
+      // id = CoinGecko slug (giữ -2 để query đúng), ticker = clean exchange symbol
+      asset = { id: cgId, name, ticker, icon, color, type, cgTicker: ticker };
     } else {
       asset = { id: type==='crypto' ? ticker.toLowerCase() : ticker, name, ticker, icon, color, type };
     }

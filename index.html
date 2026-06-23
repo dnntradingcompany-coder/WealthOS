@@ -2206,18 +2206,20 @@ async function fetchOneCrypto(id) {
   const cached = cacheGet('crypto:'+id);
   if (cached) return { id, current_price: cached.price, price_change_percentage_24h: cached.pct };
 
-  // USD-pegged stablecoins: không có cặp USDT/USDT trên sàn → peg cứng về $1
-  const USD_STABLE_IDS = new Set(['tether','dai','first-digital-usd','true-usd','paxos-standard','frax','liquity-usd','gemini-dollar','paypal-usd']);
-  if (USD_STABLE_IDS.has(id)) {
-    const result = { id, current_price: 1, price_change_percentage_24h: 0 };
-    cacheSet('crypto:'+id, 1, 0);
-    return result;
-  }
-
   // sym dùng cho exchange APIs — strip CoinGecko disambiguation suffixes (-2, -v2, -protocol, -network, etc.)
   // vd: 'aster-2' → 'ASTER', 'uniswap-v3' → 'UNISWAP', 'matic-network' → 'MATIC'
   const rawSym = CRYPTO_SYMBOLS[id]?.cc || id.toUpperCase();
   const sym = rawSym.replace(/-\d+$/, '').replace(/-V\d+$/i, '').replace(/-(NETWORK|PROTOCOL|TOKEN|FINANCE|EXCHANGE|SWAP|DAO|LABS)$/i, '');
+
+  // USD-pegged stablecoins: không có cặp USDT/USDT trên sàn → peg cứng về $1
+  // Khớp theo cả CoinGecko id (tether, usdt...) lẫn ký hiệu (USDT, DAI...)
+  const USD_STABLE_IDS = new Set(['tether','usdt','dai','first-digital-usd','fdusd','true-usd','tusd','paxos-standard','usdp','frax','liquity-usd','lusd','gemini-dollar','gusd','paypal-usd','pyusd','binance-usd','busd']);
+  const USD_STABLE_SYMS = new Set(['USDT','DAI','FDUSD','TUSD','USDP','FRAX','LUSD','GUSD','PYUSD','BUSD']);
+  if (USD_STABLE_IDS.has(id.toLowerCase()) || USD_STABLE_SYMS.has(sym.toUpperCase())) {
+    const result = { id, current_price: 1, price_change_percentage_24h: 0 };
+    cacheSet('crypto:'+id, 1, 0);
+    return result;
+  }
 
   const bSym   = CRYPTO_SYMBOLS[id]?.binance;
   const bbSym  = CRYPTO_SYMBOLS[id]?.bybit;
@@ -2503,6 +2505,13 @@ async function fetchCommodityHistory(id) {
 }
 
 async function fetchCryptoHistory(id) {
+  // USD-pegged stablecoins: lịch sử phẳng quanh $1
+  const STABLE_HIST_IDS = new Set(['tether','usdt','dai','first-digital-usd','fdusd','true-usd','tusd','paxos-standard','usdp','frax','liquity-usd','lusd','gemini-dollar','gusd','paypal-usd','pyusd','binance-usd','busd']);
+  const _symH = (CRYPTO_SYMBOLS[id]?.cc || id.toUpperCase()).toUpperCase();
+  if (STABLE_HIST_IDS.has(id.toLowerCase()) || ['USDT','DAI','FDUSD','TUSD','USDP','FRAX','LUSD','GUSD','PYUSD','BUSD'].includes(_symH)) {
+    return Array(8).fill(1);
+  }
+
   // Đặc biệt cho HYPE — dùng các sàn có hỗ trợ
   if (id === 'hyperliquid') {
     // Bybit klines (GET, không CORS): interval=D, limit=8

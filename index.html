@@ -1088,6 +1088,7 @@ const LANG = {
     commGold:'Vàng', commSilver:'Bạc', commOil:'Dầu thô WTI', commGas:'Khí tự nhiên', commPlat:'Bạch kim', commCopper:'Đồng', commWheat:'Lúa mì', commCoffee:'Cà phê',
     qtyLabel:'KHỐI LƯỢNG NẮM GIỮ', currentValueLabel:'GIÁ TRỊ QUY ĐỔI (USD)', balanceLabel:'SỐ DƯ',
     propertyLabel:'GIÁ TRỊ BĐS (USD)', assetValLabel:'GIÁ TRỊ TÀI SẢN (USD)', expectedReturnLabel:'Tăng trưởng dự kiến',
+    cashBalancePlh:'Số dư tiết kiệm', rePropertyPlh:'Giá trị BĐS (USD)',
   },
   en: {
     logo:'WEALTHOS', title:'AI Net Worth & Portfolio Tracker',
@@ -1188,6 +1189,7 @@ const LANG = {
     commGold:'Gold', commSilver:'Silver', commOil:'Crude Oil WTI', commGas:'Natural Gas', commPlat:'Platinum', commCopper:'Copper', commWheat:'Wheat', commCoffee:'Coffee',
     qtyLabel:'QUANTITY HELD', currentValueLabel:'CURRENT VALUE (USD)', balanceLabel:'BALANCE',
     propertyLabel:'PROPERTY VALUE (USD)', assetValLabel:'ASSET VALUE (USD)', expectedReturnLabel:'Expected return',
+    cashBalancePlh:'Savings balance', rePropertyPlh:'Property value (USD)',
   },
   zh: {
     logo:'WEALTHOS', title:'AI 净资产与投资组合追踪器',
@@ -1270,6 +1272,7 @@ const LANG = {
     shareDownloadBtn:'下载图片', shareCopyBtn:'复制链接',
     // dynamic inline strings
     balanceLabel:'余额', propertyLabel:'房产价值 (USD)', assetValLabel:'资产价值 (USD)', qtyLabel:'持仓数量',
+    cashBalancePlh:'储蓄余额', rePropertyPlh:'房产价值 (USD)',
     currentValueLabel:'当前价值 (USD)', expectedReturnLabel:'预期收益',
     chatSub:'💬 与您的AI理财顾问聊天', freeSub:'分析当前投资组合的优势和劣势',
     suggest0:'💼 分析当前投资组合', suggest1:'🏖️ 20年后退休需要多少？',
@@ -1361,6 +1364,7 @@ const LANG = {
     shareModalTitle:'ポートフォリオを共有', shareModalSub:'Wealthosを友達やコミュニティに広める',
     shareDownloadBtn:'画像をダウンロード', shareCopyBtn:'リンクをコピー',
     balanceLabel:'残高', propertyLabel:'不動産価値 (USD)', assetValLabel:'資産価値 (USD)', qtyLabel:'保有数量',
+    cashBalancePlh:'貯蓄残高', rePropertyPlh:'不動産価値 (USD)',
     currentValueLabel:'現在価値 (USD)', expectedReturnLabel:'期待収益',
     chatSub:'💬 AIファイナンシャルアドバイザーとチャット', freeSub:'現在のポートフォリオの強みと弱みを分析',
     suggest0:'💼 現在のポートフォリオを分析', suggest1:'🏖️ 20年後の退職に必要な金額は？',
@@ -2735,7 +2739,7 @@ function renderHoldings() {
     const isCash = a.type==='cash', isRE = a.type==='realestate';
     const isOther = a.type==='custom' && a.customGrowthRate != null;
     const qtyLabel = isCash ? (a.currency||'USD') : isRE ? 'USD' : isOther ? 'USD' : a.ticker.split('.')[0];
-    const qtyPlaceholder = isCash ? 'Số dư tiết kiệm' : isRE ? 'Giá trị BĐS (USD)' : isOther ? t('assetValLabel')||'Asset value (USD)' : '0';
+    const qtyPlaceholder = isCash ? (t('cashBalancePlh')||'Savings balance') : isRE ? (t('rePropertyPlh')||'Property value (USD)') : isOther ? t('assetValLabel')||'Asset value (USD)' : '0';
     const effectivePrice = a.price ?? a.manualPrice ?? null;
 
     // Extra info field (lãi suất hoặc % tăng trưởng BĐS hoặc custom)
